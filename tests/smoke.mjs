@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { createContext, runInContext } from 'vm';
 const root = new URL('..', import.meta.url).pathname;
-const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js'];
+const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js'];
 const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/app.js','icons/icon-192.png','icons/icon-512.png', ...lessonFiles];
 for (const f of files) {
   if (!existsSync(root + f)) { console.error('❌ Missing', f); process.exit(1); }
@@ -61,6 +61,10 @@ checkLesson('js/c11-lesson.js','C11','c11 農曆新年團拜',
   ['揮春','團拜','鼓勵利是','左手握手','書法','年糕','過敏專區','哈姆立克','墨漬','C11.words','C11.roles','C11.postCeremony','C11.trivia','C11.worksheet','C11.program'],9);
 checkLesson('js/c12-lesson.js','C12','c12 思善日',
   ['貝登堡','思善日','World Thinking Day','2 月 22','世界童軍','3 分鐘','電子蠟燭','捐款','自願','思善卡','誓詞','C12.countries','C12.roles','C12.postCeremony','C12.trivia','C12.worksheet','C12.bpMessage','C12.program'],9);
+checkLesson('js/c13-lesson.js','C13','c13 先鋒工程（一）',
+  ['平結','八字結','雙套結','半結','反手結','左壓右','婆婆結','接力賽','C13.knots','C13.trivia','C13.worksheet','C13.program'],9);
+checkLesson('js/c14-lesson.js','C14','c14 先鋒工程（二）',
+  ['稱人結','接繩結','繫木結','縮繩結','曳木結','收繩','保養','兔仔','拖木頭','十結小達人','C14.knots','C14.ropeCare','C14.trivia','C14.worksheet','C14.program'],9);
 
 const dataSrc = readFileSync(root+'js/data.js','utf8');
 ['sensitive:true','special:true','outdoor:true','personalKit'].forEach(t=>{
@@ -78,7 +82,7 @@ createContext(ctx);
 });
 console.log('✅ JS 執行：', Object.keys(ctx.App.pages).join(','));
 console.log('✅ 儀式卡',ctx.CEREMONY.cards.length,'制服類型',ctx.UNIFORM.types.length);
-const codes=['C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12'];
+const codes=['C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14'];
 for(let i=0;i<codes.length;i++){
   const c=codes[i];
   console.log('✅ '+c.toLowerCase(),'full=',ctx.DATA.meetings[i].full,'segs=',ctx[c].program.length);
@@ -88,14 +92,14 @@ for(let i=0;i<codes.length;i++){
   const tid=codes[i].toLowerCase();
   try{ ctx.App.renderMeeting(tid); }catch(e){ console.error('❌ renderMeeting('+tid+'):',e.message,e.stack.split('\n')[0]); process.exit(1); }
 }
-console.log('✅ renderMeeting(c01-c12) 正常');
+console.log('✅ renderMeeting(c01-c14) 正常');
 
-// check SW cache name includes c12
+// check SW cache name includes c14
 const swSrc = readFileSync(root+'sw.js','utf8');
-if(!swSrc.includes('c12-20260915') || !swSrc.includes('c12-lesson.js')){ console.error('❌ sw.js 未升級 c12'); process.exit(1); }
-console.log('✅ sw.js cache 已升級到 c12');
-// check README mentions c12
+if(!swSrc.includes('c14-20260915') || !swSrc.includes('c14-lesson.js')){ console.error('❌ sw.js 未升級 c14'); process.exit(1); }
+console.log('✅ sw.js cache 已升級到 c14');
+// check README mentions c14
 const rm = readFileSync(root+'README.md','utf8');
-if(!rm.includes('c12')){ console.error('❌ README 缺 c12'); process.exit(1); }
-console.log('✅ README 提及 c12');
+if(!rm.includes('c14')){ console.error('❌ README 缺 c14'); process.exit(1); }
+console.log('✅ README 提及 c14');
 console.log('\n🎉 全部 smoke test 通過');

@@ -173,7 +173,7 @@ App.renderMeeting = function(tid){
     wrap.appendChild(App.h('h2',null,'🎒 執袋清單（領袖/共用物資）'));
     var bt = App.h('table','meeting-table');
     bt.innerHTML = '<thead><tr><th>物品</th><th>數量</th><th>性質</th><th>備註</th></tr></thead><tbody>'+
-      d.bag.map(function(x){return '<tr><td>'+x.n+'</td><td>'+(typeof x.qty==='number'?x.qty:x.qty)+'</td><td>'+x.type+'</td><td>'+x.note+'</td></tr>';}).join('')+
+      d.bag.map(function(x){return '<tr><td>'+x.n+'</td><td>'+(typeof x.qty==='number'?x.qty:x.qty)+'</td><td>'+x.type+'</td><td>'+(x.note||'')+'</td></tr>';}).join('')+
       '</tbody>';
     wrap.appendChild(bt);
 
