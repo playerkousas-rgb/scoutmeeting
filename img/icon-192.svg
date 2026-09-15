@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- 背景圓：森林綠 -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#388E3C"/>
+      <stop offset="1" stop-color="#1B5E20"/>
+    </linearGradient>
+  </defs>
+  <circle cx="96" cy="96" r="96" fill="url(#g)"/>
+  <!-- 外環：金色細邊 -->
+  <circle cx="96" cy="96" r="88" fill="none" stroke="#F9A825" stroke-width="2"/>
+
+  <!-- 百合花飾 (fleur-de-lis) — 世界童軍標誌核心，金色 -->
+  <!-- 中央主瓣 -->
+  <path d="M96 38
+           C 90 54, 86 66, 86 82
+           C 86 94, 90 100, 96 104
+           C 102 100, 106 94, 106 82
+           C 106 66, 102 54, 96 38 Z"
+        fill="#F9A825"/>
+  <!-- 左瓣 -->
+  <path d="M86 62
+           C 64 66, 52 80, 50 98
+           C 48 112, 54 120, 64 116
+           C 70 114, 74 106, 74 96
+           C 74 84, 78 74, 86 68 Z"
+        fill="#F9A825"/>
+  <!-- 右瓣 -->
+  <path d="M106 62
+           C 128 66, 140 80, 142 98
+           C 144 112, 138 120, 128 116
+           C 122 114, 118 106, 118 96
+           C 118 84, 114 74, 106 68 Z"
+        fill="#F9A825"/>
+  <!-- 中央束帶（結） -->
+  <rect x="86" y="100" width="20" height="8" fill="#F9A825"/>
+  <!-- 橫帶 -->
+  <path d="M58 112 L134 112 L132 120 L60 120 Z" fill="#F9A825"/>
+  <!-- 下端下垂帶 -->
+  <path d="M90 120 L90 144 C90 150, 102 150, 102 144 L102 120 Z" fill="#F9A825"/>
+
+  <!-- 三指提示：頂上三個星點（代表童軍三指誓詞） -->
+  <circle cx="96" cy="44" r="3.5" fill="#fff"/>
+  <circle cx="66" cy="96" r="3.5" fill="#fff"/>
+  <circle cx="126" cy="96" r="3.5" fill="#fff"/>
+
+  <!-- 底部文字：SCOUT -->
+  <text x="96" y="170" text-anchor="middle" font-family="-apple-system,Segoe UI,sans-serif" font-weight="700" font-size="20" fill="#fff" letter-spacing="2">SCOUT</text>
+</svg>

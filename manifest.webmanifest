@@ -1,0 +1,21 @@
+{
+  "name": "童軍團集會助手 Scout Hub",
+  "short_name": "童軍助手",
+  "description": "取代官方《童軍團集會套包》：新領袖淨係跟住做就帶得完一場90分鐘童軍團集會；資深領袖搵材料、搵靈感、查興趣章即用。",
+  "lang": "zh-HK",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F3F8F4",
+  "theme_color": "#2E7D32",
+  "shortcuts": [
+    {"name": "✂️ 素材庫", "short_name": "素材庫", "url": "./index.html#print"},
+    {"name": "🪢 技能", "short_name": "技能", "url": "./index.html#skills"},
+    {"name": "🎖️ 興趣章", "short_name": "興趣章", "url": "./index.html#badges"}
+  ],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
