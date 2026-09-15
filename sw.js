@@ -1,0 +1,41 @@
+var CACHE = "scout-v14-c12-20260915";
+var ASSETS = [
+  "./", "./index.html", "./manifest.webmanifest", "./css/app.css",
+  "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js",
+  "./js/c01-lesson.js", "./js/c02-lesson.js", "./js/c03-lesson.js", "./js/c04-lesson.js", "./js/c05-lesson.js", "./js/c06-lesson.js", "./js/c07-lesson.js", "./js/c08-lesson.js", "./js/c09-lesson.js", "./js/c10-lesson.js", "./js/c11-lesson.js", "./js/c12-lesson.js", "./js/app.js",
+  "./icons/icon-192.png", "./icons/icon-512.png"
+];
+var EXTERNAL_PREFIX = "https://";
+
+self.addEventListener("install", function (e) {
+  e.waitUntil(
+    caches.open(CACHE).then(function (c) {
+      return c.addAll(ASSETS).catch(function(){ return Promise.resolve(); });
+    }).then(function () { return self.skipWaiting(); })
+  );
+});
+
+self.addEventListener("activate", function (e) {
+  e.waitUntil(
+    caches.keys().then(function (ks) {
+      return Promise.all(ks.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
+    }).then(function () { return self.clients.claim(); })
+  );
+});
+
+self.addEventListener("fetch", function (e) {
+  var req = e.request;
+  if (req.method !== "GET") return;
+  var url = new URL(req.url);
+  if (url.origin !== location.origin) return;
+  e.respondWith(
+    caches.match(req).then(function (cached) {
+      var net = fetch(req).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { try { c.put(req, copy); } catch (_) {} });
+        return res;
+      }).catch(function(){ return cached || caches.match("./index.html"); });
+      return cached || net;
+    })
+  );
+});
