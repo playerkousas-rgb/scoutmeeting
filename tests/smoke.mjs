@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'fs';
 import { createContext, runInContext } from 'vm';
 const root = new URL('..', import.meta.url).pathname;
 const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js','js/c15-lesson.js','js/c16-lesson.js','js/c17-lesson.js','js/c18-lesson.js','js/c19-lesson.js','js/c20-lesson.js','js/c21-lesson.js','js/c22-lesson.js','js/c23-lesson.js','js/c24-lesson.js'];
-const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/app.js','icons/icon-192.png','icons/icon-512.png', ...lessonFiles];
+const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/app.js','icons/icon-192.png','icons/icon-512.png', ...lessonFiles];
 for (const f of files) {
   if (!existsSync(root + f)) { console.error('❌ Missing', f); process.exit(1); }
   console.log('✅', f);
@@ -97,7 +97,7 @@ console.log('✅ icon PNG');
 
 const ctx={window:{addEventListener:()=>{}},document:{getElementById:()=>({appendChild:()=>{},innerHTML:'',classList:{add:()=>{},remove:()=>{},toggle:()=>{}},setAttribute:()=>{},onclick:null,style:{}}),querySelector:()=>null,querySelectorAll:()=>[],createElement:(t)=>({classList:{add:()=>{},remove:()=>{},toggle:()=>{}},setAttribute:()=>{},appendChild:()=>{},innerHTML:'',style:{}}),addEventListener:()=>{}},location:{hash:'',href:''},navigator:{onLine:true,serviceWorker:{register:()=>new Promise(()=>{})}},addEventListener:()=>{}};
 createContext(ctx);
-['js/interests.js','js/ceremony.js','js/uniform.js', ...lessonFiles, 'js/data.js','js/app.js'].forEach(f => {
+['js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js', ...lessonFiles, 'js/data.js','js/app.js'].forEach(f => {
   runInContext(readFileSync(root+f,'utf8'), ctx, {filename:f});
 });
 console.log('✅ JS 執行：', Object.keys(ctx.App.pages).join(','));
@@ -133,6 +133,20 @@ console.log('✅ 四 tab 內容標記齊');
 const cssSrc = readFileSync(root+'css/app.css','utf8');
 if(!cssSrc.includes('.print-btn, .filters')){ console.error('❌ CSS 缺列印隱藏規則'); process.exit(1); }
 console.log('✅ 列印 CSS 齊');
+// v18：歌紙＋SVG 圖解＋全站搜尋
+if(!ctx.DIAGRAMS || !ctx.DIAGRAMS.compass || !ctx.DIAGRAMS.pack || Object.keys(ctx.DIAGRAMS.track).length!==6 || ctx.DIAGRAMS.reef.length!==3 || ctx.DIAGRAMS.fig8.length!==3 || ctx.DIAGRAMS.bowline.length!==4){ console.error('❌ DIAGRAMS 缺圖'); process.exit(1); }
+console.log('✅ SVG 圖解庫齊（指南針/背囊/追蹤6/平結3/八字3/稱人4）');
+try{ ctx.App.pages.search('急救'); ctx.App.pages.search(); }catch(e){ console.error('❌ pages.search:',e.message); process.exit(1); }
+console.log('✅ 搜尋頁 render 正常');
+if(ctx.App.buildSearchIndex().length < 60){ console.error('❌ 搜尋索引太少'); process.exit(1); }
+console.log('✅ 搜尋索引', ctx.App.buildSearchIndex().length, '項');
+for (const mk of ['義勇軍進行曲','營火之夜','小隊同心','營火歌單','領唱','自創營火歌','searchGo','buildSearchIndex','全站搜尋']) {
+  if(!appSrc.includes(mk)){ console.error('❌ app.js 缺 v18 標記 '+mk); process.exit(1); }
+}
+console.log('✅ 歌紙＋搜尋標記齊');
+const htmlSrc = readFileSync(root+'index.html','utf8');
+if(!htmlSrc.includes('js/diagrams.js') || !htmlSrc.includes("#search'")){ console.error('❌ index.html 缺 diagrams/search 接線'); process.exit(1); }
+console.log('✅ index.html 接線齊');
 // check SW cache name includes c24
 const swSrc = readFileSync(root+'sw.js','utf8');
 if(!swSrc.includes('c24-20260916') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 c24'); process.exit(1); }

@@ -2841,3 +2841,9 @@ ul.motto li{ font-size:15px; }
 
 /* v17：列印時隱藏列印按鈕同篩選器 */
 @media print { .print-btn, .filters { display:none !important; } }
+
+/* v18：SVG 圖解排版 */
+.svg-steps{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:8px 0}
+.svg-steps figure{margin:0;text-align:center}
+.svg-steps svg{border:1px solid #ccc;border-radius:8px;background:#fff;max-width:100%;height:auto}
+.svg-steps figcaption{font-size:.8em;color:#555;margin-top:2px}

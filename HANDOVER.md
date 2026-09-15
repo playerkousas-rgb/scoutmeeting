@@ -1,7 +1,7 @@
 # Scout Hub — Handover Notes（交下一個 Agent 用）
 
 > 最後更新：2026-09-15
-> 目前 branch：`arena/01a0a4b6-scoutmeeting`（v17 完成：c01–c24 共 24 場完整教案＋10 個 tab 內容全補齊！🎉，待合併 main；main 目前為 v14）
+> 目前 branch：`arena/01a0a4b6-scoutmeeting`（v18 完成：24 場教案＋10 tab＋歌紙＋SVG 圖解＋全站搜尋全齊！🎉，待合併 main；main 目前為 v14）
 > 本文件係交俾下一個 Agent 接手時嘅工作記錄，包含產品定位、技術架構、已完成項目、代碼約定、下一步優先次序。
 
 ---
@@ -87,6 +87,8 @@
 **剩餘 placeholder 場次：無——24 場已全數完成！🎉**（v16 補完 c15–c24）
 
 **10 個 tab 內容：已全數補齊！🎉**（v17：✂️素材庫＋🎮12遊戲＋🪢9技能卡＋🧑‍🤝‍🧑小隊制度工具）
+
+**歌紙＋SVG 圖解＋全站搜尋：已全數完成！🎉**（v18：國歌＋2 原創營火歌＋歌單；17 個 SVG 圖；85 項搜尋索引）
 
 ## 5. 檔案結構
 
@@ -209,15 +211,15 @@ npm test    # 跑 tests/smoke.mjs，97 項，必須全部 ✅ 先好 merge
 
 1. **制服圖片熱連**——官網 TLS 曾經 wget/curl fail，但瀏覽器入到，暫時熱連；如將來官網改路徑要更新 uniform.js
 2. **素材庫/技能/小隊 tab** 全部係 placeholder（🚧），需要做：
-   - ~~素材：c01-c24 工作紙列印版、技能 9 卡、小隊制度工具~~（v17 已完成 ✅，剩歌紙＋SVG 圖解）
-3. **搜尋功能（🔍）** 暫時跳去 #book，未實際做全文搜尋
+   - ~~素材：c01-c24 工作紙列印版、技能 9 卡、小隊制度工具、歌紙、SVG 圖解~~（v17＋v18 已完成 ✅）
+3. ~~**搜尋功能（🔍）** 暫時跳去 #book~~（v18 已做真搜尋 ✅：即時搜尋＋85 項索引＋熱門關鍵字）
 4. **c01-c05 仲用舊 inline 格式**（leaderPrep 其實冇、d.script 有），將來可考慮統一到新格式，但唔強制——renderMeeting 已經兼容
 5. ~~**game/activities** 淨係得 4 個常用~~（v17 已擴充到 12 個 ✅，全部有完整玩法/物資/安全）
 6. **browser-app-review/browser-practical/browser-print-scope** 等測試檔係早期規劃遺留，未完成，可視乎需要整理或刪除
 7. **http server（python3 -m http.server 8080）** 如果 restart 會 kill 咗之前個 process，可再 `python3 -m http.server 8080 &` 重開
 8. **img/icon-192.svg** 有 SVG 源檔，但 ImageMagick 缺 rsvg-convert 所以唔可以直接 convert 去 PNG，將來改 icon 可以繼續用 generate_image 出 1024×1024 PNG 再 resize 覆蓋 icons/icon-512.png
 9. ~~**print CSS** 未特別優化~~（早已有完整 `@media print` 系統；v17 再加咗隱藏 `.print-btn`/`.filters` ✅）
-10. ~~**歡呼庫**完全未做~~（v17 已加 5 個歡呼 ✅）；歌書（營火歌/團呼）仲未做
+10. ~~**歡呼庫/歌書**完全未做~~（v17 歡呼＋v18 歌紙 ✅：國歌＋2 原創營火歌＋歌單＋自創工作坊）
 11. ~~指南針方位已由 c13 延後~~（v16 已落實：c16 Day2 加入指南針定向遊戲＋C16 gap 註明呼應 c09 承諾，閉環完成 ✅）
 12. **index.html 載入 `js/redesign.js` 但檔案唔存在**（404，前人遺留；暫無害因為 App.init 有 try/catch，但最好下次清走或補回檔案）
 13. ~~執袋表冇 note 會顯示 undefined~~（v15 已修：app.js 加咗 `(x.note||'')` fallback）
@@ -226,10 +228,10 @@ npm test    # 跑 tests/smoke.mjs，97 項，必須全部 ✅ 先好 merge
 
 > v16 已完成：c15–c24 全數補完，24 場集會 24/24 全完成！🎉（指南針閉環：c16 落實）
 > v17 已完成：10 個 tab 內容全補齊！🎉（素材庫/12遊戲/9技能卡/小隊工具＋列印隱藏）
+> v18 已完成：歌紙＋SVG 圖解＋全站搜尋！🎉（國歌/原創歌/歌單；17 SVG；85 項搜尋索引）
 
-1. **歌紙**（營火歌/團呼）＋技能 SVG 逐步圖解（文字版已齊）
-2. **全站搜尋**（🔍 現時跳去 #book）
-3. 清走 `js/redesign.js` 死引用（見第 11 節第 12 點）
+1. 清走 `js/redesign.js` 死引用（見第 11 節第 12 點）
+2. （預留）更多 SVG 圖解（復原臥式、十字紮）、歌紙加歌
 
 ## 13. 開發命令
 
@@ -254,7 +256,7 @@ npm test                      # 跑 smoke test
 - 家長 Q&A 要預先回答家長最關心嘅問題（收費？安全？宗教？過敏？）
 
 ---
-**Last agent 完成時間**：2026-09-16（v17：10 個 tab 內容全補齊！）
-**最後完成**：v17 四 tab（素材庫/遊戲庫12/技能9卡/小隊工具）
-**smoke test**：102 項全通過
+**Last agent 完成時間**：2026-09-16（v18：歌紙＋SVG 圖解＋全站搜尋全完成！）
+**最後完成**：v18（歌紙/17 SVG/搜尋85項索引）
+**smoke test**：108 項全通過
 **http server**：如需要可 `cd /home/user/scoutmeeting && python3 -m http.server 8080` 重開
