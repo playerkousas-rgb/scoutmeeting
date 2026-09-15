@@ -114,6 +114,25 @@ for(let i=0;i<codes.length;i++){
 }
 console.log('✅ renderMeeting(c01-c24) 正常');
 
+// v17：四個 tab 內容補完
+if(ctx.DATA.games.length!==12){ console.error('❌ 遊戲庫唔係 12 個'); process.exit(1); }
+console.log('✅ 遊戲庫 12 個');
+for (const f of ['patrolScore','drawLots','countdownStart','groupRandom']) {
+  if(typeof ctx.App[f]!=='function'){ console.error('❌ 缺小隊工具 '+f); process.exit(1); }
+}
+console.log('✅ 小隊工具函數齊');
+for (const p of ['print','play','skills','patrol']) {
+  try{ ctx.App.pages[p](); }catch(e){ console.error('❌ pages.'+p+':',e.message); process.exit(1); }
+}
+console.log('✅ print/play/skills/patrol render 正常');
+const appSrc = readFileSync(root+'js/app.js','utf8');
+for (const mk of ['工作紙列印','繩結卡','急救卡','game-card','小隊計分板','隨機分組','抽籤','倒數計時','歡呼庫','會議記錄表','追蹤符號']) {
+  if(!appSrc.includes(mk)){ console.error('❌ app.js 缺標記 '+mk); process.exit(1); }
+}
+console.log('✅ 四 tab 內容標記齊');
+const cssSrc = readFileSync(root+'css/app.css','utf8');
+if(!cssSrc.includes('.print-btn, .filters')){ console.error('❌ CSS 缺列印隱藏規則'); process.exit(1); }
+console.log('✅ 列印 CSS 齊');
 // check SW cache name includes c24
 const swSrc = readFileSync(root+'sw.js','utf8');
 if(!swSrc.includes('c24-20260916') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 c24'); process.exit(1); }

@@ -2838,3 +2838,6 @@ ul.motto li{ font-size:15px; }
 /* === 室外郊野警告 === */
 .outdoor-warn { background:#E3F2FD; border-left:5px solid #1565C0; }
 .outdoor-warn b { color:#0D47A1; }
+
+/* v17：列印時隱藏列印按鈕同篩選器 */
+@media print { .print-btn, .filters { display:none !important; } }
