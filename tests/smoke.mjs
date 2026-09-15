@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { createContext, runInContext } from 'vm';
 const root = new URL('..', import.meta.url).pathname;
-const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js'];
+const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js','js/c15-lesson.js','js/c16-lesson.js','js/c17-lesson.js','js/c18-lesson.js','js/c19-lesson.js','js/c20-lesson.js','js/c21-lesson.js','js/c22-lesson.js','js/c23-lesson.js','js/c24-lesson.js'];
 const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/app.js','icons/icon-192.png','icons/icon-512.png', ...lessonFiles];
 for (const f of files) {
   if (!existsSync(root + f)) { console.error('❌ Missing', f); process.exit(1); }
@@ -65,6 +65,26 @@ checkLesson('js/c13-lesson.js','C13','c13 先鋒工程（一）',
   ['平結','八字結','雙套結','半結','反手結','左壓右','婆婆結','接力賽','C13.knots','C13.trivia','C13.worksheet','C13.program'],9);
 checkLesson('js/c14-lesson.js','C14','c14 先鋒工程（二）',
   ['稱人結','接繩結','繫木結','縮繩結','曳木結','收繩','保養','兔仔','拖木頭','十結小達人','C14.knots','C14.ropeCare','C14.trivia','C14.worksheet','C14.program'],9);
+checkLesson('js/c15-lesson.js','C15','c15 營藝（一）',
+  ['營藝','背囊','小刀','斧頭','手鋸','爐具','C15.trivia','C15.worksheet','C15.program'],9);
+checkLesson('js/c16-lesson.js','C16','c16 小隊露營',
+  ['露營','帳篷','營火','拔營','指南針','Leave No Trace','C16.personalKit','C16.doNotBring','C16.roles','C16.postCeremony','C16.trivia','C16.program'],9);
+checkLesson('js/c17-lesson.js','C17','c17 七種急救',
+  ['急救','流鼻血','燒傷','燙傷','抽筋','扭傷','割傷','刺傷','復原臥式','C17.firstaid','C17.trivia','C17.program'],9);
+checkLesson('js/c18-lesson.js','C18','c18 母親節',
+  ['母親節','康乃馨','心意卡','感恩','C18.roles','C18.postCeremony','C18.trivia','C18.program'],9);
+checkLesson('js/c19-lesson.js','C19','c19 小隊會議',
+  ['小隊會議','會議記錄','主席','小隊長','C19.trivia','C19.worksheet','C19.program'],9);
+checkLesson('js/c20-lesson.js','C20','c20 頒發儀式',
+  ['頒發儀式','探索獎章','證書','生活分享','C20.roles','C20.postCeremony','C20.trivia','C20.program'],9);
+checkLesson('js/c21-lesson.js','C21','c21 暑期沙灘',
+  ['暑期','沙灘','中暑','防曬','水上安全','淨灘','C21.personalKit','C21.doNotBring','C21.trivia','C21.program'],9);
+checkLesson('js/c22-lesson.js','C22','c22 社區考察',
+  ['社區','文化習俗','傳統節慶','訪問','C22.personalKit','C22.doNotBring','C22.trivia','C22.program'],9);
+checkLesson('js/c23-lesson.js','C23','c23 游泳章',
+  ['游泳','泳池','救生員','水上安全','踩水','HELP','C23.requirements','C23.roles','C23.trivia','C23.program'],9);
+checkLesson('js/c24-lesson.js','C24','c24 模型製作',
+  ['模型','STEAM','𠝹刀','膠水','C24.trivia','C24.worksheet','C24.program'],9);
 
 const dataSrc = readFileSync(root+'js/data.js','utf8');
 ['sensitive:true','special:true','outdoor:true','personalKit'].forEach(t=>{
@@ -82,7 +102,7 @@ createContext(ctx);
 });
 console.log('✅ JS 執行：', Object.keys(ctx.App.pages).join(','));
 console.log('✅ 儀式卡',ctx.CEREMONY.cards.length,'制服類型',ctx.UNIFORM.types.length);
-const codes=['C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14'];
+const codes=['C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14','C15','C16','C17','C18','C19','C20','C21','C22','C23','C24'];
 for(let i=0;i<codes.length;i++){
   const c=codes[i];
   console.log('✅ '+c.toLowerCase(),'full=',ctx.DATA.meetings[i].full,'segs=',ctx[c].program.length);
@@ -92,14 +112,14 @@ for(let i=0;i<codes.length;i++){
   const tid=codes[i].toLowerCase();
   try{ ctx.App.renderMeeting(tid); }catch(e){ console.error('❌ renderMeeting('+tid+'):',e.message,e.stack.split('\n')[0]); process.exit(1); }
 }
-console.log('✅ renderMeeting(c01-c14) 正常');
+console.log('✅ renderMeeting(c01-c24) 正常');
 
-// check SW cache name includes c14
+// check SW cache name includes c24
 const swSrc = readFileSync(root+'sw.js','utf8');
-if(!swSrc.includes('c14-20260915') || !swSrc.includes('c14-lesson.js')){ console.error('❌ sw.js 未升級 c14'); process.exit(1); }
-console.log('✅ sw.js cache 已升級到 c14');
-// check README mentions c14
+if(!swSrc.includes('c24-20260916') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 c24'); process.exit(1); }
+console.log('✅ sw.js cache 已升級到 c24');
+// check README mentions c24
 const rm = readFileSync(root+'README.md','utf8');
-if(!rm.includes('c14')){ console.error('❌ README 缺 c14'); process.exit(1); }
-console.log('✅ README 提及 c14');
+if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
+console.log('✅ README 提及 c24');
 console.log('\n🎉 全部 smoke test 通過');
