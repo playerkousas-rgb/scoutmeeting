@@ -1,7 +1,7 @@
 # Scout Hub — Handover Notes（交下一個 Agent 用）
 
 > 最後更新：2026-09-15
-> 目前 branch：`main`（已合併 v14，c01–c12 共 12 場完整教案）
+> 目前 branch：`arena/01a0a4b6-scoutmeeting`（v18 完成：24 場教案＋10 tab＋歌紙＋SVG 圖解＋全站搜尋全齊！🎉，待合併 main；main 目前為 v14）
 > 本文件係交俾下一個 Agent 接手時嘅工作記錄，包含產品定位、技術架構、已完成項目、代碼約定、下一步優先次序。
 
 ---
@@ -20,7 +20,7 @@
 **上方 5 tab**：
 | Tab | 狀態 | 說明 |
 |---|---|---|
-| 📅 集會目錄（plan） | ✅ 骨架＋12 場教案 | 24 場規劃表格，撳 tid 入教案詳情 |
+| 📅 集會目錄（plan） | ✅ 24/24 全完成！ | 24 場規劃表格，撳 tid 入教案詳情 |
 | 🎪 集會儀式（ceremony） | ✅ 7 套儀式卡 | 開始/結束儀式、中式隊列、升旗、宣誓、三指敬禮、團呼 |
 | 👕 制服（uniform） | ✅ 6 類官網圖＋佩戴表＋自查 | 官網圖片熱連（TLS 下載失敗先唔 mirror） |
 | 📦 官方套包（official） | ✅ 外連 | `window.location.href = EXTERNAL.officialPack` |
@@ -55,7 +55,7 @@
 10. **恆常集會為主、特別集會另設專區**；小隊長任務卡首版從簡、領袖主導
 11. **集會以 9 段程序為標準結構**（c01-c12 全部 9 段）
 
-## 4. 已完成教案（12/24 場，狀態：✅ full:true）
+## 4. 已完成教案（24/24 場，狀態：✅ full:true）🎉
 
 | tid | 主題 | 獎章 | 形式 | 特色檔案標記 |
 |---|---|---|---|---|
@@ -71,10 +71,24 @@
 | c10 | 一日郊野 5km 徒步 | 探索 A2b+c + C2b | **室外一日特別（270min/4.5h）** | special + outdoor（1:6+急救證書/對講機×4/救生毯/16 項個人裝備/SOS/三長哨/Leave No Trace） |
 | c11 | 農曆新年團拜＋揮春創作 | 探索 C3a（文化藝術） | 室內特別（120min/2h） | special（書法/過敏專區/哈姆立克/鼓勵利是/唔設字靚獎） |
 | c12 | 童軍創辦人紀念日（思善日） | 探索 C2a+C2b | 室內特別（90min） | special（2/22 BP 伉儷生日/全球靜默 3 分鐘/電子蠟燭/自願一毫子捐款/6 國分享/思善卡/尊重多元宗教） |
+| c13 | 先鋒工程（一）：平結八字雙套半結反手結 | 探索 A3a | 恆常（90min） | knots 速查表（C13.knots：n/en/use/how/check，供日後技能 tab 用） |
+| c14 | 先鋒工程（二）：稱人接繩繫木縮繩曳木結＋收繩保養 | 探索 A3a+b | 恆常（90min） | knots＋ropeCare 速查表（C14.knots/C14.ropeCare）＋十結大點名 |
+| c15 | 營藝（一）：露營背囊＋危險工具安全 | 探索 A1b+c | 恆常（90min） | 小刀手鋸實作＋斧頭爐具示範（c16 前預備） |
+| c16 | 小隊露營（兩日一夜） | 探索 A1a+d+A4+C1a | 室外特別（1620min） | special+outdoor 紮營煮食營火拔營＋指南針定向（呼應 c09）+Leave No Trace |
+| c17 | 七種急救＋4小時服務 | 探索 D1a+b | 恆常（90min） | 沖脫泡蓋送/RICE/復原臥式＋C17.firstaid 速查表 |
+| c18 | 母親節特別集會 | （特別活動） | 室內特別（90min） | special 心意卡＋紙康乃馨＋媽媽茶點送花儀式 |
+| c19 | 小隊會議 | 探索 C1a | 恆常（90min） | 7 步程序＋主席 5 招＋真會議真記錄 |
+| c20 | 生活分享＋探索獎章頒發儀式 | 探索 C2a | 室內特別（90min） | special 全年回顧＋頒獎＋補考表 |
+| c21 | 暑期戶外同樂日（沙灘） | （暑期特別活動） | 室外特別（180min） | special+outdoor 沙灘遊戲＋HELP＋淨灘 |
+| c22 | 社區考察：文化習俗/傳統節慶 | 標準 D2 選修 | 室外特別（180min） | special+outdoor 兩站參觀＋小隊訪問 |
+| c23 | 游泳章（興趣組） | 標準 B1 | 特別（120min/泳池） | special 6 項考核＋C23.requirements（引官方要求） |
+| c24 | 模型製作（興趣組） | 標準 B2 | 恆常（90min） | 𠝹刀安全＋理想營地大模型＋展覽（全年最後一場） |
 
-**剩餘 placeholder 場次（data.js 中 placeholder:true）**：
-c13 先鋒工程（一）平結八字雙套半結反手結、c14 先鋒工程（二）稱人接繩繫木縮繩曳木結＋收繩保養、c15 營藝（一）露營背囊＋安全使用危險工具、c16 營藝（二）帳幕紮作/營火、c17 追蹤符號、c18 急救（一）燒燙傷抽筋流鼻血、c19 急救（二）包紮/搬運、c20 烹飪（一）後爐/衛生/小型食物、c21 烹飪（二）小隊戶外煮食、c22 觀星/天氣觀察、c23 社區服務＋日行一善、c24 團露營/結業。
-（實際場次順序以 data.js 為準）
+**剩餘 placeholder 場次：無——24 場已全數完成！🎉**（v16 補完 c15–c24）
+
+**10 個 tab 內容：已全數補齊！🎉**（v17：✂️素材庫＋🎮12遊戲＋🪢9技能卡＋🧑‍🤝‍🧑小隊制度工具）
+
+**歌紙＋SVG 圖解＋全站搜尋：已全數完成！🎉**（v18：國歌＋2 原創營火歌＋歌單；17 個 SVG 圖；85 項搜尋索引）
 
 ## 5. 檔案結構
 
@@ -99,9 +113,9 @@ scoutmeeting/
 │   ├── interests.js        # INTERESTS：33 個興趣章、categories、howToApply（報章＋報班流程）
 │   ├── ceremony.js         # CEREMONY：7 套儀式卡（含 refs 連結）
 │   ├── uniform.js          # UNIFORM：6 類制服官網圖＋badgePositions＋checklist＋winter
-│   └── c01-lesson.js ~ c12-lesson.js  # 12 個完整教案
+│   ├── c01-lesson.js ~ c24-lesson.js  # 24 個完整教案（含 C13/C14.knots/C14.ropeCare/C17.firstaid/C23.requirements 速查表）
 └── tests/
-    └── smoke.mjs           # 主要 test：`npm test`，61 項全通過
+    └── smoke.mjs           # 主要 test：`npm test`，97 項全通過（c01–c24）
 ```
 
 **注意**：tests/ 資料夾仲有幾個舊嘅 *.mjs 檔（audit/browser-*/content/nav/practical/print-songs-art/quickkeys/runtime/ui）係前期遺留，**唔係**現行測試——現行只用 `tests/smoke.mjs`。唔好因為其他 test 壞而卡住，可以留低/刪除都得。
@@ -114,7 +128,7 @@ scoutmeeting/
 var C12 = {};
 C12.timing = { prepWeek, leaderMeeting, setBefore, packAfter, venue };
 C12.leaderPrep = [{when, what}] | [string]; // 兩種格式都支援
-C12.words / C12.countries / ...             // 隨教案自訂
+C12.words / C12.countries / C13.knots / C17.firstaid / C23.requirements / ...  // 隨教案自訂（UI 唔渲染，備課＋日後技能 tab 用）
 C12.program = [                             // 必備，9 段
   {
     n: '段落名（string）', t: 分鐘（number）,
@@ -142,7 +156,7 @@ C12.postCeremony = [string];
 C12.trivia = [{h,d}] | [{q,a}]; // 新舊兩種（h/d 舊，q/a 新）
 ```
 
-**⚠️ 關鍵 bug 紀錄**：bag 內 qty 如包含中文單位（如 `qty:2卷`、`qty:數支`、`qty:3-4`）必須用引號包住，否則 JS parse 會 crash。c09/c10/c11/c12 已經全部修正為字串。
+**⚠️ 關鍵 bug 紀錄**：bag 內 qty 如包含中文單位（如 `qty:2卷`、`qty:數支`、`qty:3-4`）必須用引號包住，否則 JS parse 會 crash。c09/c10/c11/c12 已經全部修正為字串；c13/c14 直接用字串。
 
 ## 7. renderMeeting 通用渲染規則（app.js）
 
@@ -154,7 +168,7 @@ C12.trivia = [{h,d}] | [{q,a}]; // 新舊兩種（h/d 舊，q/a 新）
 - `m.special:true` → 自動顯示崗位表（roles）、頒發物品（items）、禮成後跟進（postCeremony）、補充小知識（trivia）
 - 通用區塊：領袖預備（leaderPrep）、🎤開場白（script，如有；c10+ 已改為 segment-level leaderScript）、9 段程序表、🎒執袋、📝家長通知、✂️工作紙、💌承諾卡（如有）、👥崗位、🎖️物品、👀觀察/檢查、📬禮成、🆘後備、🃏情境卡、💡小知識、⚠️安全
 
-renderMeeting 已升級支援兩種格式混合——c01-c09 用 inline `{ n:1, min:5, ...}` 格式，c10-c12 用 multi-line `{ n:'...', t:10, steps:[...]}` 格式，兩者皆可正常渲染。如果將來寫 c13+ 建議**跟新格式**（string n、t、steps[]、leader object、materials string）。
+renderMeeting 已升級支援兩種格式混合——c01-c09 用 inline `{ n:1, min:5, ...}` 舊格式，c10–c24 用 multi-line `{ n:'...', t:10, steps:[...]}` 新格式，兩者皆可正常渲染。24 場已全完成，無需再寫新教案。
 
 ## 8. PWA 與 Cache
 
@@ -179,7 +193,7 @@ renderMeeting 已升級支援兩種格式混合——c01-c09 用 inline `{ n:1, 
 
 ```bash
 cd /home/user/scoutmeeting
-npm test    # 跑 tests/smoke.mjs，61 項，必須全部 ✅ 先好 merge
+npm test    # 跑 tests/smoke.mjs，97 項，必須全部 ✅ 先好 merge
 ```
 
 **注意**：之前嘅 test 用正則去 count program segments，c11/c12 用多行格式之後改咗做直接 `vm.runInContext()` 載入後數 `.program.length`，呢個方法穩陣好多。日後加新場都係沿用呢個方式。
@@ -188,36 +202,36 @@ npm test    # 跑 tests/smoke.mjs，61 項，必須全部 ✅ 先好 merge
 - 所有檔案存在、icon 係 PNG、HTML 有齊外連/script
 - 制服官網 URL 存在、通告圖書館「訂閱」提及、districtbadgesystem30 標明只係專章
 - 7 套儀式卡、33 個興趣章
-- 每個 c01-c12 都 parse 到、program.length === 9、bag/safety 陣列存在
-- 每個 lesson 獨有關鍵字存在（例如 c10 一定要有「Leave No Trace」/「撤退」；c12 一定要有「電子蠟燭」/「自願」/「思善卡」）
-- renderMeeting(c01-c12) 全部可正常呼叫（用 fake DOM stub）
+- 每個 c01-c24 都 parse 到、program.length === 9、bag/safety 陣列存在
+- 每個 lesson 獨有關鍵字存在（例如 c10 一定要有「Leave No Trace」/「撤退」；c12 一定要有「電子蠟燭」/「自願」/「思善卡」；c13 一定要有「左壓右」/「接力賽」；c14 一定要有「兔仔」/「拖木頭」/「收繩」；c16 一定要有「帳篷」/「拔營」/「指南針」；c23 一定要有「踩水」/「HELP」）
+- renderMeeting(c01-c24) 全部可正常呼叫（用 fake DOM stub）
 - sw.js cache 版本升級、README 提及最新 cXX
 
 ## 11. 已知限制 / 技術債
 
 1. **制服圖片熱連**——官網 TLS 曾經 wget/curl fail，但瀏覽器入到，暫時熱連；如將來官網改路徑要更新 uniform.js
 2. **素材庫/技能/小隊 tab** 全部係 placeholder（🚧），需要做：
-   - 素材：c01-c12 工作紙列印版統一格式、歌紙
-   - 技能：9 大技能圖解卡（繩結、地圖、營藝、先鋒、追蹤、急救等）
-   - 小隊：小隊制度說明、小隊長會議記錄表、歡呼庫、計分板、抽籤/分組小工具
-3. **搜尋功能（🔍）** 暫時跳去 #book，未實際做全文搜尋
+   - ~~素材：c01-c24 工作紙列印版、技能 9 卡、小隊制度工具、歌紙、SVG 圖解~~（v17＋v18 已完成 ✅）
+3. ~~**搜尋功能（🔍）** 暫時跳去 #book~~（v18 已做真搜尋 ✅：即時搜尋＋85 項索引＋熱門關鍵字）
 4. **c01-c05 仲用舊 inline 格式**（leaderPrep 其實冇、d.script 有），將來可考慮統一到新格式，但唔強制——renderMeeting 已經兼容
-5. **game/activities** 淨係得 4 個常用，c07 之後場次嘅活動未加入
+5. ~~**game/activities** 淨係得 4 個常用~~（v17 已擴充到 12 個 ✅，全部有完整玩法/物資/安全）
 6. **browser-app-review/browser-practical/browser-print-scope** 等測試檔係早期規劃遺留，未完成，可視乎需要整理或刪除
 7. **http server（python3 -m http.server 8080）** 如果 restart 會 kill 咗之前個 process，可再 `python3 -m http.server 8080 &` 重開
 8. **img/icon-192.svg** 有 SVG 源檔，但 ImageMagick 缺 rsvg-convert 所以唔可以直接 convert 去 PNG，將來改 icon 可以繼續用 generate_image 出 1024×1024 PNG 再 resize 覆蓋 icons/icon-512.png
-9. **print CSS** 未特別優化，現時 `window.print()` 會印埋導航欄，將來要加 `@media print` 隱藏 nav/tabbar
-10. **歡呼庫/歌書** 完全未做
+9. ~~**print CSS** 未特別優化~~（早已有完整 `@media print` 系統；v17 再加咗隱藏 `.print-btn`/`.filters` ✅）
+10. ~~**歡呼庫/歌書**完全未做~~（v17 歡呼＋v18 歌紙 ✅：國歌＋2 原創營火歌＋歌單＋自創工作坊）
+11. ~~指南針方位已由 c13 延後~~（v16 已落實：c16 Day2 加入指南針定向遊戲＋C16 gap 註明呼應 c09 承諾，閉環完成 ✅）
+12. **index.html 載入 `js/redesign.js` 但檔案唔存在**（404，前人遺留；暫無害因為 App.init 有 try/catch，但最好下次清走或補回檔案）
+13. ~~執袋表冇 note 會顯示 undefined~~（v15 已修：app.js 加咗 `(x.note||'')` fallback）
 
 ## 12. 下一步優先次序（建議）
 
-1. **c13 指南針方位**（探索 A2b 進階，接續 c09 地圖圖例、準備 c15 營藝）——係最自然嘅下一個
-2. **c14 先鋒工程（二）**（5 個常用結：稱人/接繩/繫木/縮繩/曳木結＋收繩保養）——之前 c13 先做（一）平結/八字/雙套/半結/反手結
-3. **技能 tab 補繩結圖解卡**——10 個常用繩結一步一圖
-4. **c15 營藝（一）**：露營背囊＋安全使用潛在危險工具（小刀/斧/鋸/爐）
-5. **小隊 tab** 優先做小工具（抽籤/倒數/隨機分組）因為技術最簡單
-6. **素材庫**：先將 c01-c12 工作紙整成可列印 A4 版本
-7. **print CSS**：家長通知/工作紙列印時自動 hide nav
+> v16 已完成：c15–c24 全數補完，24 場集會 24/24 全完成！🎉（指南針閉環：c16 落實）
+> v17 已完成：10 個 tab 內容全補齊！🎉（素材庫/12遊戲/9技能卡/小隊工具＋列印隱藏）
+> v18 已完成：歌紙＋SVG 圖解＋全站搜尋！🎉（國歌/原創歌/歌單；17 SVG；85 項搜尋索引）
+
+1. 清走 `js/redesign.js` 死引用（見第 11 節第 12 點）
+2. （預留）更多 SVG 圖解（復原臥式、十字紮）、歌紙加歌
 
 ## 13. 開發命令
 
@@ -229,12 +243,9 @@ npm test                      # 跑 smoke test
 
 ## 14. Git 狀態
 
-- working branch 規則：**永遠留喺 `arena/01a0a3b3-scoutmeeting` 做嘢**，合併先落 `main`
-- 但目前已經 checkout 咗 main 並且有 merge commit，下一個 Agent 開始時：
-  - 建議 `git checkout arena/01a0a3b3-scoutmeeting` 繼續開發
-  - 完成幾個場後再 `git checkout main && git merge arena/01a0a3b3-scoutmeeting --no-ff` 合併
-  - 唔好開新 branch（Arena 用 `arena/01a0a3b3-scoutmeeting` 追蹤呢個 session）
-- 可以 push：`git push origin main` 同 `git push origin arena/01a0a3b3-scoutmeeting`（認證已配置）
+- working branch 規則：**永遠留喺 `arena/01a0a4b6-scoutmeeting` 做嘢**，合併先落 `main`
+- 本 session 已經喺 `arena/01a0a4b6-scoutmeeting` 上開發（由 main v14 fast-forward 合併起步）；完成後經 PR 或 merge 落 `main`，唔好開新 branch（Arena 用呢個 branch 追蹤 session）
+- 可以 push：`git push origin arena/01a0a4b6-scoutmeeting`（認證已配置）；合併 main 用 PR（由用戶批）
 
 ## 15. 用戶口吻／文案風格
 
@@ -245,7 +256,7 @@ npm test                      # 跑 smoke test
 - 家長 Q&A 要預先回答家長最關心嘅問題（收費？安全？宗教？過敏？）
 
 ---
-**Last agent 完成時間**：2026-09-15
-**最後一個完整教案**：c12 童軍創辦人紀念日（思善日）
-**smoke test**：61 項全通過
+**Last agent 完成時間**：2026-09-16（v18：歌紙＋SVG 圖解＋全站搜尋全完成！）
+**最後完成**：v18（歌紙/17 SVG/搜尋85項索引）
+**smoke test**：108 項全通過
 **http server**：如需要可 `cd /home/user/scoutmeeting && python3 -m http.server 8080` 重開
