@@ -1,7 +1,13 @@
 # Scout Hub — Handover Notes（交下一個 Agent 用）
 
 > 最後更新：2026-09-16
-> 目前 branch：`arena/01a0a8cb-scoutmeeting`（v34：新／熟手情境、手機 44px 操作、營火會六分頁、12/12 遊戲有圖、按鈕去重）
+> 目前 branch：`arena/01a0a963-scoutmeeting`（v37：**前端零 SVG** — 制服 9 張位置圖＋全部圖解一律 AVIF）
+>
+> **v36／v37 快照（睇呢段就夠，下面 v19 前後嘅記錄當歷史）**
+> - **制服 9 張位置圖**（`img/dia/uniform-{chest,zoom,sleeve,body,scarf,ties,kilwell,cap,branch}.avif`）＝乾淨制服底圖（AI 生成中性衣物、零徽章）＋**程式照《儀容與制服手冊》疊位置線／尺寸線／①–⑨ 編號**；章位一律由條文決定，AI 只出底圖（守住 v21 禁令）。前端經 `IMG.html('uniform.<key>')` 出圖。
+> - **前端零 SVG（v37）**：`js/diagrams.js`＋`js/svg-kit.js`（76KB 手繪 SVG 字串）已經搬去 `assets_src/diasvg/*.src.js`（build-only，唔入 bundle）；`js/dia.js` 用 `IMG.map`（54 張 AVIF＋尺寸＋alt）自動砌返 `DIAGRAMS.*`，所以 `app.js`／`ceremony.js` 嘅寫法完全不變，但出到嘅一定係 `<img src="img/dia/*.avif">`。圖載唔到＝`IMG.fallback()` 出 alt 文字（冇 SVG 後備）。
+> - `img/icon-192.svg` → `assets_src/icons/icon-192.svg`（只有 icon 來源仲係 SVG，唔會 ship）。
+> - 測試：`npm test` = smoke＋runtime；smoke 有「37 個前端檔案零 `<svg>`／`.svg` 引用／inline SVG data URI」＋「IMG.map 54 張全部經 DIAGRAMS 出 img」＋「`js/dia.js` 冇 `IMG.svg`」守門，幾何斷言（0.05px/mm、30°、文字唔出框）改讀 `assets_src/diasvg/`。
 > 本文件係交俾下一個 Agent 接手時嘅工作記錄，包含產品定位、技術架構、已完成項目、代碼約定、下一步優先次序。
 
 ---
@@ -108,9 +114,13 @@ scoutmeeting/
 ├── icons/
 │   ├── icon-192.png        # 192×192 自製百合花飾 PNG
 │   └── icon-512.png        # 512×512
-├── img/
-│   └── icon-192.svg        # 原始 SVG（convert 缺 rsvg-convert，所以用 generate_image 出 PNG）
+├── assets_src/
+│   ├── diasvg/
+│   │   ├── diagrams.src.js # build-only：指南針／背囊／追蹤符號手繪 SVG 底稿
+│   │   └── svg-kit.src.js  # build-only：儀式／遊戲／技能／營火手繪 SVG 底稿（前端唔會下載）
+│   └── icons/icon-192.svg  # icon 原始 SVG（前端只 ship PNG）
 ├── js/
+│   ├── dia.js              # IMG.map（54 張 AVIF＋尺寸＋alt）＋自動砌 DIAGRAMS（前端唯一出圖路徑）
 │   ├── app.js              # 核心：路由、App.renderMeeting()、所有 page render
 │   ├── data.js             # DATA 物件：meetings[] 24 場、facts、games、specialEvents、EXTERNAL 外連
 │   ├── interests.js        # INTERESTS：33 個興趣章、categories、howToApply（報章＋報班流程）
@@ -220,7 +230,7 @@ npm test    # 跑 tests/smoke.mjs，97 項，必須全部 ✅ 先好 merge
 5. ~~**game/activities** 淨係得 4 個常用~~（v17 已擴充到 12 個 ✅，全部有完整玩法/物資/安全）
 6. **browser-app-review/browser-practical/browser-print-scope** 等測試檔係早期規劃遺留，未完成，可視乎需要整理或刪除
 7. **http server（python3 -m http.server 8080）** 如果 restart 會 kill 咗之前個 process，可再 `python3 -m http.server 8080 &` 重開
-8. **img/icon-192.svg** 有 SVG 源檔，但 ImageMagick 缺 rsvg-convert 所以唔可以直接 convert 去 PNG，將來改 icon 可以繼續用 generate_image 出 1024×1024 PNG 再 resize 覆蓋 icons/icon-512.png
+8. **assets_src/icons/icon-192.svg**（v37 前係 `img/icon-192.svg`）有 SVG 源檔，但 ImageMagick 缺 rsvg-convert 所以唔可以直接 convert 去 PNG，將來改 icon 可以繼續用 generate_image 出 1024×1024 PNG 再 resize 覆蓋 icons/icon-512.png。**前端唔可以有 SVG**（用戶要求），所以 SVG 源檔一律擺 `assets_src/`。
 9. ~~**print CSS** 未特別優化~~（早已有完整 `@media print` 系統；v17 再加咗隱藏 `.print-btn`/`.filters` ✅）
 10. ~~**歡呼庫/歌書**完全未做~~（v17 歡呼＋v18 歌紙 ✅：國歌＋2 原創營火歌＋歌單＋自創工作坊）
 11. ~~指南針方位已由 c13 延後~~（v16 已落實：c16 Day2 加入指南針定向遊戲＋C16 gap 註明呼應 c09 承諾，閉環完成 ✅）

@@ -4,6 +4,22 @@
 
 > **定位**：領袖帶隊工具。三步帶法（領袖預備 → 集會流程 → 跟進）＋ 小隊長任務卡為主，成員工作紙為輔。主色森林綠 #2E7D32 + 金色 #F9A825。
 
+## ✅ v37 進度（前端零 SVG：制服圖同所有圖解一律 AVIF）
+
+- **前端 bundle 一個 `<svg>` 都唔會有**（用戶：其他地方都盡量唔要 SVG，用 AVIF）：`js/diagrams.js`＋`js/svg-kit.js`（合共 76KB 手繪 SVG 字串）搬離前端，只留做 build-only 底稿 `assets_src/diasvg/*.src.js`；前端由 `js/dia.js` 嘅 `IMG.map` 自動砌返 `DIAGRAMS.*`（`'uniform.chest'`→`DIAGRAMS.uniform.chest`、`'top.compass'`→`DIAGRAMS.compass`），每個 key 一定出 `<img src="img/dia/*.avif">`。`index.html`／`sw.js` 唔再下載呢兩個檔（離線 cache 亦細咗），`app.js`／`ceremony.js` 嘅呼叫寫法完全不變。
+- **圖載唔到＝出 alt 文字，唔會退回 SVG**：`IMG.fallback()` 由「換返手繪 SVG」改成顯示圖說文字（`<div class="dgm-fallback">`），所以舊瀏覽器唔會突然見到嗰啲「好醜」嘅 vector 圖。
+- **CSS 清走 SVG selector**：刪 18 條死規則（`craft-* svg`／`vl-card svg`／`venuepic svg`／`ldia svg`／`parachute-visual svg`／`dgm-fallback svg`／`.body-svg-wrap` 等）；`.svg-steps` 只係版面 class 名，唔會產生 SVG。
+- **唯一 SVG 檔**（`img/icon-192.svg`，icon 來源）搬去 `assets_src/icons/`：前端資料夾只剩 AVIF／PNG／JS／CSS。
+- **測試加守則**（`npm test`）：① 37 個前端檔案逐個掃 `<svg>`／`.svg` 檔引用（掃之前剷走註解，唔會誤中解釋性註解）② 驗 `IMG.map` 54 張圖全部經 `DIAGRAMS` 出到 `<img src="img/dia/*.avif">`③ `js/dia.js` 冇 `IMG.svg` ④ 手繪底稿嘅幾何斷言（尺寸線比例、立正 30°、文字唔出框）改為讀 `assets_src/diasvg/*.src.js`——圖同底稿仍然綁埋一齊驗。
+- PWA cache：`scout-v37-c24-20260916`。
+
+## ✅ v36 進度（制服圖重畫：徽章佩戴位置全部有圖）
+- **制服 9 張圖全部重畫**（用戶：制服內嘅 SVG 好醜、徽章佩戴要有圖）：`chest`（胸袋上下層）／`zoom`（左胸袋＋右袖肩膊放大）／`sleeve`（右袖由上至下 5 個位置）／`body`（全身衫袖肩帶）／`scarf`（旅巾佩戴＋照比例規格＋捲巾四步）／`ties`（領帶 4 色）／`kilwell`（木章皮繩三種制服）／`cap`（軟帽帽章帽邊＋髮式）／`branch`（陸海空顏色配搭對照）。新圖用「乾淨制服實物圖底圖（AI 生成中性衣物，唔畫任何徽章）＋程式（PIL）照 `UNIFORM.placement` 精確疊加位置線／尺寸線／①–⑨ 編號」，所以章位一律由程式決定，冇 AI 亂畫章位嘅問題（守住 v21 禁令嘅原意）。
+- **新增第 9 個 subpage 內容**：`UNIFORM.cap`（3.3 制服帽、帽章、硬帽、髮式）；領巾／領帶／皮帶皮鞋襪分頁加「制服帽佩戴（帽章・帽邊・髮式）」一節；徽章分頁加右袖放大圖。
+- 三個制服分支卡由「三張手繪顏色示意」改成**一張陸／海／空並排顏色對照圖**（`uniform.branch`），少一次 request。
+- 舊 9 張 `uniform-*.avif`（手繪 SVG raster 版）全部取代；`js/svg-kit.js` 嘅 `D.uniform` 段改成直接登記 `IMG.html('uniform.<key>')`。
+- PWA cache：`scout-v36-c24-20260916`（9 張制服圖 516KB，單張最大 82KB，全部 ≤140KB）。
+
 ## ✅ v35 進度（圖解／徽章／制服全部轉真圖，唔再用 SVG）
 - **手繪 SVG 圖解全部轉 AVIF**（用戶：SVG 好醜，盡量唔用）：54 張手繪圖解（指南針／背囊／追蹤 6／儀式 13／遊戲 12／技能 9／營火 3／制服 9）用 resvg-js 放大 raster 再轉 AVIF，放 `img/dia/`，對照表 `js/dia.js`。前端照舊用 `DIAGRAMS.*`，由 `js/svg-kit.js` 一次過換成 `<img>`；原 SVG 只做「瀏覽器唔支援 AVIF／圖檔缺失」後備（`IMG.fallback`）。所有圖有 `width/height/alt`，唔會跳位。
 - **🎖️ 興趣章出官方章樣**（用戶：唔要 app 自己嘅 emoji）：33 個興趣章全部用童軍資訊站《童軍訓練綱要》官方章圖（`img/badge/<key>.avif`，256×256，共 109KB），資料喺 `js/figs.js` 嘅 `BADGE_FIG`；興趣章卡同搜尋結果唔再出 emoji。2026-08-15 生效嘅新章（賞鳥／抱石／營火主理／寵物護理／直立板／直立板球）同重新設計章（自然學家／小農夫）都有標示。
@@ -139,9 +155,9 @@
 
 ## 技術
 - 純靜態 HTML/CSS/vanilla JS，無 build
-- PWA：Service Worker `scout-v35-c24-20260916`（逐檔 add，缺圖唔會拖冧核心預緩存）
+- PWA：Service Worker `scout-v37-c24-20260916`（逐檔 add，缺圖唔會拖冧核心預緩存）
 - 示意圖片：`img/fig/*.avif`（AVIF，38 張約 1.17MB）；資料喺 `js/figs.js`（遊戲名→`GAME_FIG`、技能→`SKILL_FIG`、急救→`AID_FIG`）。`game-chairs.avif` 係 CC BY-SA 網上相片轉檔，來源見 `img/fig/SOURCES.md`；其他圖片歷史見 `HANDOVER.md`。
-- 手繪圖解：`img/dia/*.avif`（54 張約 548KB）＋ `js/dia.js` 對照表＋ `js/svg-kit.js` 換圖；`img/dia/SOURCES.md` 記尺寸同畫法。
+- 圖解（全部 AVIF、**前端零 SVG**）：`img/dia/*.avif`（54 張約 964KB，制服 9 張佔約 516KB）＋ `js/dia.js`（`IMG.map` 對照表＋自動砌 `DIAGRAMS.*`，每個 key 出 `<img>`）；手繪 SVG 底稿只留喺 `assets_src/diasvg/`（build-only，唔會下載），`img/dia/SOURCES.md` 記尺寸、畫法同重製步驟。圖載唔到就出 alt 文字（`IMG.fallback`），唔會退回 SVG。
 - 官方圖：興趣章 `img/badge/*.avif`（33 張，童軍資訊站《童軍訓練綱要》）、制服服式圖 `img/uni/*.avif`（3 張，香港童軍總會官網）；來源同授權見 `img/badge/SOURCES.md`、`img/uni/SOURCES.md`。
 - ⚠️ 每張圖上線前對住 `js/ceremony.js`／教案逐項 QA（手勢手指數、旗位、人與人關係）；會教錯人嘅圖唔 ship（見 HANDOVER §20）
 - 📖 步操／立正／口令／致敬／旗操／集隊手號條文出處：《步操手冊》DRILL MANUAL（香港童軍總會 2003 年 7 月第二版）— 立正腳尖**與中線成 30°**＋雙手**握拳**貼褲骨；稍息＝**右掌疊左掌**（同「童軍動作」同一手勢）；敬禮食指喺**右眼對上 25mm**；快步步速 **116 步/分鐘**、步幅 **750mm**；集隊手號七款（`#ceremony/fallin`，手繪圖解）；**步操唔准用嚟罰人**

@@ -1,8 +1,11 @@
-/* dia.js — 示意圖圖檔對照表（v35）
- * 用戶要求：唔再用 SVG 出圖（手畫 vector 唔靚），手繪圖解一律先 raster 成 AVIF 再出。
- * 做法：svg-kit.js 載入後會將 DIAGRAMS 內嘅手繪 SVG 換成呢度嘅 <img>；
- *       原本嘅 SVG 只留作「瀏覽器唔支援 AVIF／圖檔缺失」時嘅後備（IMG.svg）。
- * 圖檔：img/dia/*.avif（由手繪 SVG 用 resvg-js 放大 raster 再轉 AVIF；來源、授權、尺寸見 img/dia/SOURCES.md）
+/* dia.js — 圖解圖檔對照表＋DIAGRAMS 產生器（v37）
+ * 用戶要求：唔要 SVG（手畫 vector 唔靚），圖解一律用 AVIF 真圖。
+ * 呢個檔係前端唯一嘅圖解入口：
+ *   1) IMG.map  = 每張圖解嘅 AVIF 檔案／尺寸／alt 文字
+ *   2) DIAGRAMS = 由 IMG.map 自動砌返出嚟（每個 key 一個 <img>），所以 app.js 照舊寫 DIAGRAMS.cer.open
+ * 前端由頭到尾唔會有 <svg>：圖檔 load 唔到就出 alt 文字（IMG.fallback），唔會退回 SVG。
+ * 手繪 SVG 底稿已經搬離前端（assets_src/diasvg/，build-only），只留做重建 AVIF 嘅來源。
+ * 圖檔來源、製作方法、授權見 img/dia/SOURCES.md。
  */
 var IMG = {};
 IMG.map = {
@@ -51,37 +54,51 @@ IMG.map = {
   'track.msg': { f:'img/dia/track-msg.avif', w:240, h:160, alt:'追蹤符號：三角＝附近有訊息' },
   'track.turn': { f:'img/dia/track-turn.avif', w:240, h:160, alt:'追蹤符號：轉彎箭嘴＝轉方向' },
   'track.water': { f:'img/dia/track-water.avif', w:240, h:160, alt:'追蹤符號：波浪＝有水要小心' },
-  'uniform.air': { f:'img/dia/uniform-air.avif', w:720, h:424, alt:'空童軍男／女顏色示意圖：灰藍色軟帽、淺藍色恤衫、深藍色短褲／裙褲、深藍長襪' },
-  'uniform.body': { f:'img/dia/uniform-body.avif', w:720, h:529, alt:'全身徽章佩戴位置圖：⑦右袖由上至下、⑧左袖上方、⑨專科徽章肩帶由左肩斜落右腰' },
-  'uniform.chest': { f:'img/dia/uniform-chest.avif', w:720, h:424, alt:'制服胸袋徽章層次圖（正面）：①–⑥ 標示袋蓋上方 3cm、袋蓋上方、袋中央三個高度' },
-  'uniform.kilwell': { f:'img/dia/uniform-kilwell.avif', w:720, h:434, alt:'木章皮繩佩戴位置示意圖：領巾制服、領帶制服、禮服三種戴法' },
-  'uniform.land': { f:'img/dia/uniform-land.avif', w:720, h:424, alt:'陸童軍男／女顏色示意圖：深綠軟帽、杏色恤衫、草青色短褲／裙褲、深草青長襪' },
-  'uniform.scarf': { f:'img/dia/uniform-scarf.avif', w:720, h:455, alt:'旅巾綁法示意圖：捲巾直徑約 3.5cm、底至尖 12–15cm、巾圈套衣領尖、巾尾唔超越皮帶扣' },
-  'uniform.sea': { f:'img/dia/uniform-sea.avif', w:720, h:424, alt:'海童軍男／女顏色示意圖：白頂海童軍帽、白色恤衫、深藍色短褲／裙褲、深藍長襪' },
-  'uniform.ties': { f:'img/dia/uniform-ties.avif', w:720, h:455, alt:'領帶四色示意圖：棗紅（深資）、深綠（樂行＋成年）、黑（海童軍）、深藍（空童軍）' },
-  'uniform.zoom': { f:'img/dia/uniform-zoom.avif', w:720, h:593, alt:'徽章位置局部放大圖：左胸袋（袋蓋上方 3cm 對袋中央）同右袖肩膊（旅章、地域章、區章距離）' }
+  'uniform.branch': { f:'img/dia/uniform-branch.avif', w:1200, h:1381, alt:'陸童軍／海童軍／空童軍顏色配搭對照圖：陸＝深綠色軟帽、杏色恤衫、草青色短褲；海＝白頂帽、白色恤衫、深藍色短褲及長襪；空＝灰藍色軟帽、淺藍色恤衫、深藍色短褲及長襪；旁邊有逐項顏色方塊同文字' },
+  'uniform.body': { f:'img/dia/uniform-body.avif', w:1200, h:1829, alt:'童軍支部全身徽章位置圖（恤衫＋短褲＋長襪正面人形）：右胸①–③、左胸④–⑥、右袖⑦、左袖⑧、專科徽章肩帶⑨，左邊有 cm 比例尺，右邊有位置對照表' },
+  'uniform.cap': { f:'img/dia/uniform-cap.avif', w:1200, h:1343, alt:'制服帽佩戴圖：深綠色軟帽，帽章釘喺黑色膠邊左眼處上方 2cm，帽邊喺眼眉上方約 2cm；旁邊列出除帽後嘅處理同髮式規格' },
+  'uniform.chest': { f:'img/dia/uniform-chest.avif', w:1200, h:1681, alt:'恤衫正面袋蓋位置圖：紅色上層線＝袋蓋上方 3cm、藍色中層線＝袋蓋上方 2cm、綠色下層線＝袋蓋上方、紫色＝袋中央；左右胸袋分別標①–③同④–⑥，附 3cm／2cm 尺寸線' },
+  'uniform.kilwell': { f:'img/dia/uniform-kilwell.avif', w:1200, h:1321, alt:'木章皮繩佩戴位置圖三個小圖：領巾制服（皮繩連木珠掛喺領巾前面）、領帶制服（掛喺領帶前面）、禮服（皮繩藏喺翻領內只露木珠）' },
+  'uniform.scarf': { f:'img/dia/uniform-scarf.avif', w:1200, h:2078, alt:'旅巾佩戴圖：左邊係戴起嘅樣（巾圈套喺衣領尖）、右上係照比例畫嘅規格尺寸線（一捲直徑 3.5cm、底至尖 12–15cm、皮帶線）、下面係捲巾四步實物圖，最後列出領巾 4 種同巾圈 4 種' },
+  'uniform.sleeve': { f:'img/dia/uniform-sleeve.avif', w:1200, h:1160, alt:'右袖徽章位置圖：由上至下 1 旅章（肩膊位下方 2cm）、2 地域章／區章（再 2cm、兩章相距 1cm）、3 環境／社區參與／維護自然世界章、4 優異旅團章，另外 5 童軍小隊章喺袖口縫線上方 3cm，左邊有 2cm／3cm 尺寸線' },
+  'uniform.ties': { f:'img/dia/uniform-ties.avif', w:1200, h:1262, alt:'領帶四色圖：棗紅色（深資童軍）、深綠色（樂行＋成年）、黑色（海童軍）、深藍色（空童軍），右邊列出佩戴要點（領帶結對稱、寬帶尖觸及皮帶扣上端等）' },
+  'uniform.zoom': { f:'img/dia/uniform-zoom.avif', w:1200, h:1259, alt:'局部放大圖（左胸袋同右袖肩膊兩個放大圈）：袋蓋上方 3cm、2cm、袋蓋上方、袋中央四條線；右袖肩膊顯示旅章 2cm、地域章區章再 2cm、兩章相距 1cm' }
 };
-IMG.alt = function(key){ var m = IMG.map[key]; return m ? m.alt : (key || "示意圖"); };
-/* 出一張圖（img 標籤）；冇登記就回傳空字串，由呼叫者決定要唔要出後備 */
+IMG.alt = function(key){ var m = IMG.map[key]; return m ? m.alt : (key || '示意圖'); };
+/* 出一張圖（img 標籤）：一律加 dia-img 類＋onerror 文字後備；冇登記就回傳空字串，由呼叫者決定要唔要出後備 */
 IMG.html = function(key, cls, attrs){
   var m = IMG.map[key];
-  if(!m) return "";
+  if(!m) return '';
   return '<img src="'+m.f+'" width="'+m.w+'" height="'+m.h+'" alt="'+m.alt+'" loading="lazy" decoding="async"'
-    + (cls ? ' class="'+cls+'"' : '') + (attrs ? ' '+attrs : '') + '>';
+    + ' class="dia-img'+(cls?' '+cls:'')+'" onerror="'+IMG.onerr(key)+'"'+(attrs?' '+attrs:'')+'>';
 };
 IMG.has = function(key){ return !!IMG.map[key]; };
-/* 原本嘅手繪 SVG：svg-kit.js 載入時逐個存落嚟，只做後備 */
-IMG.svg = {};
+/* 圖檔 load 唔到（舊瀏覽器唔支援 AVIF／缺檔）＝出 alt 文字，唔會退回 SVG */
 IMG.fallback = function(key, self){
-  var s = IMG.svg[key];
   var box = self && self.parentNode ? self.parentNode : null;
-  if(!s || !box || !document.createElement) return;
+  if(!box || !document.createElement) return;
   var d = document.createElement('div');
   d.className = 'dgm-fallback';
-  d.innerHTML = s;
+  d.setAttribute('role','img');
+  d.setAttribute('aria-label', IMG.alt(key));
+  d.innerHTML = '<b>🖼️ 圖未顯示</b><span>'+IMG.alt(key)+'</span>';
   box.replaceChild(d, self);
 };
 IMG.onerr = function(key){
   return "IMG.fallback('" + key + "',this)";
 };
-if (typeof module !== "undefined" && module.exports) module.exports = IMG;
+/* ══════════ DIAGRAMS：由 IMG.map 砌返（前端唯一出圖路徑）══════════
+   'uniform.chest' → DIAGRAMS.uniform.chest｜'top.compass' → DIAGRAMS.compass｜'track.arrow' → DIAGRAMS.track.arrow
+   所以 app.js／ceremony.js 照舊寫 DIAGRAMS.cer.open、DIAGRAMS.uniform.body，出到嘅一定係 <img src="img/dia/*.avif">。 */
+var DIAGRAMS = (typeof window !== 'undefined' && window.DIAGRAMS) ? window.DIAGRAMS : {};
+(function(){
+  Object.keys(IMG.map).forEach(function(key){
+    var i = key.indexOf('.');
+    if (i < 0) return;
+    var grp = key.slice(0, i), name = key.slice(i + 1);
+    var host = (grp === 'top') ? DIAGRAMS : (DIAGRAMS[grp] = DIAGRAMS[grp] || {});
+    host[name] = IMG.html(key);
+  });
+})();
+if (typeof window !== 'undefined') window.DIAGRAMS = DIAGRAMS;
+if (typeof module !== 'undefined' && module.exports) module.exports = { IMG: IMG, DIAGRAMS: DIAGRAMS };

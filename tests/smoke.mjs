@@ -3,7 +3,8 @@ import { spawnSync } from 'child_process';
 import { createContext, runInContext } from 'vm';
 const root = new URL('..', import.meta.url).pathname;
 const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js','js/c15-lesson.js','js/c16-lesson.js','js/c17-lesson.js','js/c18-lesson.js','js/c19-lesson.js','js/c20-lesson.js','js/c21-lesson.js','js/c22-lesson.js','js/c23-lesson.js','js/c24-lesson.js'];
-const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/dia.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js','js/app.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png',
+const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/dia.js','js/interests.js','js/ceremony.js','js/uniform.js','js/songs.js','js/figs.js','js/projector.js','js/app.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png',
+  'assets_src/diasvg/diagrams.src.js','assets_src/diasvg/svg-kit.src.js',
   'img/fig/cer-open.avif','img/fig/cer-close.avif','img/fig/cer-drill.avif','img/fig/cer-flag.avif',
   'img/fig/cer-oath.avif','img/fig/cer-salute.avif','img/fig/fire-circle.avif','img/fig/fire-song.avif',  'img/fig/game-ball.avif','img/fig/game-shape.avif','img/fig/game-tarp.avif','img/fig/game-pack.avif',
   'img/fig/game-relay-cards.avif','img/fig/game-tug.avif','img/fig/game-aid.avif','img/fig/game-orienteer.avif',
@@ -21,7 +22,7 @@ const interestsSrc = readFileSync(root + 'js/interests.js', 'utf8');
 const bm = interestsSrc.match(/k:'[a-z_]+',\s*en:'/g);
 console.log('✅ 興趣章數：', bm ? bm.length : 0);
 const html = readFileSync(root + 'index.html', 'utf8');
-['1MhGE2LP3kiCEmyJAGUfIlLzL0Iq4fK33','js/ceremony.js','js/uniform.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js', ...lessonFiles, 'icons/icon-192.png'].forEach(u => {
+['1MhGE2LP3kiCEmyJAGUfIlLzL0Iq4fK33','js/ceremony.js','js/uniform.js','js/dia.js','js/songs.js','js/figs.js','js/projector.js', ...lessonFiles, 'icons/icon-192.png'].forEach(u => {
   if (!html.includes(u)) { console.error('❌ index.html 缺少', u); process.exit(1); }
 });
 if (html.includes('js/redesign.js')) { console.error('❌ index.html 仲有死引用 js/redesign.js'); process.exit(1); }
@@ -129,14 +130,38 @@ console.log('✅ v19 icon：192/512/maskable 齊晒（尺寸啱）');
 
 const ctx={window:{addEventListener:()=>{},print:()=>{},scrollTo:()=>{}},document:{getElementById:()=>({appendChild:()=>{},innerHTML:'',classList:{add:()=>{},remove:()=>{},toggle:()=>{}},setAttribute:()=>{},onclick:null,style:{}}),querySelector:()=>null,querySelectorAll:()=>[],createElement:(t)=>({classList:{add:()=>{},remove:()=>{},toggle:()=>{}},setAttribute:()=>{},appendChild:()=>{},innerHTML:'',style:{}}),addEventListener:()=>{}},location:{hash:'',href:'',replace:()=>{}},navigator:{onLine:true,serviceWorker:{register:()=>new Promise(()=>{})}},addEventListener:()=>{},setTimeout:()=>0};
 createContext(ctx);
-['js/dia.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js', ...lessonFiles, 'js/data.js','js/app.js'].forEach(f => {
+['js/dia.js','js/interests.js','js/ceremony.js','js/uniform.js','js/songs.js','js/figs.js','js/projector.js', ...lessonFiles, 'js/data.js','js/app.js'].forEach(f => {
   runInContext(readFileSync(root+f,'utf8'), ctx, {filename:f});
 });
-/* v35：DIAGRAMS 而家一律出 <img src="img/dia/*.avif">，手繪 SVG 只留做後備（IMG.svg）。
-   凡係「圖入面畫咗／寫咗咩」嘅斷言（尺寸線、角度、文字出框、顏色）一律驗 IMG.svg 內嘅原底稿——
-   因為 AVIF 就係由同一張底稿 raster 出嚟，驗到底稿即係驗到圖。 */
+/* v37：前端已經完全冇 SVG（用戶：唔要 SVG，全部 AVIF）——js/dia.js 由 IMG.map 砌 DIAGRAMS，
+   只會出 <img src="img/dia/*.avif">。手繪 SVG 底稿搬去 assets_src/diasvg/（build-only），
+   呢度照舊載入佢哋，只為驗「圖上畫咗／寫咗乜」（尺寸線、角度、文字出框）——
+   AVIF 由同一張底稿 raster 出嚟，驗到底稿即係驗到圖。 */
+{
+  const sc = { window:{}, Math, JSON, console };
+  sc.window = sc; sc.globalThis = sc;
+  createContext(sc);
+  for (const f of ['assets_src/diasvg/diagrams.src.js','assets_src/diasvg/svg-kit.src.js']) {
+    runInContext(readFileSync(root+f,'utf8'), sc, {filename:f});
+  }
+  const SVGSRC = {};
+  (function walk(o, prefix){
+    for (const k in o) {
+      const v = o[k], key = prefix ? prefix+'.'+k : k;
+      if (typeof v === 'string') { if (/<svg/i.test(v)) SVGSRC[key] = v; }
+      else if (v && typeof v === 'object') walk(v, key);
+    }
+  })(sc.DIAGRAMS, '');
+  /* 'top.compass'／'top.pack' 係 app 出圖用嘅 key，底稿入面就叫 compass／pack → 對返 */
+  for (const k of ['compass','pack']) if (SVGSRC[k]) { SVGSRC['top.'+k] = SVGSRC[k]; delete SVGSRC[k]; }
+  ctx.IMG.svg = SVGSRC;   /* 測試專用；前端冇呢個 map */
+  ctx.__testSvgSrc = true;
+  if (Object.keys(SVGSRC).length < 45) { console.error('❌ 底稿源檔唔齊（'+Object.keys(SVGSRC).length+'／45）：assets_src/diasvg/'); process.exit(1); }
+}
 function srcView(g){ const o={}; for (const k in ctx.IMG.svg) if (k.indexOf(g+'.')===0) o[k.slice(g.length+1)] = ctx.IMG.svg[k]; return o; }
-function srcOf(key){ return ctx.IMG.svg[key] || ''; }
+/* 圖上寫咗乜：v35 之前係手繪 SVG 底稿（IMG.svg）；v36 起制服 9 張冇底稿，
+   內容直接燒喺 AVIF 度，所以改用 IMG.map 嘅 alt（同時 app.js 嘅 figcaption 都要講同樣數字）。 */
+function srcOf(key){ return ctx.IMG.svg[key] || (ctx.IMG.map[key] ? ctx.IMG.map[key].alt : '') || ''; }
 console.log('✅ JS 執行：', Object.keys(ctx.App.pages).join(','));
 console.log('✅ 儀式卡',ctx.CEREMONY.cards.length,'制服類型',ctx.UNIFORM.types.length,'制服分支',ctx.UNIFORM.branches.length);
 const codes=['C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14','C15','C16','C17','C18','C19','C20','C21','C22','C23','C24'];
@@ -286,6 +311,38 @@ if (!ctx.IMG || typeof ctx.IMG.has!=='function' || !ctx.IMG.has('cer.open') || !
     else if (v && typeof v==='object') walk(v, p); } })({compass:ctx.DIAGRAMS.compass,pack:ctx.DIAGRAMS.pack,track:ctx.DIAGRAMS.track,cer:ctx.DIAGRAMS.cer,game:ctx.DIAGRAMS.game,skillx:ctx.DIAGRAMS.skillx,fire:ctx.DIAGRAMS.fire,uniform:ctx.DIAGRAMS.uniform}, '');
   if (bad.length) { console.error('❌ DIAGRAMS 仲有 SVG 未轉 AVIF（'+bad.length+'）：'+bad.slice(0,8).join(', ')); process.exit(1); }
 }
+/* v37：前端 bundle 零 SVG —— 冇 <svg>、冇引用 .svg 檔（用戶：其他地方都盡量唔用 SVG，用 AVIF） */
+{
+  const shipped = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/dia.js','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/songs.js','js/figs.js','js/projector.js','js/app.js', ...lessonFiles];
+  const bad = [];
+  /* 註解可以講 SVG（解釋設計決定），但碼／標記唔可以真係出 SVG → 掃之前剷走註解 */
+  const codeOnly = (src)=>src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/<!--[\s\S]*?-->/g,'').replace(/(^|[^:])\/\/.*$/gm,'$1');
+  for (const f of shipped) {
+    const src = codeOnly(readFileSync(root+f,'utf8'));
+    if (/<svg/i.test(src)) bad.push(f+'：有 <svg>');
+    if (/\.svg["')]/.test(src)) bad.push(f+'：引用 .svg 檔');
+    if (/data:image\/svg/i.test(src)) bad.push(f+'：inline SVG data URI');
+  }
+  if (bad.length) { console.error('❌ 前端仲有 SVG（用戶要求唔要）：\n   '+bad.join('\n   ')); process.exit(1); }
+  if (typeof ctx.IMG.svg !== 'undefined' && !ctx.__testSvgSrc) { console.error('❌ js/dia.js 應該冇 IMG.svg（SVG 後備已經冇）'); process.exit(1); }
+  console.log('✅ v37：前端 '+shipped.length+' 個檔案零 SVG（冇 <svg>、冇 .svg 檔；圖載唔到只出 alt 文字）');
+}
+/* 每個 IMG.map key 都要出得到圖：DIAGRAMS 對應位置一定係 <img src="img/dia/*.avif"> */
+{
+  const flat = {};
+  (function walk(o, p){ for (const k in o) { const v=o[k], key=p?p+'.'+k:k;
+    if (typeof v==='string') flat[key]=v; else if (v && typeof v==='object') walk(v,key); } })({compass:ctx.DIAGRAMS.compass,pack:ctx.DIAGRAMS.pack,track:ctx.DIAGRAMS.track,cer:ctx.DIAGRAMS.cer,game:ctx.DIAGRAMS.game,skillx:ctx.DIAGRAMS.skillx,fire:ctx.DIAGRAMS.fire,uniform:ctx.DIAGRAMS.uniform}, '');
+  const bad = [];
+  for (const key of Object.keys(ctx.IMG.map)) {
+    const k = key.indexOf('top.')===0 ? key.slice(4) : key;
+    const html = flat[k];
+    if (!html) { bad.push(key+'：DIAGRAMS 冇呢一葉'); continue; }
+    if (!/^<img src="img\/dia\/[a-z0-9-]+\.avif"/.test(html)) bad.push(key+'：唔係 AVIF img（'+String(html).slice(0,30)+'）');
+  }
+  const extra = Object.keys(flat).filter(k => !ctx.IMG.map[k] && !ctx.IMG.map['top.'+k]);
+  if (bad.length) { console.error('❌ IMG.map → DIAGRAMS 對唔上：\n   '+bad.join('\n   ')); process.exit(1); }
+  console.log('✅ v37：IMG.map '+Object.keys(ctx.IMG.map).length+' 張圖全部經 DIAGRAMS 出 <img>（零 SVG'+(extra.length?'；'+extra.length+' 個孤兒 key':'')+'）');
+}
 /* 每張圖都有圖檔＋alt，並且 sw.js 有 cache */
 {
   const m = ctx.IMG.map, n = Object.keys(m).length;
@@ -342,7 +399,9 @@ console.log('✅ 營火歌：'+ctx.SONGS.sheets.length+' 首香港旅團歌紙�
 
 // index.html 接線
 const htmlSrc = readFileSync(root+'index.html','utf8');
-if(!htmlSrc.includes('js/diagrams.js') || !htmlSrc.includes("#search'")){ console.error('❌ index.html 缺 diagrams/search 接線'); process.exit(1); }
+if(!htmlSrc.includes('js/dia.js') || !htmlSrc.includes("#search'")){ console.error('❌ index.html 缺 dia/search 接線'); process.exit(1); }
+if(htmlSrc.includes('svg-kit') || htmlSrc.includes('diagrams.js')){ console.error('❌ index.html 仲載入緊手繪 SVG 底稿（v37 起前端只出 AVIF）'); process.exit(1); }
+if(/<svg/i.test(htmlSrc) || /\.svg["']/.test(htmlSrc)){ console.error('❌ index.html 仲有 SVG'); process.exit(1); }
 if(!htmlSrc.includes('data-tab="songs"') || htmlSrc.includes('data-tab="patrol"')){ console.error('❌ index.html 底部 tab 未轉營火歌'); process.exit(1); }
 if(htmlSrc.includes('navcap')){ console.error('❌ index.html 仲有 navcap（用戶要求刪 🅰️／🅱️ 兩句）'); process.exit(1); }
 if(htmlSrc.includes('🅰️') || htmlSrc.includes('🅱️')){ console.error('❌ index.html 仲有 🅰️／🅱️ 字句'); process.exit(1); }
@@ -360,7 +419,8 @@ const swSrc = readFileSync(root+'sw.js','utf8');
 const swVer = (swSrc.match(/scout-v(\d+)-c24-(\d+)/)||[])[1];
 if(!swVer || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js cache 名唔係 scout-vN-c24-日期 格式'); process.exit(1); }
 if(!readFileSync(root+'README.md','utf8').includes('scout-v'+swVer+'-c24')){ console.error('❌ README 寫嘅 cache 版本同 sw.js（v'+swVer+'）唔一致'); process.exit(1); }
-if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js') || !swSrc.includes('projector.js')){ console.error('❌ sw.js 未 cache 新檔（svg-kit/songs/projector）'); process.exit(1); }
+if(!swSrc.includes('songs.js') || !swSrc.includes('projector.js')){ console.error('❌ sw.js 未 cache 新檔（songs/projector）'); process.exit(1); }
+if(swSrc.includes('svg-kit') || swSrc.includes('diagrams.js')){ console.error('❌ sw.js 仲 cache 緊 SVG 底稿（前端唔應該再下載）'); process.exit(1); }
 if(!swSrc.includes('./js/dia.js')){ console.error('❌ sw.js 未 cache js/dia.js（圖檔對照表）'); process.exit(1); }
 if(!swSrc.includes('img/badge/') || !swSrc.includes('img/uni/')){ console.error('❌ sw.js 未 cache 興趣章／制服圖（img/badge、img/uni）'); process.exit(1); }
 console.log('✅ sw.js cache 版本 v'+swVer+'（README 已同步）');
@@ -390,7 +450,7 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
   if (angs('attn').filter(a=>a===30).length < 2) { console.error('❌ 立正圖解冇畫兩腳腳尖向外 30 度'); process.exit(1); }
   if (!/305/.test(C.rest)) { console.error('❌ 稍息圖解冇標 305mm'); process.exit(1); }
   if (!/25mm/.test(C.salute3)) { console.error('❌ 敬禮圖解冇標 25mm'); process.exit(1); }
-  const srcs = ['js/ceremony.js','js/c01-lesson.js','js/svg-kit.js','js/app.js'].map(f=>readFileSync(root+f,'utf8')).join('\n');
+  const srcs = ['js/ceremony.js','js/c01-lesson.js','assets_src/diasvg/svg-kit.src.js','js/app.js'].map(f=>readFileSync(root+f,'utf8')).join('\n');
   for (const banned of ['Changing step','Inclining','MARKER OUTWARD','AW-AWAY-YEA','CALL THE ROLL','Squad will advance','Bend the left knee','Shoot the right foot forward','Quick mark','抽膝踏步〔','彈前腳〔','{ h:\'5. 抽膝',"k:'commands'",'檢閱會操','動令落邊隻腳','150mm','每分鐘 116','flag 0','DOUBLE TIME']) {
     if (srcs.includes(banned)) { console.error('❌ 深階內容未清走：'+banned); process.exit(1); }
   }
@@ -490,7 +550,15 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
 {
   const est = (t)=>{ let w=0; for (const ch of t) { const c = ch.codePointAt(0); w += (c>0x2e80?1.0:(ch===' '?0.34:0.58)); } return w; };
   const dkeys = Object.keys(ctx.IMG.svg);
-  if (dkeys.length < 50) { console.error('❌ IMG.svg 底稿唔齊（'+dkeys.length+'）— 換圖時冇存低原 SVG？'); process.exit(1); }
+  /* v36：制服 9 張（uniform.*）已經唔再由手繪 SVG raster 出嚟，而係「乾淨底圖＋程式疊位」
+     直接畫成 AVIF，所以冇 SVG 底稿。其餘 45 張（儀式 13＋遊戲 12＋技能 9＋營火 3＋
+     指南針／背囊 2＋追蹤 6）照舊要留低底稿做後備。 */
+  if (dkeys.length < 45) { console.error('❌ IMG.svg 底稿唔齊（'+dkeys.length+'／45）— 換圖時冇存低原 SVG？'); process.exit(1); }
+  ['chest','zoom','sleeve','body','scarf','ties','kilwell','cap','branch'].forEach(k=>{
+    if (ctx.IMG.svg['uniform.'+k]) { console.error('❌ uniform.'+k+' 仲留住 SVG 底稿（v36 應直接出 AVIF）'); process.exit(1); }
+    const u = ctx.IMG.map['uniform.'+k];
+    if (!u || !existsSync(root+u.f)) { console.error('❌ uniform.'+k+' 冇對應 AVIF 圖檔'); process.exit(1); }
+  });
   let n=0, bad=[];
   for (const key of dkeys) {
     const grp = key, k = '';
@@ -797,10 +865,20 @@ console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間�
   if (!ctx.DIAGRAMS.uniform.zoom || !/^<img src="img\/dia\/uniform-zoom\.avif"/.test(ctx.DIAGRAMS.uniform.zoom)) { console.error('❌ 冇徽章局部放大圖（AVIF）'); process.exit(1); }
   if (srcOf('uniform.zoom').indexOf('3cm') < 0 || srcOf('uniform.zoom').indexOf('1cm') < 0) { console.error('❌ 放大圖冇標實際距離'); process.exit(1); }
   if (!ctx.DIAGRAMS.uniform.scarf || srcOf('uniform.scarf').indexOf('3.5cm') < 0) { console.error('❌ 冇旅巾綁法圖'); process.exit(1); }
-  for (const b of ['land','sea','air']) {
-    if (!ctx.DIAGRAMS.uniform[b] || ctx.DIAGRAMS.uniform[b].indexOf('undefined') >= 0) { console.error('❌ 制服本地顏色圖缺：'+b); process.exit(1); }
+  /* v36：陸／海／空三張手繪顏色圖合併成一張陸海空對照圖（uniform.branch），三個分支卡共用 */
+  if (!ctx.DIAGRAMS.uniform.branch || !/^<img src="img\/dia\/uniform-branch\.avif"/.test(ctx.DIAGRAMS.uniform.branch)) {
+    console.error('❌ 制服陸／海／空顏色配搭圖缺（uniform.branch）'); process.exit(1);
   }
+  if (srcOf('uniform.branch').indexOf('海童軍') < 0 || srcOf('uniform.branch').indexOf('空童軍') < 0) {
+    console.error('❌ 顏色配搭圖 alt 冇講齊陸／海／空'); process.exit(1);
+  }
+  if (appSrc.indexOf('bu.branch') < 0) { console.error('❌ 制服分支卡冇用顏色配搭圖'); process.exit(1); }
   if (appSrc.indexOf("DIAGRAMS.uniform.zoom") < 0) { console.error('❌ 徽章頁冇用局部放大圖'); process.exit(1); }
+  /* v36：徽章頁要右袖放大圖、配件頁要制服帽圖 */
+  if (appSrc.indexOf("DIAGRAMS.uniform.sleeve") < 0) { console.error('❌ 徽章頁冇用右袖放大圖'); process.exit(1); }
+  if (appSrc.indexOf("bd.cap") < 0 || appSrc.indexOf("bd.scarf") < 0 || appSrc.indexOf("bd.ties") < 0 || appSrc.indexOf("bd.kilwell") < 0) { console.error('❌ 配件頁冇用齊制服帽／旅巾／領帶／木章圖'); process.exit(1); }
+  if (appSrc.indexOf("UNIFORM.cap") < 0 || !ctx.UNIFORM.cap || ctx.UNIFORM.cap.points.length < 5) { console.error('❌ 制服帽（3.3）內容／圖缺'); process.exit(1); }
+  if (srcOf('uniform.cap').indexOf('2cm') < 0) { console.error('❌ 制服帽圖冇標 2cm'); process.exit(1); }
   /* 7) 補圖：先鋒工程都要有圖 */
   if (appSrc.indexOf("figFor('pioneer'") < 0) { console.error('❌ 先鋒工程冇圖'); process.exit(1); }
   /* 8) 遊戲庫每個遊戲都有圖（插畫或俯視擺位圖） */
@@ -881,4 +959,4 @@ console.log('✅ v33：制服配件（領巾 4 種・巾圈 4 種・領帶 4 色
 }
 console.log('✅ v34：新／熟手定位・手機 44px・安全圖片 fallback・營火六分頁・按鈕範圍齊');
 
-console.log('\n🎉 全部 smoke test 通過（v35：圖解／徽章／制服全部 AVIF 真圖，冇再用 SVG 出圖）');
+console.log('\n🎉 全部 smoke test 通過（v37：前端零 SVG — 圖解／徽章／制服一律 AVIF，圖載唔到只出 alt 文字）');

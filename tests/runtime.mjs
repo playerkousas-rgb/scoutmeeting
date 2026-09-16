@@ -60,7 +60,7 @@ sb.window = sb; sb.globalThis = sb;
 vm.createContext(sb);
 
 const lessons = fs.readdirSync(path.join(root, 'js')).filter(f => /^c\d\d-/.test(f)).sort().map(f => 'js/' + f);
-const files = lessons.concat(['js/data.js', 'js/interests.js', 'js/ceremony.js', 'js/uniform.js', 'js/diagrams.js', 'js/svg-kit.js', 'js/songs.js', 'js/figs.js', 'js/projector.js', 'js/app.js']);
+const files = lessons.concat(['js/data.js', 'js/interests.js', 'js/ceremony.js', 'js/uniform.js', 'js/dia.js', 'js/songs.js', 'js/figs.js', 'js/projector.js', 'js/app.js']);
 for (const f of files) vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), sb, { filename: f });
 ok(true, '載入次序正確：c01–c24 → data → 模組 → app（' + files.length + ' 個檔案）');
 
