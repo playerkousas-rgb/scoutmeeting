@@ -1,7 +1,7 @@
 # Scout Hub — Handover Notes（交下一個 Agent 用）
 
 > 最後更新：2026-09-15
-> 目前 branch：`arena/01a0a4b6-scoutmeeting`（v18 完成：24 場教案＋10 tab＋歌紙＋SVG 圖解＋全站搜尋全齊！🎉，待合併 main；main 目前為 v14）
+> 目前 branch：`arena/01a0a749-scoutmeeting`（v19 完成：用戶 12 項回饋全落地！🎉 分頁化＋圖解＋指邊印邊＋營火歌 tab＋新 icon；v18 已併入）
 > 本文件係交俾下一個 Agent 接手時嘅工作記錄，包含產品定位、技術架構、已完成項目、代碼約定、下一步優先次序。
 
 ---
@@ -33,7 +33,7 @@
 | 🎮 活動（play） | 🟡 4 個常用遊戲 | 未來補更多 |
 | 🪢 技能（skills） | 🚧 WIP | 列出 9 大技能分類，圖解卡未做 |
 | 🎖️ 興趣章（badges） | ✅ 33 個興趣組專科徽章 | 含官方要求 + 建議考核方式，filter 分類 |
-| 🧑‍🤝‍🧑 小隊（patrol） | 🚧 WIP | 列出 5 個功能，未實作 |
+| 🔥 營火歌（songs，v19 取代小隊 tab） | ✅ | 11 首公版傳統營火歌歌紙（和弦/拍子/動作）＋領唱 5 招＋火圈編排圖；小隊制度已併入手冊 |
 
 **頂欄外連**（icon-only 按鈕）：
 - 🔍 搜尋（暫跳去 #book，未做 search 功能）
@@ -43,9 +43,10 @@
 
 ## 3. 重要用戶約定（唔可以改）
 
-1. **唔好抄 Cubs Hub 嘅 emoji icon**——用自製森林綠+金百合花飾
+0. **v19 用戶新约定（見下方第 16 節）**：①tab 內容要分頁（制服要陸/海/空小分頁）②兴趣组由团考核、興趣章 tab 唔放區總部報章系統連結③唔出繩結逐步圖卡（會錯）④儀式/活動/技能要補圖（興趣章唔使）⑤歌紙只用傳統童軍營火歌，唔自創唔放流行歌⑥列印指邊印邊⑦工作紙：上面教案「跟住做」＋素材庫「直接印」兩邊都要⑧集會目錄整行可撳
+1. **唔好抄 Cubs Hub 嘅 emoji icon**——用自製森林綠+金百合花飾（v19 已更新為 192/512/maskable 三 size，原圖來自 generate_image）
 2. **完全移除森林故事**（幼童軍先有，童軍支部冇）
-3. **下方第 4 tab = 🪢 技能，第 5 tab = 🧑‍🤝‍🧑 小隊**（唔好轉位）
+3. **第 4 tab = 🪢 技能；第 5 tab 已由「小隊」改為 🔥 營火歌**（v19 用戶指示，取代舊約定）
 4. **「活動章」tab 改名「興趣章」，只做興趣組**（藍底技能組/紅底服務組/金邊教導組全外連 scoutbadge）
 5. **進度性獎章內容/記錄/考核全部外連 scoutbadge**，本 APP 唔做
 6. **制服必須用香港童軍總會官網圖片**（熱連 `https://www.scout.org.hk/uploads/member/Scout_B.1.jpg` 等，唔好自己整/改圖）
@@ -54,6 +55,7 @@
 9. **「如何報考訓練班」**必須教用通告圖書館訂閱：通知面板 → 剔支部/分類 → 啟用通知 → 手機加入主畫面
 10. **恆常集會為主、特別集會另設專區**；小隊長任務卡首版從簡、領袖主導
 11. **集會以 9 段程序為標準結構**（c01-c12 全部 9 段）
+12. **🚫 唔准生成「制服圖」**（v21 用戶指正：AI 一定畫錯帽章／巾圈／袋蓋／布章位置）。AI 插畫只畫**中性練習衫**（灰T＋深灰短褲、冇帽冇領巾冇章），目標只係俾領袖睇明**動作／站位／程序**；制服標準一律用官網圖＋《儀容與制服手冊》。同埋唔出：繩結逐步圖、營火袍布章插畫（呢啲屬制服／徽章範圍，只用平面圖解＋文字）
 
 ## 4. 已完成教案（24/24 場，狀態：✅ full:true）🎉
 
@@ -260,3 +262,73 @@ npm test                      # 跑 smoke test
 **最後完成**：v18（歌紙/17 SVG/搜尋85項索引）
 **smoke test**：108 項全通過
 **http server**：如需要可 `cd /home/user/scoutmeeting && python3 -m http.server 8080` 重開
+
+
+---
+
+## 16. v19 改動記錄（2026-09-15，用戶 12 項回饋）
+
+| # | 要求 | 做法 |
+|---|---|---|
+| 1 | tab 內容太長要分頁 | 新增 `App.subnav`（tab/sub 路由）＋`App.chiprow`（錨點跳位）；制服=陸/海/空/徽章/自查、儀式=7套逐一、手冊=6分頁、技能=9分頁、營火歌=11首歌紙分頁；集會詳情頁頂部加節位 chips |
+| 2 | 做 APP ICON | generate_image 出 1024 原圖→ImageMagick crop/resize：icons/icon-192.png、icon-512.png、icon-maskable-512.png；img/icon-192.svg 重畫成對應源檔；manifest 更新 |
+| 3 | 興趣章唔放區系統連結 | app.js badges 移除「📝 前往區總部報章系統」；interests.js howToApply 改「團內考核 7 步」（no system CTA）；topbar 📝 保留（供其他組用，註明只係報專科徽章用） |
+| 4 | 儀式加分頁補圖 | svg-kit.js 新增 DIAGRAMS.cer（open/close/drill/flag/oath/salute 6 套場位圖）；ceremony.js 每卡加 fig/figcap/rel；#ceremony/<k> 單頁模式＋上一套/下一套導航 |
+| 5 | 工作紙定位 | 素材庫直接列 24 場工作紙（.ws-item，逐張「只印呢張」）；集會頁內工作紙保留（跟住做）；lede 寫明上下定位分別 |
+| 6 | 列印指邊印邊 | `App.printSec(el)`：clone 目標 .sec/.card/.ws-item 去 #printzone＋body.print-one，@media print 收埋 #app 淨印 printzone；「只印本節」掣遍布各區塊；全場印＝「整場教案全部列印」明示按鈕 |
+| 7 | 唔出繩結卡 | 刪素材庫「繩結卡」區、技能「平結/八字/稱人圖解」卡、diagrams.js reef/fig8/bowline 資料；換成 warn callout 指向 c13/c14 教案 |
+| 8 | 活動/技能/儀式補圖（興趣章除外） | DIAGRAMS.game 12 張場地擺位圖；DIAGRAMS.skillx（ropecare/legend/tent/stove/knife/rice/sos/lost）；DIAGRAMS.fire（circle/flow/scarf）；badges 維持文字 |
+| 9 | 歌紙用童軍營火歌 | 新 js/songs.js：11 首 Public Domain 傳統歌（含兩隻老虎輪唱）＋有版權歌只列名（Kookaburra/熊熊烈火/友誼之光/童軍歌）；刪自創歌＋流行歌單＋自創工作坊 |
+| 10 | 小隊tab改營火歌 | 底部 #tabbar 第五格 = 🔥 營火歌 #songs；route 舊 #patrol → #book/patrol redirect；sw/manifest shortcut 更新 |
+| 11 | 小隊制度入手册 | book 新增「小隊制度」（制度/小隊長3職責/會議記錄表）＋「集會工具」（計分板/抽籤/倒數/分組）；歡呼庫去營火歌 tab |
+| 12 | 目錄整行可撳 | plan-table tr.meet-row onclick＋tabindex＋▶；hover 高亮 |
+
+**測試**：tests/smoke.mjs 已改 v19 版（加：svg-kit/songs 檔存在、icon 尺寸、無繩結卡/無區系統CTA negative test、DIAGRAMS.cer/game/skillx/fire 計數、傳統歌 positive/自創歌 negative、manifest maskable）——108+ 項全綠。
+**注意**：sw.js CACHE=scout-v19-c24-20260915（測試斷言 'scout-v19'）；#ceremony/#songs 用 hash sub，SW 唔使理。
+
+---
+
+## 17. v20 改動記錄（2026-09-16，補圖：SVG → 真圖 AVIF，批次 1／3）
+
+用戶指正：**補圖唔好再用我手畫嘅 SVG**（唔專業、又好慢），一次大概只能出 10 張，圖檔格式用 **AVIF**。
+
+### 做法（pipeline，下次繼續照做）
+1. `generate_image` 出 1024 級原圖去 `assets_src/figsrc/<key>.png`（呢個 dir 已入 `.gitignore`，唔提交，每次只提交 AVIF）。
+2. prompt 必帶風格 lock：`Clean editorial flat illustration with soft shading, warm muted palette, very light off-white background, no text no letters no numbers no watermark no logos`＋**制服必須照 uniform.js 寫實**（陸童軍：深綠軟帽連帽章／杏色短袖恤兩胸袋／草青短褲／棕皮帶童軍扣／深草青直坑紋長襪／黑皮鞋／旅巾連巾圈）。
+3. 逐張 `read_file` 睇成品 **有冇畫錯**（手勢、指數、腳位、旗位）；錯嘅部分宁可 crop 走（例：cer-salute 右格半禮畫成兩指 → 淨 crop 左格全禮，半禮改做文字），**唔好擺錯圖教錯人**（同繩結卡同理）。
+4. 編 AVIF：`convert src.png -resize '1000x1000>' -strip -quality 58~64 -define avif:pixel-format=yuv420p img/fig/<key>.avif`（IM 6.9 有 libaom，0.5s/張；1000px 約 10–80KB）。
+5. 喺 `js/figs.js` 加 key：`{src,w,h,alt,cap}`（w/h 必填防 CLS；alt 寫清楚畫面內容俾螢幕閱讀器＋冇圖時嘅交代；cap 係圖說）。
+6. 渲染：`App.ph(key, cap, svgFallback)`（app.js）→ `<figure class="ph-fig">`＋`<img loading=lazy onerror=...>`＋`<details class="dgm-alt no-print">`（舊 SVG 變折疊後備）。load 唔到 AVIF（舊瀏覽器）→ `.imgfail` 收埋圖、auto-open 圖解。
+7. 收尾：sw.js ASSETS＋CACHE 版本、`index.html` script、`npm test`（smoke 已加 v20 斷言）。
+
+### 本批（批次 1／3）已出 9 張
+| key | 用咩位置 |
+|---|---|
+| cer-open / cer-close / cer-drill / cer-flag / cer-oath / cer-salute | `#ceremony/<k>` 每張儀式卡主圖（ceremony.js 用 `fig:'open'` → key `'cer-'+fig`；figcap 已改寫到啱「場景示意」） |
+| fire-circle | 🔥 營火歌 tab hero（取代 DIAGRAMS.fire.circle 做主圖；flow 仍係圖解） |
+| fire-song | 🔥 營火歌 tab 頂部 banner |
+| fire-robe | 營火章「營火袍」位（DIAGRAMS.fire.scarf 退居折疊後備） |
+
+cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI），caption 已註明「實際樣式以《隊列和升掛國旗及區旗指引》為準」。
+
+### 未做（下一批先做）
+- **批次 2**：遊戲 12 張場圖（`DIAGRAMS.game` 逐個換 AVIF；遊戲名做 key，建議 `game-<slug>`）。
+- **批次 3**：技能 8 張（ropecare／legend／tent／stove／knife／rice／sos／lost）＋補返 cer-salute 正確嘅「全禮＋半禮」兩格圖。
+- **永遠唔做**：繩結逐步圖（用戶明確禁止）。
+- 測試 guard：`smoke.mjs` 會 fail 掉任何 key 符合 `/knot|reef|bowline|fig8|繩結|結/` 嘅 FIGS 項目、任何 >140KB 嘅 AVIF、任何非 `ftypavif` header、以及 sw.js 漏 cache 嘅圖。
+
+**注意**：sw.js `CACHE=scout-v20-c24-20260916`（測試斷言 'scout-v20'）；改圖必需要改 CACHE 名，先至會踢走舊 cache。
+
+### v21 修正（2026-09-16）：補圖唔畫制服
+用戶：「唔好生成制服嘅圖，因為會生錯；我哋目標只係讓領袖知道動作」→ 批次 1 全部 9 張**重畫**：
+- prompt 加硬規則：`plain neutral practice clothing — light grey t-shirt, dark grey shorts, bare head, NO hat, NO neckerchief, NO badges/patches/emblems/insignia; the image teaches only body position / spacing / sequence`
+- 旗照舊只畫**純色塊**（紅高綠矮），caption 註明樣式以《隊列和升掛國旗及區旗指引》為準
+- `cer-salute` 由「淨全禮」改成**兩格（全禮＋半禮）**，兩格手勢一致先至夠clear；`cer-drill` C 格喺圖說寫明「圖只係一般行進姿勢，腳手前後次序照文字」（AI 分唔掂左右腳配對邊隻手）
+- **抽走 `fire-robe.avif`**（營火袍＝布章位置，屬制服範圍）→ 退回 `DIAGRAMS.fire.scarf` 平面圖解
+- 新增 `game-banner.avif`（🎮 活動 tab 封面：設場安全位＋內外圈方向）
+- 每張圖說自動加 `FIGS_NOTE`（全域變數，唔放落 FIGS key 入面，避免比 test 當成一張圖）：「圖內人物只係中性練習衫，唔代表制服標準 → 睺 👕 制服 tab 官網圖」
+- `App.ph()` 負責 append note；`sw.js` CACHE 升 `scout-v21-c24-20260916`
+- 9 張 AVIF 合計 **318KB**（比 v20 更細，因為冇制服細節／紋理）
+
+**smoke test 新增 guard**：FIGS 任何 key 命中 `/robe|uniform|scarf|制服|領巾|布章|章/` 即 fail；`alt` 提到帽章/布章/領巾/杏色/草青 即 fail；`img/fig/fire-robe.avif` 存在即 fail；圖說冇 ph-note 即 fail。
+**下一批照跟**：遊戲 12 張、技能 8 張 — 全部中性練習衫，唔画制服、唔画章。
