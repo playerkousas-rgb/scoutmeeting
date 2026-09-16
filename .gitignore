@@ -1,1 +1,6 @@
 assets_src/figsrc/
+
+# 原始下載／暫存素材（體積大，唔入 git；重製方法見 img/*/SOURCES.md）
+image-search/
+assets_src/badges_raw/
+assets_src/unicrop/

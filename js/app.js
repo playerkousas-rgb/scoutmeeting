@@ -255,7 +255,8 @@ App.block = function(title, innerHTML, opts){
 /* 🖼️ 示意圖（v20）：優先 AVIF 插畫；無圖就退回平面圖解；圖 load 唔到（舊瀏覽器／缺檔）自動-show 平面圖解 */
 App.ph = function(key, cap, svgHtml){
   var f = (typeof FIGS !== 'undefined' && FIGS) ? FIGS[key] : null;
-  if(!f) return svgHtml ? '<figure class="dgm-fig"><div class="dgm-wrap">'+svgHtml+'</div><figcaption>🖼️ '+(cap||'示意圖解')+'</figcaption></figure>' : '';
+  var svgAltHtml = svgHtml || '';
+  if(!f) return svgAltHtml ? '<figure class="dgm-fig"><div class="dgm-wrap">'+svgAltHtml+'</div><figcaption>🖼️ '+(cap||'示意圖解')+'</figcaption></figure>' : '';
   var onerr = "var p=this.closest('.ph-fig');if(p){p.classList.add('imgfail');var d=p.querySelector('details');if(d)d.open=true;}";
   var img = '<div class="ph-wrap"><img src="'+f.src+'" width="'+(f.w||1000)+'" height="'+(f.h||750)+'" alt="'+(f.alt||'')+'" loading="lazy" decoding="async" onerror="'+onerr+'"></div>';
   var noteText = (f.note!==undefined) ? f.note : ((typeof FIGS_NOTE!=='undefined' && FIGS_NOTE) ? FIGS_NOTE : '');
@@ -264,10 +265,17 @@ App.ph = function(key, cap, svgHtml){
   return '<figure class="ph-fig" data-fig="'+key+'">'+img+
     (cap?'<figcaption>🖼️ '+cap+note+credit+'</figcaption>':'')+
     '<div class="ph-fail">📷 呢張圖load唔到（舊瀏覽器唔支援 AVIF／檔案未落 cache）；用下面嘅平面圖解代替。</div>'+
-    (svgHtml?'<details class="dgm-alt no-print"><summary>📐 平面／位置圖解（睇位用）</summary><div class="dgm-wrap">'+svgHtml+'</div></details>':'')+
+    (svgAltHtml?'<details class="dgm-alt no-print"><summary>📐 平面／位置圖解（睇位用）</summary><div class="dgm-wrap">'+svgAltHtml+'</div></details>':'')+
     '</figure>';
 };
-/* 攞儀式卡嘅圖（cer-＋fig key），冇圖先退回 SVG */
+/* 平面圖解：DIAGRAMS 內嘅手繪圖已經全部換成 img/dia/*.avif（svg-kit.js 載入時換），
+   呢個 helper 係俾「直接用 DIAGRAMS.xxx 字串」嘅位用，順便有圖就出圖、冇就先出底稿 */
+App.dgmFigure = function(key, cap, cls){
+  var html = (typeof IMG!=='undefined' && IMG.map[key]) ? IMG.html(key, 'dia-img'+(cls?' '+cls:''), 'onerror="'+IMG.onerr(key)+'"') : '';
+  if(!html) return '';
+  return '<figure class="dgm-fig">'+html+'<figcaption>📐 '+(cap||IMG.alt(key))+'</figcaption></figure>';
+};
+/* 攞儀式卡嘅圖（cer-＋fig key），冇圖先退回平面圖解 */
 App.cerFig = function(c){
   var dk = c.fig || c.dgm;
   var svgAlt = (dk && typeof DIAGRAMS!=='undefined' && DIAGRAMS.cer && DIAGRAMS.cer[dk]) ? DIAGRAMS.cer[dk] : '';
@@ -275,7 +283,7 @@ App.cerFig = function(c){
   return App.ph('cer-'+c.fig, c.figcap || '位置示意圖解', svgAlt);
 };
 
-/* 逐步圖解（手繪 SVG，照《步操手冊》分部動作）；冇呢個 key 就乜都唔出 */
+/* 逐步圖解（照《步操手冊》分部動作；圖已轉 AVIF）；冇呢個 key 就乜都唔出 */
 App.cerDgm = function(k, cap){
   var dk = (k && typeof DIAGRAMS!=='undefined' && DIAGRAMS.cer) ? DIAGRAMS.cer[k] : '';
   if(!dk) return '';
@@ -337,7 +345,7 @@ App.buildSearchIndex = function(){
       text:(g.n+' '+g.cat+' '+g.desc+' '+g.mats).toLowerCase()});
   });
   INTERESTS.badges.forEach(function(b){
-    idx.push({type:'興趣章', title:b.ic+' '+b.zh+'（'+b.en+'）', link:'#badges', desc:'官方要求',
+    idx.push({type:'興趣章', title:b.zh+'（'+b.en+'）', link:'#badges', desc:'官方要求',
       text:(b.zh+' '+b.en+' '+b.k+' '+(b.req||[]).join(' ')).toLowerCase()});
   });
   var skills = [
@@ -889,20 +897,29 @@ App.pages.uniform = function(sub){
   var cur = 'land';
   subs.forEach(function(x){ if(x.k===sub) cur = sub; });
   wrap.appendChild(App.subnav('uniform',subs,cur));
-  wrap.appendChild(App.h('p','lede','童軍支部（陸）、海童軍、空童軍男／女團員制服標準。圖片：<b>香港童軍總會官網</b>；內容以《儀容與制服手冊》為準。'));
+  wrap.appendChild(App.h('p','lede','童軍支部（陸）、海童軍、空童軍男／女團員制服標準。服式圖：<b>香港童軍總會</b>官方圖（本地存檔，離線都睇得到），可以另開官網原圖對最新式樣；內容以《儀容與制服手冊》為準。'));
 
   var byKey = {};
   UNIFORM.types.forEach(function(t){ byKey[t.k]=t; });
+  var BRANCH = {scout_b:'land',scout_g:'land',sea_b:'sea',sea_g:'sea',air_b:'air',air_g:'air'};
   function typeCard(t){
     var rows = t.items.map(function(i){return '<tr><th>'+i[0]+'</th><td>'+i[1]+'</td></tr>';}).join('');
-    var bmap = {scout_b:'land',scout_g:'land',sea_b:'sea',sea_g:'sea',air_b:'air',air_g:'air'};
+    var br = BRANCH[t.k] || 'land';
+    var uni = (typeof UNIFORMFIG!=='undefined' && UNIFORMFIG) ? UNIFORMFIG[br] : null;
+    var figHtml = '';
+    if(uni){
+      /* 主圖：官方服式圖（本地 AVIF，離線都睇得到）；load 唔到先連返總會官網原圖 */
+      figHtml = '<figure class="uniform-fig"><img src="'+uni.src+'" width="'+uni.w+'" height="'+uni.h+'" alt="'+t.name+'：'+uni.alt+'" loading="lazy" decoding="async"'
+        + ' onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src=\''+t.img+'\';}else{var f=this.closest(\'.uniform-fig\');if(f)f.classList.add(\'imgfail\');}">'
+        + '<figcaption>'+t.name+'官方服式圖（'+uni.branch+'男／女團員）｜實物以<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">童軍物品供應社</a>及《儀容與制服手冊》為準</figcaption></figure>';
+    }
     var bu = (typeof DIAGRAMS!=='undefined' && DIAGRAMS.uniform) ? DIAGRAMS.uniform : {};
-    var bfig = bu[bmap[t.k]] ? '<div class="svg-steps"><figure>'+bu[bmap[t.k]]+
-      '<figcaption>本地顏色示意（離線都睇得到）：'+t.name+' 各件顏色配搭；實際樣式以官網圖同手冊為準</figcaption></figure></div>' : '';
-    return '<div class="card uniform-card"><h3>'+t.name+'</h3>'+bfig+
+    var bfig = bu[br] ? '<div class="svg-steps"><figure>'+bu[br]+
+      '<figcaption>顏色配搭示意（離線都睇得到）：'+t.name+' 各件顏色同配搭位置</figcaption></figure></div>' : '';
+    return '<div class="card uniform-card"><h3>'+t.name+'</h3>'+figHtml+bfig+
       '<div class="uniform-split">'+
-        '<div class="uniform-visual"><a href="'+t.img+'" target="_blank" rel="noopener"><img src="'+t.img+'" alt="'+t.name+' 官方圖" loading="lazy" class="uniform-img" onerror="this.hidden=true;var v=this.closest(\'.uniform-visual\');var f=v?v.querySelector(\'.uniform-img-fallback\'):null;if(f)f.hidden=false;"></a>'+
-        '<div class="uniform-img-fallback" hidden>⚠️ 官網圖片暫時載入唔到；上面本地顏色圖照常可用。<br><a href="'+t.img+'" target="_blank" rel="noopener">稍後開官方圖</a></div></div>'+
+        '<div class="uniform-visual no-print"><a href="'+t.img+'" target="_blank" rel="noopener">🖼️ 開總會官網原圖（對最新式樣）</a>'+
+        '<small class="mut">本地圖係總會官網同一張，離線都睇得到。</small></div>'+
         '<table class="uniform-table"><tbody>'+rows+'</tbody></table>'+
       '</div></div>';
   }
@@ -1341,6 +1358,15 @@ App.pages.skills = function(sub){
   return wrap;
 };
 
+/* 🎖️ 興趣章章樣：用官方圖（img/badge/*.avif）；冇圖／load 唔到就出文字章名，唔會用 emoji 代替 */
+App.badgeFig = function(k){
+  var b = (typeof BADGE_FIG!=='undefined' && BADGE_FIG) ? BADGE_FIG[k] : null;
+  if(!b) return '<span class="badge-ic" aria-hidden="true"></span>';
+  return '<figure class="badge-fig"><img src="'+b.src+'" width="132" height="132" alt="'+b.alt+'" loading="lazy" decoding="async"'
+    + ' onerror="var f=this.closest(\'.badge-fig\');if(f){f.classList.add(\'imgfail\');}">'
+    + '<figcaption>'+b.cap+'</figcaption></figure>';
+};
+
 /* 🎖️ 興趣章（唔放區總部報章系統入口——興趣組由團考核） */
 App.pages.badges = function(){
   var wrap = App.h('div','page');
@@ -1362,7 +1388,7 @@ App.pages.badges = function(){
     filt.appendChild(btn);
   });
   wrap.appendChild(filt);
-  wrap.appendChild(App.h('p','source-note','📚 來源：'+INTERESTS.source.title+'（'+INTERESTS.source.version+'）｜<a href="#book/apply">興趣組點考（團內考核 7 步）</a>｜💡 興趣組由團考核，唔使自己入區總部報章系統'));
+  wrap.appendChild(App.h('p','source-note','📚 來源：'+INTERESTS.source.title+'（'+INTERESTS.source.version+'）｜<a href="#book/apply">興趣組點考（團內考核 7 步）</a>｜💡 興趣組由團考核，唔使自己入區總部報章系統<br>🎖️ 章樣：<a href="https://scoutsinfohub.org.hk/scout-training-scheme" target="_blank" rel="noopener">童軍資訊站《童軍訓練綱要》</a>官方專科徽章圖（本地存檔，離線都睇得到）；實物以<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">童軍物品供應社</a>發售嘅布章為準。'));
   var grid = App.h('div','badge-grid');
   INTERESTS.badges.forEach(function(b){
     var catName = (INTERESTS.categories.find(function(c){return c.k===b.cat;})||{n:''}).n;
@@ -1374,7 +1400,7 @@ App.pages.badges = function(){
     var card = App.h('div','badge-card');
     card.setAttribute('data-cat',b.cat);
     card.innerHTML =
-      '<div class="badge-head"><span class="badge-ic">'+b.ic+'</span>'+
+      '<div class="badge-head">'+App.badgeFig(b.k)+
       '<h3>'+b.zh+' <small>('+b.en+')</small></h3>'+
       '<div class="badge-tags">'+tags+'<span class="tag cat">'+catName+'</span></div></div>'+
       '<details><summary>📋 官方考核要求</summary><ol class="req-list">'+reqList+'</ol></details>'+

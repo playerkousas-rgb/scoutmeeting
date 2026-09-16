@@ -3,7 +3,7 @@ import { spawnSync } from 'child_process';
 import { createContext, runInContext } from 'vm';
 const root = new URL('..', import.meta.url).pathname;
 const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js','js/c15-lesson.js','js/c16-lesson.js','js/c17-lesson.js','js/c18-lesson.js','js/c19-lesson.js','js/c20-lesson.js','js/c21-lesson.js','js/c22-lesson.js','js/c23-lesson.js','js/c24-lesson.js'];
-const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js','js/app.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png',
+const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/dia.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js','js/app.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png',
   'img/fig/cer-open.avif','img/fig/cer-close.avif','img/fig/cer-drill.avif','img/fig/cer-flag.avif',
   'img/fig/cer-oath.avif','img/fig/cer-salute.avif','img/fig/fire-circle.avif','img/fig/fire-song.avif',  'img/fig/game-ball.avif','img/fig/game-shape.avif','img/fig/game-tarp.avif','img/fig/game-pack.avif',
   'img/fig/game-relay-cards.avif','img/fig/game-tug.avif','img/fig/game-aid.avif','img/fig/game-orienteer.avif',
@@ -129,9 +129,14 @@ console.log('✅ v19 icon：192/512/maskable 齊晒（尺寸啱）');
 
 const ctx={window:{addEventListener:()=>{},print:()=>{},scrollTo:()=>{}},document:{getElementById:()=>({appendChild:()=>{},innerHTML:'',classList:{add:()=>{},remove:()=>{},toggle:()=>{}},setAttribute:()=>{},onclick:null,style:{}}),querySelector:()=>null,querySelectorAll:()=>[],createElement:(t)=>({classList:{add:()=>{},remove:()=>{},toggle:()=>{}},setAttribute:()=>{},appendChild:()=>{},innerHTML:'',style:{}}),addEventListener:()=>{}},location:{hash:'',href:'',replace:()=>{}},navigator:{onLine:true,serviceWorker:{register:()=>new Promise(()=>{})}},addEventListener:()=>{},setTimeout:()=>0};
 createContext(ctx);
-['js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js', ...lessonFiles, 'js/data.js','js/app.js'].forEach(f => {
+['js/dia.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js', ...lessonFiles, 'js/data.js','js/app.js'].forEach(f => {
   runInContext(readFileSync(root+f,'utf8'), ctx, {filename:f});
 });
+/* v35：DIAGRAMS 而家一律出 <img src="img/dia/*.avif">，手繪 SVG 只留做後備（IMG.svg）。
+   凡係「圖入面畫咗／寫咗咩」嘅斷言（尺寸線、角度、文字出框、顏色）一律驗 IMG.svg 內嘅原底稿——
+   因為 AVIF 就係由同一張底稿 raster 出嚟，驗到底稿即係驗到圖。 */
+function srcView(g){ const o={}; for (const k in ctx.IMG.svg) if (k.indexOf(g+'.')===0) o[k.slice(g.length+1)] = ctx.IMG.svg[k]; return o; }
+function srcOf(key){ return ctx.IMG.svg[key] || ''; }
 console.log('✅ JS 執行：', Object.keys(ctx.App.pages).join(','));
 console.log('✅ 儀式卡',ctx.CEREMONY.cards.length,'制服類型',ctx.UNIFORM.types.length,'制服分支',ctx.UNIFORM.branches.length);
 const codes=['C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14','C15','C16','C17','C18','C19','C20','C21','C22','C23','C24'];
@@ -268,12 +273,38 @@ console.log('✅ 列印 CSS＋v19 樣式齊');
 
 // v19 圖解庫
 if(!ctx.DIAGRAMS || !ctx.DIAGRAMS.compass || !ctx.DIAGRAMS.pack || Object.keys(ctx.DIAGRAMS.track).length!==6){ console.error('❌ DIAGRAMS 基礎圖缺'); process.exit(1); }
+/* v35：圖解統一係 <img src="img/dia/*.avif">（用戶要求唔用 SVG） */
+for (const [nm, html] of [['compass',ctx.DIAGRAMS.compass],['pack',ctx.DIAGRAMS.pack],['cer.open',ctx.DIAGRAMS.cer.open],['game.有口難言',ctx.DIAGRAMS.game['有口難言']]]) {
+  if (!/^<img src="img\/dia\/[a-z0-9-]+\.avif"/.test(html)) { console.error('❌ '+nm+' 唔係 AVIF 圖：'+String(html).slice(0,40)); process.exit(1); }
+}
+if (!ctx.IMG || typeof ctx.IMG.has!=='function' || !ctx.IMG.has('cer.open') || !ctx.IMG.alt('cer.open') || typeof ctx.IMG.fallback!=='function' || typeof ctx.IMG.onerr!=='function') { console.error('❌ js/dia.js 未載入（IMG API 缺）'); process.exit(1); }
+/* 全庫掃描：DIAGRAMS 任何一葉都唔可以再係 <svg>（用戶：盡量唔要 SVG） */
+{
+  const bad = [];
+  (function walk(o, path){ for (const k in o) { const v=o[k], p=path?path+'.'+k:k;
+    if (typeof v==='string') { if (/<svg/i.test(v)) bad.push(p); }
+    else if (v && typeof v==='object') walk(v, p); } })({compass:ctx.DIAGRAMS.compass,pack:ctx.DIAGRAMS.pack,track:ctx.DIAGRAMS.track,cer:ctx.DIAGRAMS.cer,game:ctx.DIAGRAMS.game,skillx:ctx.DIAGRAMS.skillx,fire:ctx.DIAGRAMS.fire,uniform:ctx.DIAGRAMS.uniform}, '');
+  if (bad.length) { console.error('❌ DIAGRAMS 仲有 SVG 未轉 AVIF（'+bad.length+'）：'+bad.slice(0,8).join(', ')); process.exit(1); }
+}
+/* 每張圖都有圖檔＋alt，並且 sw.js 有 cache */
+{
+  const m = ctx.IMG.map, n = Object.keys(m).length;
+  if (n < 50) { console.error('❌ dia.js 圖檔對照表太少（'+n+'）'); process.exit(1); }
+  for (const k in m) {
+    const e = m[k];
+    if (!e.f || e.f.indexOf('img/dia/') !== 0 || e.f.indexOf('.avif') < 0) { console.error('❌ dia.js 圖檔路徑唔對：'+k); process.exit(1); }
+    if (!e.w || !e.h) { console.error('❌ dia.js 冇標尺寸：'+k); process.exit(1); }
+    if (!e.alt || e.alt.length < 8) { console.error('❌ dia.js 冇 alt 文字：'+k); process.exit(1); }
+    if (!readFileSync(root+'sw.js','utf8').includes(e.f)) { console.error('❌ sw.js 冇 cache 圖檔：'+k+' → '+e.f); process.exit(1); }
+    if (!existsSync(root+e.f)) { console.error('❌ 圖檔唔存在：'+e.f); process.exit(1); }
+  }
+}
 if(Object.keys(ctx.DIAGRAMS.cer).length<6){ console.error('❌ 儀式圖解不足 6 套'); process.exit(1); }
 if(Object.keys(ctx.DIAGRAMS.game).length!==12){ console.error('❌ 遊戲場地圖唔係 12 張，實際', Object.keys(ctx.DIAGRAMS.game).length); process.exit(1); }
 if(!ctx.DIAGRAMS.skillx || !ctx.DIAGRAMS.skillx.tent || !ctx.DIAGRAMS.skillx.rice || !ctx.DIAGRAMS.skillx.sos || !ctx.DIAGRAMS.skillx.lost){ console.error('❌ 技能圖解缺'); process.exit(1); }
 if(!ctx.DIAGRAMS.fire || !ctx.DIAGRAMS.fire.circle || !ctx.DIAGRAMS.fire.flow){ console.error('❌ 營火圖缺'); process.exit(1); }
 if(ctx.DIAGRAMS.reef || ctx.DIAGRAMS.bowline){ console.error('❌ 仲殘留繩結逐步圖（用戶要求移除）'); process.exit(1); }
-console.log('✅ SVG 圖解庫齊（指南針/背囊/追蹤6＋儀式6/遊戲12/技能/營火；繩結圖已移除）');
+console.log('✅ 圖解庫齊（AVIF：指南針/背囊/追蹤6＋儀式/遊戲12/技能/營火；繩結圖已移除）');
 
 // 搜尋頁
 try{ ctx.App.pages.search('急救'); ctx.App.pages.search(); }catch(e){ console.error('❌ pages.search:',e.message); process.exit(1); }
@@ -330,6 +361,8 @@ const swVer = (swSrc.match(/scout-v(\d+)-c24-(\d+)/)||[])[1];
 if(!swVer || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js cache 名唔係 scout-vN-c24-日期 格式'); process.exit(1); }
 if(!readFileSync(root+'README.md','utf8').includes('scout-v'+swVer+'-c24')){ console.error('❌ README 寫嘅 cache 版本同 sw.js（v'+swVer+'）唔一致'); process.exit(1); }
 if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js') || !swSrc.includes('projector.js')){ console.error('❌ sw.js 未 cache 新檔（svg-kit/songs/projector）'); process.exit(1); }
+if(!swSrc.includes('./js/dia.js')){ console.error('❌ sw.js 未 cache js/dia.js（圖檔對照表）'); process.exit(1); }
+if(!swSrc.includes('img/badge/') || !swSrc.includes('img/uni/')){ console.error('❌ sw.js 未 cache 興趣章／制服圖（img/badge、img/uni）'); process.exit(1); }
 console.log('✅ sw.js cache 版本 v'+swVer+'（README 已同步）');
 
 // README
@@ -337,7 +370,7 @@ const rm = readFileSync(root+'README.md','utf8');
 if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
 // ── v29：內容範圍（集會套包＝會員章＋日常集會；深階步操交返訓練班＋《步操手冊》）──
 {
-  const C = ctx.DIAGRAMS.cer;
+  const C = srcView('cer');
   const keys = ctx.CEREMONY.cards.map(c=>c.k);
   const want = ['open','close','footdrill','flag','oath','salute','howl','fallin'];
   if (keys.join(',')!==want.join(',')) { console.error('❌ 儀式卡應得返：'+want.join('/')+'（而家：'+keys.join(',')+'）'); process.exit(1); }
@@ -347,12 +380,10 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
   for (const k of ['attn','rest','salute3']) if (!C[k]) { console.error('❌ 基本動作圖解缺 '+k+'（立正／稍息／敬禮要画得啱）'); process.exit(1); }
   // 尺寸線必須共用同一比例（呢個斷言先至令「750 係 375 兩倍」呢類判斷可信）
   const S = 0.05;
-  for (const [grp,g] of Object.entries(ctx.DIAGRAMS)) {
-    for (const [k,src] of Object.entries(g)) {
-      if (typeof src!=='string') continue;
-      for (const d of src.matchAll(/<desc data-mm="(\d+)" data-len="([-\d.]+)"><\/desc>/g)) {
-        if (Math.abs(+d[2] - +d[1]*S) > 1.2) { console.error('❌ 圖解 '+grp+'.'+k+' 尺寸線比例唔啱：'+d[1]+'mm 畫咗 '+d[2]+'px'); process.exit(1); }
-      }
+  for (const [key,src] of Object.entries(ctx.IMG.svg)) {
+    if (typeof src!=='string') continue;
+    for (const d of src.matchAll(/<desc data-mm="(\d+)" data-len="([-\d.]+)"><\/desc>/g)) {
+      if (Math.abs(+d[2] - +d[1]*S) > 1.2) { console.error('❌ 圖解 '+key+' 尺寸線比例唔啱：'+d[1]+'mm 畫咗 '+d[2]+'px'); process.exit(1); }
     }
   }
   const angs = (k)=>Array.from(C[k].matchAll(/data-ang="([-\d.]+)"/g)).map(m=>+m[1]);
@@ -393,7 +424,7 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
 
 // ── v30：基本級 D 圖「補晒」（每張儀式卡都有圖・冇孤兒圖解・面板內文字唔准出框）──
 {
-  const C = ctx.DIAGRAMS.cer;
+  const C = srcView('cer');
   const got = Object.keys(C).sort();
   const want = ['attn','close','dress','flag','formup','howl','oath','open','rest','salute','salute3','threefinger','drill'].sort();
   if (got.join(',')!==want.join(',')) { console.error('❌ D.cer 圖解應得 13 張（'+want.join('/')+'）；而家 '+got.length+' 張：'+got.join(',')); process.exit(1); }
@@ -457,13 +488,13 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
 
 // ── 所有手繪圖解嘅文字都要喺 viewBox 內（溢出即係睇唔到；用 stack 累加巢式 translate/scale）──
 {
-  const D = ctx.DIAGRAMS;
   const est = (t)=>{ let w=0; for (const ch of t) { const c = ch.codePointAt(0); w += (c>0x2e80?1.0:(ch===' '?0.34:0.58)); } return w; };
-  const dkeys = [];
-  for (const grp of Object.keys(D)) { const g = D[grp]; if (g && typeof g==='object') for (const k of Object.keys(g)) if (typeof g[k]==='string') dkeys.push([grp,k]); }
+  const dkeys = Object.keys(ctx.IMG.svg);
+  if (dkeys.length < 50) { console.error('❌ IMG.svg 底稿唔齊（'+dkeys.length+'）— 換圖時冇存低原 SVG？'); process.exit(1); }
   let n=0, bad=[];
-  for (const [grp,k] of dkeys) {
-    const src = D[grp][k]; const m = src.match(/viewBox="0 0 (\d+) (\d+)"/); if (!m) continue; n++;
+  for (const key of dkeys) {
+    const grp = key, k = '';
+    const src = ctx.IMG.svg[key]; const m = src.match(/viewBox="0 0 (\d+) (\d+)"/); if (!m) continue; n++;
     const W=+m[1], H=+m[2];
     const re=/<g transform="translate\(([-\d.]+),([-\d.]+)\)(?: scale\(([-\d.]+)\))?">|<\/g>|<text x="([-\d.]+)" y="([-\d.]+)" font-size="([-\d.]+)"[^>]*?text-anchor="(start|middle|end)"[^>]*>([^<]*)<\/text>/g;
     let mm, stack=[[0,0,1]], over=[];
@@ -477,10 +508,10 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
       let l=x,r=x; if (anc==='start') r=x+w; else if (anc==='end') l=x-w; else { l=x-w/2; r=x+w/2; }
       if (l<-2 || r>W+2 || y<-2 || y>H+2) over.push(txt.slice(0,14)+'['+l.toFixed(0)+'..'+r.toFixed(0)+']');
     }
-    if (over.length) bad.push(grp+'.'+k+'：'+over.slice(0,2).join('、'));
+    if (over.length) bad.push(key+'：'+over.slice(0,2).join('、'));
   }
   if (bad.length) { console.error('❌ 下圖文字超出 viewBox（會俾人cut）：\n   '+bad.join('\n   ')); process.exit(1); }
-  console.log('✅ '+n+' 張手繪圖解文字全部喺 viewBox 內（含 v29 三張基本動作圖解）');
+  console.log('✅ '+n+' 張圖解底稿文字全部喺 viewBox 內（AVIF 由同一底稿 raster，唔會 cut 字）');
 }
 console.log('✅ README 提及 c24 同《步操手冊》');
 // ═════════ v20：真圖示意插畫（AVIF），SVG 只做折疊後備 ═════════
@@ -635,6 +666,7 @@ for (const f of avifs) {
 for (const sub of ['care','map','pack','camp','pioneer','track','field','aid']) { try { ctx.App.pages.skills(sub); } catch(e) { console.error('❌ pages.skills('+sub+') render 失敗：', e.message); process.exit(1); } }
 console.log('✅ 技能插畫 '+Object.keys(SF).length+'/12 齊（除繩結外全部技能有圖）・圖檔 '+figKeys.length+' 張全數入 FIGS＋sw');
 
+
 // ═════════ v31：急救每種都有圖（AI 插畫＋手繪位置圖） ═════════
 const AF = figSandbox.AID_FIG || {};
 if (!AF || !Object.keys(AF).length) { console.error('❌ figs.js 冇 export AID_FIG'); process.exit(1); }
@@ -648,10 +680,33 @@ for (const f of ctx.C17.firstaid) {
 }
 {
   const faint = ctx.App.aidCard('復原臥式','側臥','有呼吸先做');
-  if (faint.indexOf('<svg') < 0) { console.error('❌ 復原臥式冇手繪位置圖（AI 咪畫得準，用量圖）'); process.exit(1); }
+  if (faint.indexOf('img/dia/skill-faint.avif') < 0) { console.error('❌ 復原臥式冇側臥位置圖（AVIF）'); process.exit(1); }
   if (!ctx.DIAGRAMS.skillx || !ctx.DIAGRAMS.skillx.faint) { console.error('❌ 缺 DIAGRAMS.skillx.faint 復原臥式圖解'); process.exit(1); }
 }
-console.log('✅ 急救 '+(Object.keys(AF).length+1)+' 張卡全部有圖（7 種用 AVIF 插畫＋復原臥式用手繪側臥圖）');
+console.log('✅ 急救 '+(Object.keys(AF).length+1)+' 張卡全部有圖（7 種 AVIF 插畫＋復原臥式側臥位置圖）');
+
+/* ── 遊戲／技能／急救圖說（caption）統一格式（2026-09 潤色）──────────────────
+   規則：① 開頭一個短標籤＋「：」　② 中段要點用「・」　③ 最後一定要有「⚠️ 」提示
+        ④ 教案出處寫「cXX 教案」（唔用「照 c17」呢類簡寫）　⑤ 60–200 字　⑥ 除 ⚠️ 外唔用其他 emoji */
+{
+  const OPEN = ['設場', '玩法', '急救步驟', '搭帳次序', '保養五點', '氣爐六條', '扭傷 RICE', '迷路三步', '小刀三條', '求救節奏', '執包三件事', '實習場面', '符號砌法', '收場做齊', '練習：飛毯', '練習：'];
+  const famKeys = Object.values(GF).concat(Object.values(SF), Object.values(AF));
+  let checked = 0;
+  for (const k of new Set(famKeys)) {
+    const f = FIGSJ[k];
+    if (!f || !f.cap) continue;
+    checked++;
+    if (!OPEN.some(o => f.cap.indexOf(o) === 0)) { console.error('❌ 圖說未用統一開頭（'+k+'）：'+f.cap.slice(0, 20)); process.exit(1); }
+    if (f.cap.indexOf('⚠️') < 0) { console.error('❌ 圖說冇 ⚠️ 提示（'+k+'）'); process.exit(1); }
+    if (f.cap.length > 210) { console.error('❌ 圖說太長（'+k+'：'+f.cap.length+' 字）——卡內會爆行'); process.exit(1); }
+    if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(f.cap.replace(/⚠️/g, ''))) { console.error('❌ 圖說只用得 ⚠️ 一個 emoji（'+k+'）'); process.exit(1); }
+    if (/照 ?c\d|對應 ?c\d(?!\d)/.test(f.cap) && !/c\d\d 教案/.test(f.cap)) { console.error('❌ 圖說出處要用「cXX 教案」寫法（'+k+'）'); process.exit(1); }
+    if (/setup/i.test(f.cap)) { console.error('❌ 圖說唔好用英文 setup（'+k+'）'); process.exit(1); }
+  }
+  /* 燒傷／燙傷共用同一張圖，圖說要講明「兩者一樣」 */
+  if (!/燒傷／燙傷一樣|燙傷／燒傷一樣/.test(FIGSJ['aid-burn'].cap)) { console.error('❌ 燒傷圖說冇講明燙傷處理一樣'); process.exit(1); }
+  console.log('✅ 遊戲／技能／急救圖說 '+checked+' 條：開頭統一・要點用「・」・尾段 ⚠️・出處寫「cXX 教案」');
+}
 
 // ═════════ v31：制服徽章佩戴位置圖（用戶要圖，呢度用 SVG 手繪，唔用 AI） ═════════
 {
@@ -672,14 +727,14 @@ console.log('✅ 急救 '+(Object.keys(AF).length+1)+' 張卡全部有圖（7 �
   const chestSvg = ctx.DIAGRAMS.uniform.chest, bodySvg = ctx.DIAGRAMS.uniform.body;
   if (!/①|1/.test('') === false) {}
   for (const [nm, svgStr] of [['chest',chestSvg],['body',bodySvg]]) {
-    if (!/^<svg /.test(svgStr) || svgStr.indexOf('viewBox') < 0) { console.error('❌ DIAGRAMS.uniform.'+nm+' 唔係完整 SVG'); process.exit(1); }
     if (svgStr.indexOf('undefined') >= 0) { console.error('❌ DIAGRAMS.uniform.'+nm+' 有 undefined'); process.exit(1); }
+    if (!(nm==='chest' ? /^<img src="img\/dia\/uniform-[a-z-]+\.avif"/ : /^<img src="img\/dia\/uniform-[a-z-]+\.avif"/).test(svgStr)) { console.error('❌ DIAGRAMS.uniform.'+nm+' 唔係 AVIF 位置圖'); process.exit(1); }
   }
   if (chestSvg.indexOf('①') < 0 || chestSvg.indexOf('⑥') < 0) { console.error('❌ 胸袋圖冇 ①–⑥ 標記'); process.exit(1); }
   if (bodySvg.indexOf('⑦') < 0 || bodySvg.indexOf('⑨') < 0) { console.error('❌ 全身圖冇 ⑦–⑨ 標記'); process.exit(1); }
   try { ctx.App.pages.uniform('badge'); } catch(e) { console.error('❌ 徽章頁 render 失敗：', e.message); process.exit(1); }
 }
-console.log('✅ 徽章佩戴位置圖：SVG 手繪 ①–⑥（胸袋）＋⑦–⑨（全身）＋ UNIFORM.placement 對照表');
+console.log('✅ 徽章佩戴位置圖：AVIF ①–⑥（胸袋）＋⑦–⑨（全身）＋ UNIFORM.placement 對照表');
 console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間、敬禮以右格作準、集隊右翼定義、升旗以制服整齊與否決定舉手');
 
 // ═════════ v32：真分頁（唔再錨點跳位）＋營火會＋清 agent 字句＋補圖 ═════════
@@ -739,9 +794,9 @@ console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間�
     if (!mf.shortcuts.some(s => s.name.indexOf('營火會') >= 0)) { console.error('❌ manifest 捷徑未改做「營火會」'); process.exit(1); }
   }
   /* 6) 制服：局部放大圖＋旅巾圖 */
-  if (!ctx.DIAGRAMS.uniform.zoom || !/^<svg /.test(ctx.DIAGRAMS.uniform.zoom)) { console.error('❌ 冇徽章局部放大圖'); process.exit(1); }
-  if (ctx.DIAGRAMS.uniform.zoom.indexOf('3cm') < 0 || ctx.DIAGRAMS.uniform.zoom.indexOf('1cm') < 0) { console.error('❌ 放大圖冇標實際距離'); process.exit(1); }
-  if (!ctx.DIAGRAMS.uniform.scarf || ctx.DIAGRAMS.uniform.scarf.indexOf('3.5cm') < 0) { console.error('❌ 冇旅巾綁法圖'); process.exit(1); }
+  if (!ctx.DIAGRAMS.uniform.zoom || !/^<img src="img\/dia\/uniform-zoom\.avif"/.test(ctx.DIAGRAMS.uniform.zoom)) { console.error('❌ 冇徽章局部放大圖（AVIF）'); process.exit(1); }
+  if (srcOf('uniform.zoom').indexOf('3cm') < 0 || srcOf('uniform.zoom').indexOf('1cm') < 0) { console.error('❌ 放大圖冇標實際距離'); process.exit(1); }
+  if (!ctx.DIAGRAMS.uniform.scarf || srcOf('uniform.scarf').indexOf('3.5cm') < 0) { console.error('❌ 冇旅巾綁法圖'); process.exit(1); }
   for (const b of ['land','sea','air']) {
     if (!ctx.DIAGRAMS.uniform[b] || ctx.DIAGRAMS.uniform[b].indexOf('undefined') >= 0) { console.error('❌ 制服本地顏色圖缺：'+b); process.exit(1); }
   }
@@ -762,16 +817,6 @@ console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間�
 }
 console.log('✅ v32：真分頁（無錨點跳位）・營火會（時間表＋歡呼＋頌詞）・清 agent 字句・活動／技能／制服／儀式全部有圖');
 
-/* 粗檢：SVG 內每個 <text> 嘅 y 座標唔可以超出 viewBox 高度（防止圖文出框） */
-function plotCheck(svgStr, name){
-  const m = svgStr.match(/viewBox="0 0 (\d+) (\d+)"/);
-  if (!m) { console.error('❌ '+name+' 冇 viewBox'); process.exit(1); }
-  const h = +m[2];
-  const ys = [...svgStr.matchAll(/<text[^>]*\sy="(-?[\d.]+)"/g)].map(x => +x[1]);
-  for (const y of ys) {
-    if (y > h - 2) { console.error('❌ '+name+' 有文字出框（y='+y+'／高 '+h+'）'); process.exit(1); }
-  }
-}
 // ═════════ v33：制服配件（領巾／巾圈／領帶／基維爾／皮帶襪）═════════
 {
   const NW = ctx.UNIFORM.neckwear, KW = ctx.UNIFORM.kilwell, BS = ctx.UNIFORM.beltSocks;
@@ -787,9 +832,9 @@ function plotCheck(svgStr, name){
   if (NW.source.indexOf('3.4') < 0 || BS.source.indexOf('3.6') < 0) { console.error('❌ 制服配件冇標章節出處'); process.exit(1); }
   for (const k of ['ties','kilwell','scarf','zoom']) {
     const svg = ctx.DIAGRAMS.uniform[k];
-    if (!svg || !/^<svg /.test(svg) || svg.indexOf('undefined') >= 0) { console.error('❌ 制服圖缺失／壞：'+k); process.exit(1); }
+    if (!svg || svg.indexOf('undefined') >= 0) { console.error('❌ 制服圖缺失／壞：'+k); process.exit(1); }
+    if (!/^<img src="img\/dia\/uniform-/.test(svg)) { console.error('❌ 制服圖唔係 AVIF：'+k); process.exit(1); }
   }
-  plotCheck(ctx.DIAGRAMS.uniform.ties, '領帶圖');
   try { const node = ctx.App.pages.uniform('acc'); if (!node) throw new Error('冇回傳'); }
   catch(e) { console.error('❌ 制服「領巾領帶」分頁 render 失敗：', e.message); process.exit(1); }
   /* 制服毛衣／附加配件：只指向童軍物品供應社，唔自創內容 */
@@ -815,9 +860,11 @@ console.log('✅ v33：制服配件（領巾 4 種・巾圈 4 種・領帶 4 色
   if (!appSrc.includes('type="search"') || appSrc.includes('>搵！</button>')) {
     console.error('❌ 搜尋應輸入即顯示，唔應有重複提交掣'); process.exit(1);
   }
-  if (appSrc.includes('nextElementSibling') || !appSrc.includes("var v=this.closest(\\'.uniform-visual\\')")) {
-    console.error('❌ 制服官網圖 fallback 未安全查找容器'); process.exit(1);
+  /* v35：制服頁改用本地官方服式圖（AVIF），載入唔到先連返官網原圖；一律用 closest 查找容器，唔可以再靠 nextElementSibling */
+  if (appSrc.includes('nextElementSibling') || !appSrc.includes("this.closest(\\'.uniform-fig\\')")) {
+    console.error('❌ 制服服式圖 fallback 未安全查找容器'); process.exit(1);
   }
+  if (!appSrc.includes('UNIFORMFIG')) { console.error('❌ 制服頁冇用 UNIFORMFIG 出官方服式圖'); process.exit(1); }
   const cssV34 = readFileSync(root+'css/app.css','utf8');
   for (const rule of [
     '#view button,.subtab,.pg-btn{min-height:44px;min-width:44px}',
@@ -834,4 +881,4 @@ console.log('✅ v33：制服配件（領巾 4 種・巾圈 4 種・領帶 4 色
 }
 console.log('✅ v34：新／熟手定位・手機 44px・安全圖片 fallback・營火六分頁・按鈕範圍齊');
 
-console.log('\n🎉 全部 smoke test 通過（v34：雙角色＋手機操作＋營火會分頁＋12/12 遊戲圖片）');
+console.log('\n🎉 全部 smoke test 通過（v35：圖解／徽章／制服全部 AVIF 真圖，冇再用 SVG 出圖）');
