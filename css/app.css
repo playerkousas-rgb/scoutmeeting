@@ -2933,6 +2933,15 @@ ul.motto li{ font-size:15px; }
 /* ════════════════════════════════════════════════
    v20 示意插畫（AVIF 真圖・非 SVG 手畫）
    ════════════════════════════════════════════════ */
+.dgm-fold{margin:8px 0 2px;border:1px dashed var(--line);border-radius:12px;background:#FBFAF6;padding:0 10px}
+.dgm-fold>summary{cursor:pointer;font-size:.8rem;color:var(--brand);font-weight:bold;padding:7px 0;list-style:none}
+.dgm-fold>summary::-webkit-details-marker{display:none}
+.dgm-fold>summary:before{content:'\25B8  ';color:var(--brand)}
+.dgm-fold[open]>summary:before{content:'\25BE  '}
+.dgm-fold[open]{background:#fff;border-style:solid}
+.dgm-fold .dgm-fig{margin:0 0 10px}
+@media print{.dgm-fold{border:0;padding:0;background:#fff}.dgm-fold>summary{display:none}}
+
 .ph-fig{margin:10px 0 12px;border:1.5px solid var(--line);border-radius:14px;background:#fff;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
 .ph-fig .ph-wrap{background:#F2F0E9;line-height:0;min-height:120px}
 .ph-fig img{display:block;width:100%;height:auto;max-width:100%}

@@ -213,13 +213,56 @@ console.log('✅ manifest：新 icon＋營火歌 shortcut');
 
 // sw.js
 const swSrc = readFileSync(root+'sw.js','utf8');
-if(!swSrc.includes('scout-v27') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v27'); process.exit(1); }
+const swVer = (swSrc.match(/scout-v(\d+)-c24-(\d+)/)||[])[1];
+if(!swVer || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js cache 名唔係 scout-vN-c24-日期 格式'); process.exit(1); }
+if(!readFileSync(root+'README.md','utf8').includes('scout-v'+swVer+'-c24')){ console.error('❌ README 寫嘅 cache 版本同 sw.js（v'+swVer+'）唔一致'); process.exit(1); }
 if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js')){ console.error('❌ sw.js 未 cache v19 新檔'); process.exit(1); }
-console.log('✅ sw.js cache 已升級（v27 含 28 張示意圖）');
+console.log('✅ sw.js cache 版本 v'+swVer+'（README 已同步）・28 張示意圖');
 
 // README
 const rm = readFileSync(root+'README.md','utf8');
 if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
+// ── v28：十張步操分部動作圖解（手繪・角度／距離用 data-* 鎖死）──
+{
+  const C = ctx.DIAGRAMS.cer, cer = ctx.CEREMONY.cards;
+  const need = ['attn','rest','turns','salute3','sidepace','qmarch','qhalt','marchturn','marchabout','changestep'];
+  for (const k of need) if (!C[k]) { console.error('❌ v28 圖解缺 '+k); process.exit(1); }
+  const S = 0.05;
+  for (const k of need) {
+    for (const d of C[k].matchAll(/<desc data-mm="(\d+)" data-len="([-\d.]+)"><\/desc>/g)) {
+      if (Math.abs(+d[2] - +d[1]*S) > 1.2) { console.error('❌ 圖解 '+k+' 尺寸線唔喺同一比例：'+d[1]+'mm 畫咗 '+d[2]+'px'); process.exit(1); }
+    }
+  }
+  const mmOf = (k)=>Array.from(C[k].matchAll(/data-mm="(\d+)"/g)).map(m=>+m[1]);
+  for (const [k, list] of [['attn',[375]],['rest',[305]],['sidepace',[300,1200]],['qmarch',[750,375]],['qhalt',[750,375]],['marchturn',[750,375]],['marchabout',[750,150]]]) {
+    const got = mmOf(k);
+    for (const want of list) if (!got.includes(want)) { console.error('❌ 圖解 '+k+' 冇標明 '+want+'mm（手冊嘅數字一定要畫喺圖上）'); process.exit(1); }
+  }
+  const angs = (k)=>Array.from(C[k].matchAll(/data-ang="([-\d.]+)"/g)).map(m=>+m[1]);
+  if (![90,180,45].every(a=>angs('turns').includes(a))) { console.error('❌ 原地轉法圖解缺 90／180／45 度弧'); process.exit(1); }
+  if (angs('attn').filter(a=>a===30).length < 2) { console.error('❌ 立正圖解冇畫兩隻腳腳尖向外 30 度'); process.exit(1); }
+  if (!angs('attn').includes(90)) { console.error('❌ 抽膝踏步冇標大腿與地面平行（90 度）'); process.exit(1); }
+  if (!angs('rest').includes(30)) { console.error('❌ 稍息圖解冇保留腳尖向外 30 度'); process.exit(1); }
+  for (const k of need) { if (/undefined|NaN/.test(C[k])) { console.error('❌ 圖解 '+k+' 有 undefined/NaN'); process.exit(1); } }
+  const used = [];
+  for (const c of cer) { if (c.dgm) used.push(c.dgm); (c.steps||[]).forEach(x=>x.dgm&&used.push(x.dgm)); (c.types||[]).forEach(x=>x.dgm&&used.push(x.dgm)); }
+  for (const k of used) if (!C[k]) { console.error('❌ 儀式卡掛咗圖解 key「'+k+'」但 DIAGRAMS.cer 冇呢張'); process.exit(1); }
+  if (used.length < 12) { console.error('❌ v28 之後應該至少 12 個圖解掛喺卡上，而家得 '+used.length); process.exit(1); }
+  const F = JSON.stringify(cer.find(c=>c.k==='footdrill')), M = JSON.stringify(cer.find(c=>c.k==='march')), SL = JSON.stringify(cer.find(c=>c.k==='salute'));
+  for (const [src, re, msg] of [[F,/Out!/,'稍息打數 Out!'],[F,/In!/,'回立正打數 In!'],
+    [F,/One — Two — Up/,'橫移打數序列'],[F,/Turning by numbers, right turn — one/,'轉法分部口令'],
+    [M,/Step off together/,'一排開步口令'],[M,/Squad will advance/,'面向前後開步口令'],
+    [M,/150mm/,'向後轉第一分部 150mm 小步'],[M,/左腳腳踭後/,'換步踏喺左腳踭後'],
+    [M,/half pace/,'慢步 balance step'],[SL,/Up—Two—Three—Down/,'敬禮打數']]) {
+    if (!re.test(src)) { console.error('❌ 冇寫低：'+msg); process.exit(1); }
+  }
+  const app = readFileSync(root+'js/app.js','utf8');
+  if (!/App\.cerDgm = function/.test(app) || !/st\.dgm\?App\.cerDgm/.test(app) || !/t\.dgm\?App\.cerDgm/.test(app)) { console.error('❌ app.js 未支援 steps[].dgm／types[].dgm'); process.exit(1); }
+  if (!/d\.open = true/.test(app)) { console.error('❌ 列印無自動展開 details（折疊圖解會印唔出）'); process.exit(1); }
+  if (!/\.dgm-fold\{/.test(readFileSync(root+'css/app.css','utf8'))) { console.error('❌ css 缺 .dgm-fold 樣式'); process.exit(1); }
+  console.log('✅ v28：'+need.length+' 張步操分部圖解（角度／毫米已斷言）・儀式卡共掛 '+used.length+' 個圖解・列印自動展開');
+}
+
 // ── v26b：所有 SVG 圖解嘅文字都要喺 viewBox 內（手繪圖解冇得靠 AI，溢出就係睇唔到）──
 {
   const D = ctx.DIAGRAMS;
@@ -230,20 +273,21 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
   for (const [grp,k] of keys) {
     const src = D[grp][k]; const m = src.match(/viewBox="0 0 (\d+) (\d+)"/); if (!m) continue; n++;
     const W=+m[1], H=+m[2];
-    const re=/<g transform="translate\(([-\d.]+),([-\d.]+)\)"[^>]*>|<\/g>|<text x="([-\d.]+)" y="([-\d.]+)" font-size="([-\d.]+)"[^>]*?text-anchor="(start|middle|end)"[^>]*>([^<]*)<\/text>/g;
-    let mm, gx=0, over=[];
+    const re=/<g transform="translate\(([-\d.]+),([-\d.]+)\)(?: scale\(([-\d.]+)\))?">|<\/g>|<text x="([-\d.]+)" y="([-\d.]+)" font-size="([-\d.]+)"[^>]*?text-anchor="(start|middle|end)"[^>]*>([^<]*)<\/text>/g;
+    let mm, stack=[[0,0,1]], over=[];
     while ((mm = re.exec(src))) {
-      if (mm[0]==='</g>') { gx=0; continue; }
-      if (mm[3]===undefined) { gx=+mm[1]; continue; }
-      const fs=+mm[5], anc=mm[6], txt=mm[7]||''; if (!txt) continue;
-      const w=est(txt)*fs, x=gx+ +mm[3];
+      if (mm[0]==='</g>') { if (stack.length>1) stack.pop(); continue; }
+      if (mm[7]===undefined) { const p0=stack[stack.length-1]; stack.push([p0[0]+ +mm[1], p0[1]+ +mm[2], p0[2]*(mm[3]?+mm[3]:1)]); continue; }
+      const top=stack[stack.length-1], fs=+mm[5]*top[2], anc=mm[6], txt=mm[7]||'';
+      if (!txt) continue;
+      const w=est(txt)*fs, x=top[0]+ +mm[3]*top[2];
       let l=x,r=x; if (anc==='start') r=x+w; else if (anc==='end') l=x-w; else { l=x-w/2; r=x+w/2; }
       if (l<-2 || r>W+2) over.push(txt.slice(0,14));
     }
     if (over.length) bad.push(grp+'.'+k+'：'+over.slice(0,2).join('、'));
   }
   if (bad.length) { console.error('❌ 下圖文字超出 viewBox（會俾人cut）：\n   '+bad.join('\n   ')); process.exit(1); }
-  console.log('✅ '+n+' 張手繪圖解文字全部喺 viewBox 內（集隊手號七格＋行進間口令九格冇溢出）');
+  console.log('✅ '+n+' 張手繪圖解文字全部喺 viewBox 內（含 v28 十張步操分部圖解）');
 }
 console.log('✅ README 提及 c24 同《步操手冊》');
 // ═════════ v20：真圖示意插畫（AVIF），SVG 只做折疊後備 ═════════
@@ -500,11 +544,11 @@ console.log('✅ v26《步操手冊》第3–8章＋附錄：稍息改返右掌�
   if (!/Bend the left knee/.test(c01src) || !/Shoot the right foot forward/.test(c01src)) { console.error('❌ c01 冇抽膝踏步／彈前腳（手冊第3章§1）'); process.exit(1); }
   const svgSrc = readFileSync(root+'js/svg-kit.js','utf8');
   if (/腳尖向外約 45°/.test(svgSrc)) { console.error('❌ 圖解註解仲寫 45°'); process.exit(1); }
-  if (!/與中線成30°/.test(svgSrc) || !/每分鐘116步/.test(svgSrc)) { console.error('❌ 圖解冇更新立正/步速註解'); process.exit(1); }
+  if (!/與中線成\s*30\s*°|與中線成 30 度/.test(svgSrc) || !/每分鐘\s*116\s*步/.test(svgSrc)) { console.error('❌ 圖解冇更新立正/步速註解'); process.exit(1); }
   if (!/步操手冊|DRILL MANUAL/.test(readFileSync(root+'js/ceremony.js','utf8'))) { console.error('❌ ceremony.js 冇列明《步操手冊》出處'); process.exit(1); }
   if (!/drive\.google\.com\/file\/d\/1g4M6C7e1K7tVDkr2IADdkebm1CjljI-l/.test(readFileSync(root+'js/ceremony.js','utf8'))) { console.error('❌ CEREMONY.refs 冇《步操手冊》連結'); process.exit(1); }
   console.log('✅ v25《步操手冊》對照：立正 30°/握拳/Alert・口令結構與步速步幅・抽膝彈前腳・致敬條文（§3丙/§5.1/§6.1-6.3）・集隊術語與手號待核・步操唔准做懲罰');
 }
 console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間、敬禮以右格作準、集隊右翼定義、升旗以制服整齊與否決定舉手');
 
-console.log('\n🎉 全部 smoke test 通過（v27：旗操全本＋附錄乙／丙落地）');
+console.log('\n🎉 全部 smoke test 通過（v28：步操分部動作圖解 10 張）');

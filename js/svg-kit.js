@@ -136,6 +136,374 @@ function COL(n,title,angle,detail,kind,cue){
     +'</g>';
 }
 
+/* ── v28：步操動作逐步圖解（《步操手冊》第3–4章 分部動作）───────────────
+   呢啲圖一定要手繪：AI 數唔到腳序，亦度唔到角度／毫米。
+   畫法＝用角度／距離產生圖；圖解入面每一條受手冊規定嘅角度或距離都帶
+   data-ang / data-mm，tests/smoke.mjs 會逐個核對，唔靠眼。 */
+var fA = '#37474F', fAD = '#C62828', fAT = '#E65100', fA2 = '#607D8B';
+function frd(v){ return Math.round(v*10)/10; }
+function fpv(x, y, ang, len){ return [x + len*Math.sin(ang*Math.PI/180), y - len*Math.cos(ang*Math.PI/180)]; }
+function fln(a, b, c, d, col, w, dash){
+  return '<path d="M'+frd(a)+','+frd(b)+' L'+frd(c)+','+frd(d)+'" stroke="'+(col||fA)+'" stroke-width="'+(w||3)
+    +'" stroke-linecap="round" fill="none"'+(dash?' stroke-dasharray="3,2.5"':'')+'/>';
+}
+function fdot(x, y, r, col){ return '<circle cx="'+frd(x)+'" cy="'+frd(y)+'" r="'+(r||2.4)+'" fill="'+(col||fA)+'"/>'; }
+/* 側面人形（髖喺 0,0；腳垂直向下＝0 度，向前為正） */
+var fS = 0.05;
+function fSFG(o){
+  var s = '', sh = fpv(0, 0, (o.lean||0)-180, 26);
+  s += fln(0, 0, sh[0], sh[1], fA, 7);
+  var hd = fpv(sh[0], sh[1], (o.head===undefined ? (o.lean||0) : o.head)-180, 8.6);
+  s += fdot(hd[0], hd[1], 5.4);
+  var arms = o.arms || [[0,0],[0,0]];
+  for (var i=0;i<arms.length;i++){
+    var a = arms[i], col = i===1 ? fA : fA2;
+    var e = fpv(sh[0], sh[1], a[0], 12), h = fpv(e[0], e[1], a[1], 11);
+    s += fln(sh[0], sh[1], e[0], e[1], col, 2.7) + fln(e[0], e[1], h[0], h[1], col, 2.7);
+    s += a[2] ? fdot(h[0], h[1], 2.3, col) : fln(h[0]-2.3, h[1], h[0]+2.3, h[1]-1.9, col, 1.8);
+  }
+  var legs = o.legs || [[0,0,'flat'],[0,0,'flat']];
+  for (var k=0;k<legs.length;k++){
+    var g = legs[k], lc = k===1 ? fA : fA2;
+    var kn = fpv(0, 0, g[0], 13), an = fpv(kn[0], kn[1], g[1], 14);
+    s += fln(0, 0, kn[0], kn[1], lc, 3.1) + fln(kn[0], kn[1], an[0], an[1], lc, 3.1);
+    var fa = g[2]==='heel' ? -20 : g[2]==='toe' ? 25 : 90;
+    var toe = fpv(an[0], an[1], fa, 7);
+    s += fln(an[0], an[1], toe[0], toe[1], lc, 2.5);
+  }
+  return s + fln(-44, 27.5, 44, 27.5, '#B9B3A6', 1.3);
+}
+/* 俯視腳位：sp=每隻腳尖向外角度（相對中線），gap=兩腳踭距離 px，mm=標明距離 */
+function fTOP(o){
+  var sp = o.sp===undefined ? 30 : o.sp, g = o.gap||5, s = '';
+  if (o.mm) g = o.mm*fS/2;
+  s += fln(0, -30, 0, 12, '#90A4AE', 1, 1);
+  for (var i=0;i<2;i++){
+    var dir = i===0 ? -1 : 1, hx = dir*g, hy = 0;
+    var fa = 180 + dir*sp;
+    var toe = fpv(hx, hy, fa, 17);
+    s += '<path d="M'+hx+','+hy+' L'+frd(toe[0])+','+frd(toe[1])+'" stroke="'+fA+'" stroke-width="6.4" stroke-linecap="round" data-ang="'+sp+'"/>';
+    if (o.arc) s += '<path d="M'+frd(hx)+','+(hy-13)+' A13,13 0 0 '+(i===0?0:1)+' '+frd(fpv(hx,hy,180+dir*sp,13)[0])+','+frd(fpv(hx,hy,180+dir*sp,13)[1])+'" stroke="'+fAT+'" stroke-width="1.4" fill="none" data-ang="'+sp+'"/>';
+  }
+  if (o.mm) s += fDIM(-g, 0, g, 0, o.dim, o.mm);
+  if (o.shiftTo) s += fln(g, 0, o.shiftTo, 0, fAT, 1.4, 1) + fdot(o.shiftTo, 0, 2, fAT);
+  return s;
+}
+/* 正面人形（敬禮用；rArm=右手動作模式） */
+function fFGG(o){
+  var s = fdot(0, -30, 5.6) + '<rect x="-7" y="-24" width="14" height="19" rx="5" fill="'+fA+'"/>'
+    + fln(-3.5, -5, -5, 16) + fln(-5, 16, -12, 16) + fln(3.5, -5, 5, 16) + fln(5, 16, 12, 16)
+    + fln(-40, 17.5, 40, 17.5, '#B9B3A6', 1.3);
+  s += fln(-7, -22, -14, -12, fA2, 2.7) + fln(-14, -12, -16, -1, fA2, 2.7) + fdot(-16, -1, 2.2, fA2);
+  if (o.rArm === 'down') s += fln(7, -22, 14, -12) + fln(14, -12, 15, -1) + fdot(15, -1, 2.2);
+  else if (o.rArm === 'side') s += fln(7, -22, 24, -22) + fdot(25.5, -22, 2.4) + fln(3, -22.6, 24, -22.6, fAD, 1);
+  else if (o.rArm === 'at') s += fln(7, -22, 20, -26) + fln(20, -26, 5, -32)
+    + '<path d="M5,-32 L-1,-34.5 L-1,-30 z" fill="'+fA+'"/>'
+    + fln(2.5,-30,2.5,-35.5,fAD,1) + fln(0.8,-30,4.2,-30,fAD,1) + fln(0.8,-35.5,4.2,-35.5,fAD,1)
+    + T(12,-30.5,'25mm',6.6,fAD,'start',1);
+  return s;
+}
+/* 毫米尺寸線（帶 data-mm 俾 test 核對） */
+function fDIM(x1, y1, x2, y2, label, mm){
+  var s = fln(x1, y1, x2, y2, fAD, 1.1), dx = x2-x1, dy = y2-y1;
+  var nx = (dy===0?0:(dx===0?3:-dy/Math.sqrt(dx*dx+dy*dy)*3)), ny = (dx===0?0:(dy===0?3:dx/Math.sqrt(dx*dx+dy*dy)*3));
+  s += fln(x1-nx, y1-ny, x1+nx, y1+ny, fAD, 1.1) + fln(x2-nx, y2-ny, x2+nx, y2+ny, fAD, 1.1);
+  s += '<rect x="'+frd(Math.min(x1,x2))+'" y="'+frd(Math.min(y1,y2)-3)+'" width="'+frd(Math.abs(dx)||2)+'" height="'+frd(Math.abs(dy)||2)+'" fill="none" stroke="none" data-mm="'+mm+'"/>';
+  s += '<desc data-mm="'+mm+'" data-len="'+frd(Math.sqrt(dx*dx+dy*dy))+'"></desc>';
+  return s + T((x1+x2)/2 + (dy===0?0:11), (y1+y2)/2 + (dx===0?0:-4), label, 6.8, fAD, 'middle', 1);
+}
+/* 俯視轉向弧（由 a0 轉到 a1，ang＝手冊規定角度） */
+function fARC(cx, cy, rad, a0, a1){
+  var p0 = [cx+rad*Math.sin(a0*Math.PI/180), cy-rad*Math.cos(a0*Math.PI/180)];
+  var p1 = [cx+rad*Math.sin(a1*Math.PI/180), cy-rad*Math.cos(a1*Math.PI/180)];
+  var sw = a1>a0 ? 1 : 0;
+  var s = '<path d="M'+frd(p0[0])+','+frd(p0[1])+' A'+rad+','+rad+' 0 0 '+sw+' '+frd(p1[0])+','+frd(p1[1])
+    +'" stroke="'+fAT+'" stroke-width="1.8" fill="none" stroke-dasharray="4,2.4" data-ang="'+frd(Math.abs(a1-a0))+'"/>';
+  var t = (a1 + (sw?90:-90))*Math.PI/180, ux = Math.sin(t), uy = -Math.cos(t);
+  return s + '<path d="M'+frd(p1[0]+ux*6.5)+','+frd(p1[1]+uy*6.5)+' L'+frd(p1[0]-uy*3.4)+','+frd(p1[1]+ux*3.4)
+    + ' L'+frd(p1[0]+uy*3.4)+','+frd(p1[1]-ux*3.4)+' z" fill="'+fAT+'"/>';
+}
+/* 一格：標題＋圖＋三行註（棕／藍打數／紅警告） */
+function fCL(n, title, art, l1, l2, l3, cols, cw, ch){
+  cols = cols || 2; cw = cw || 160; ch = ch || 126;
+  var col = (n-1)%cols, row = Math.floor((n-1)/cols);
+  var x = 8+col*(cw+4), y = 20+row*(ch+4);
+  return '<g transform="translate('+x+','+y+')">'
+    + '<rect x="0" y="0" width="'+cw+'" height="'+ch+'" rx="8" fill="#EAF1E6" stroke="#C7D8C2"/>'
+    + T(5, 12, title, 7.8, '#1B5E20', 'start', 1)
+    + '<g transform="translate('+frd(cw/2)+',60) scale(0.86)">'+art+'</g>'
+    + T(4, ch-25, l1, 6.6, '#6D4C41', 'start')
+    + T(4, ch-17, l2, 6.6, '#0D47A1', 'start', 1)
+    + T(4, ch-9, l3, 6.6, '#C62828', 'start')
+    + '</g>';
+}
+/* 自動排版：panels=[[標題,圖,l1,l2,l3]]，cols=欄數 */
+function fDGR(title, panels, cols, foot){
+  cols = cols || 2;
+  var cw = Math.floor((340-16-(cols-1)*4)/cols), ch = 126;
+  var rows = Math.ceil(panels.length/cols), H = 20+rows*(ch+4)+14;
+  var cells = panels.map(function(p, i){ return fCL(i+1, p[0], p[1], p[2], p[3], p[4], cols, cw, ch); }).join('');
+  return svg(340, H, title,
+    T(170, 12, title, 9.4, '#1B5E20', 'middle', 1) + cells
+    + T(170, H-4, foot || '《步操手冊》第3–4章・分部動作（by numbers）逐格做熟，先至連貫做完全動作', 6.8, '#8D6E63', 'middle'));
+}
+
+/* ── v28 圖解 10 張（《步操手冊》第3–4章 分部動作）──────────────────── */
+
+/* 1. 立正・抽膝・彈前腳〔第3章§1–2〕 */
+D.cer.attn = fDGR('立正・抽膝踏步・彈前腳（第3章§1–2）', [
+  ['① 立正（Alert!）腳位', fTOP({sp:30, gap:4, arc:1})
+    + fln(0,-30,0,16,'#90A4AE',1,1),
+    '腳掌平放地面・雙膝蹬直',
+    '腳尖向外分開，與中線成 30 度角',
+    'Attention／Squad Shun／Parade Shun 動作相同，典禮先用的'],
+  ['② 立正 手・頸・眼', fFGG({rArm:'down'})
+    + '<rect x="-11" y="-2" width="9" height="6" rx="2.6" fill="'+fA+'" data-note="fist"/>'
+    + '<rect x="2" y="-2" width="9" height="6" rx="2.6" fill="'+fA+'"/>',
+    '雙手握拳、手踭蹬直',
+    '母指指甲向前放喺食指上，母指放於褲骨之後',
+    '後顎貼衣領・眼望無限遠'],
+  ['③ 抽膝踏步 Bend the knee!', fSFG({legs:[[90,12,'toe'],[0,0,'flat']], arms:[[0,0,1],[0,0,1]]})
+    + fARC(0,0,17,0,90),
+    '原地提高左（右）腳直至大腿與地面平行',
+    '小腿放鬆；另一腳腳掌平放、膝頭蹬直',
+    '握拳緊貼褲骨，身體各部分保持立正'],
+  ['④ 彈前腳 Shoot the foot!', fSFG({legs:[[24,-6,'heel'],[0,0,'flat']], arms:[[0,0,1],[0,0,1]]})
+    + fDIM(-1,32,17,32,'375mm',375),
+    '口令：Shoot the right (left) foot forward!',
+    '彈前右（左）腳半步 375 毫米',
+    '熟咗就交替做：Bend knee + shoot foot']
+], 2, '第3章§1–2・一般集會用「Alert!」就夠；Attention／Shun 留俾典禮');
+
+/* 2. 稍息・休息・回立正〔第3章§2〕 */
+function fBKN(loose){
+  var s = '<rect x="-9" y="-22" width="18" height="26" rx="6" fill="'+fA2+'"/>'
+    + '<circle cx="0" cy="-28" r="5.4" fill="'+fA+'"/>'
+    + fln(-9,-18,-16,loose?4:-4, fA, 2.8) + fln(9,-18,16,loose?4:-4, fA, 2.8)
+    + fln(-16,loose?4:-4,-2,loose?8:2, fA, 2.8) + fln(16,loose?4:-4,2,loose?8:2, fA, 2.8)
+    + '<rect x="-6" y="0" width="12" height="5.5" rx="2.4" fill="'+fA+'"/>';
+  return s + fln(-40,27.5,40,27.5,'#B9B3A6',1.3);
+}
+D.cer.rest = fDGR('稍息・休息・回立正（第3章§2）', [
+  ['① 稍息 Stand at — ease!', fTOP({sp:30, gap:15, arc:1, mm:305, dim:'305mm'}),
+    '提左腳至大腿平行，再用力向外踏下',
+    '打數 Out!・腳踭分開 305mm（約同肩膊闊）',
+    '雙腳腳掌平放、膝蹬直、重心放兩腳之間'],
+  ['② 稍息 手部', fBKN(0),
+    '雙手沿身體向後移至身後中央，由拳變掌',
+    '右掌疊於左掌上，雙手母指緊扣',
+    '所有手指及手踭蹬直，頸至頭保持立正向前'],
+  ['③ 休息 Stand — easy!', fBKN(1),
+    '口令無打數：只係將雙手手踭自然放鬆',
+    '除手踭外，其餘與稍息完全相同',
+    '回稍息：喊「Squad!」手踭用力拉緊蹬直'],
+  ['④ 回立正 Alert!（打數 In!）', fSFG({legs:[[86,10,'toe'],[0,0,'flat']], arms:[[-16,-30,1],[-20,-34,1]]})
+    + fARC(0,0,16,86,0),
+    '左腳尖微微指向地下，用力踏回右腳旁',
+    '雙手由掌變拳沿身體向前移至拇指貼褲骨',
+    '⚠️ 立正↔休息唔可以直接互轉，要經稍息']
+], 2, '《步操手冊》第3章§2・原地動作一律用標準停頓時距（每分鐘 40 個動作）');
+
+/* 3. 原地四轉〔第3章§3–6〕 */
+function fTURN(ang, pivotLabel){
+  var body = '<rect x="-6" y="-11" width="12" height="22" rx="5" fill="'+fA+'"/>'
+    + '<circle cx="0" cy="-15" r="4" fill="'+fA+'"/>'
+    + fln(0,-11,0,-24,'#1B5E20',1.6,1) + '<path d="M-3,-21 L0,-26 L3,-21 z" fill="#1B5E20"/>';
+  var feet = fTOP({sp:0, gap:4});
+  return body + '<g transform="translate(0,26) scale(0.7)">'+feet+'</g>'
+    + fARC(0,0,26,0,ang) + fdot(6,19,2.2,fAT) + (pivotLabel||'');
+}
+D.cer.turns = fDGR('原地轉法：向右・向左・向後・斜轉（第3章§3–6）', [
+  ['① 向右轉 90 度', fTURN(90),
+    'Turning, right — turn!／One—Two—Three—One',
+    '軸心：右腳腳踭＋左腳腳尖；用頭、肩、身體的力轉',
+    '「Two—Three」係停留時間冇動作'],
+  ['② 向左轉 90 度', fTURN(-90),
+    'Turning, left — turn!／One—Two—Three—One',
+    '軸心：左腳腳踭＋右腳腳尖',
+    '第二分部：提左膝？唔係 — 向左轉就提右膝至大腿平行'],
+  ['③ 向後轉 180 度', fTURN(180),
+    '口令 Turning, about — turn!',
+    '以右腳踭＋左腳尖為軸，向右轉 180 度',
+    '然後提左腳踏回右腳旁（打數 One）'],
+  ['④ 向左／右斜轉 45 度', fTURN(45),
+    '口令 Inclining, left/right — Incline!',
+    '做法同向左／右轉，只係角度改為 45 度',
+    '打數一樣 One—Two—Three—One']
+], 2, 'by numbers：Squad One 轉身、Squad Two 提膝併腳；熟咗先連貫做');
+
+/* 4. 原地向前敬禮〔第3章§7〕 */
+D.cer.salute3 = fDGR('原地向前敬禮（第3章§7）・Up—Two—Three—Down', [
+  ['① 預備（立正）', fFGG({rArm:'down'}),
+    'Saluting, salute to the front — salute!',
+    '打數 Up—Two—Three—Down',
+    '左手握拳緊貼褲骨，雙腳腳掌平放'],
+  ['② 「Up」向橫提至與肩膊平', fFGG({rArm:'side'})
+    + fln(-30,-22,30,-22,'#90A4AE',1,1) + T(0,-31,'肩膊水平線',6.6,'#6D4C41','middle'),
+    '右手向橫提昇直至與肩膊平',
+    '同時將右手握成童軍敬禮手號',
+    '先向橫提至與肩膊平，先至擺前臂'],
+  ['③ 「Up」前臂擺至右眼對上', fFGG({rArm:'at'}),
+    '用力將右前臂擺至食指於右眼對上的位置',
+    '右食指喺右眼眼球中心對上 25 毫米',
+    '右手前臂與指尖成一直線・頭向前望'],
+  ['④ 「Down」放回褲骨', fFGG({rArm:'down'}) + fARC(22,-20,9,180,270),
+    '右手用最短的距離握拳放回右邊褲骨',
+    '分部：Saluting by numbers… one!',
+    '「Two—Three」係停留時間冇動作']
+], 2, '第3章§7・25mm 係手冊數字；「指尖接帽沿／眉梢」屬中式講法');
+
+/* 5. 橫移〔第3章§8〕 */
+D.cer.sidepace = fDGR('橫移 The side pace（第3章§8）・每步 300mm', [
+  ['① One! 左腳向左橫移', (function(){
+      var s = fln(0,-26,0,12,'#90A4AE',1,1);
+      var tr = fpv(4,0,150,17); s += '<path d="M4,0 L'+frd(tr[0])+','+frd(tr[1])+'" stroke="'+fA+'" stroke-width="6.4" stroke-linecap="round" data-ang="30"/>';
+      var go = fpv(-8,0,210,17); s += '<path d="M-8,0 L'+frd(go[0])+','+frd(go[1])+'" stroke="#90A4AE" stroke-width="6.4" stroke-linecap="round" opacity="0.45"/>';
+      var gn = fpv(-23,0,210,17); s += '<path d="M-23,0 L'+frd(gn[0])+','+frd(gn[1])+'" stroke="'+fA+'" stroke-width="6.4" stroke-linecap="round" data-ang="30"/>';
+      return s + fDIM(-8,22,-23,22,'300mm',300);
+    })(),
+    '左腳向左邊橫移 300 毫米，右腳保持原位',
+    '口令 Left close march — one!／打數 One!',
+    '雙膝蹬直、握拳貼褲骨、身向前'],
+  ['② Two! 併返腳', fSFG({legs:[[0,0,'flat'],[88,10,'toe']], arms:[[0,0,1],[0,0,1]]}) + fARC(0,0,16,88,0),
+    '提右膝至大腿與地面平行，右小腿放鬆',
+    '打數 Two!・用力將右腳踏在左腳旁',
+    '姿勢回復立正向前'],
+  ['③ 多於一步：每步後加「Up」', (function(){var g='';for(var i=0;i<4;i++){g+=fln(-30+i*20,10,-30+i*20,-6,'#90A4AE',5.4,i===3?0:1);}return g+fDIM(-30,20,30,20,'300mm × 4',1200);})(),
+    '打數序列：One — Two — Up — One — Two ···',
+    '最後一步完成之後唔再加「Up」',
+    '向右橫移就係 Right close — march!，動作相反'],
+  ['④ 步數上限', (function(){var g='';for(var i=0;i<8;i++){g+='<rect x="'+frd(-44+i*11)+'" y="-2" width="10.6" height="14" rx="2.6" fill="#C8E6C9" stroke="#90A4AE" stroke-width="0.8"/>';}return g+T(0,-10,'8 步上限',7.6,'#C62828','middle',1);})(),
+    '⚠️ 橫移嘅步數不得多於 8 步',
+    '排長要移動先 8 步以內用橫移，超過就要用別嘅方法',
+    '成個動作期間身軀保持立正向前']
+], 2, '第3章§8・橫移用於調整位置；步操唔准用嚟罰人（第2章§3.1）');
+
+/* 6. 快步開步〔第4章§1〕 */
+function fSTRIDE(front){
+  var s = front
+    ? fSFG({lean:0, legs:[[26,-6,'heel'],[0,0,'flat']], arms:[[-78,-88,1],[74,84,1]]})
+    : fSFG({lean:0, legs:[[0,0,'flat'],[26,-6,'heel']], arms:[[78,88,1],[-74,-84,1]]});
+  return s + fDIM(-19,33,18.5,33,'750mm',750);
+}
+D.cer.qmarch = fDGR('快步行進：開步與三步（第4章§1）・116 步/分鐘', [
+  ['① Left! 左腳行前一步', fSTRIDE(1),
+    '左腳行前 750 毫米，右腳腳掌平放地面',
+    '右手向前提升至與肩膊平、左手盡量拉後',
+    '打數 Left!（分部口令 Marching by numbers, quick march — one!）'],
+  ['② Right! 右腳行前一步', fSTRIDE(0),
+    '右腳行前 750 毫米，左腳腳掌平放',
+    '左手向前提升至與肩膊平、右手盡量拉後',
+    '重心放喺雙腳之間、雙膝蹬直'],
+  ['③ Left! 繼續交替', fSTRIDE(1) + fln(30,-30,44,-30,fAT,1.4) + '<path d="M44,-34 L52,-30 L44,-26 z" fill="'+fAT+'"/>',
+    '第三分部同第一分部一樣（左腳）',
+    '打數 Left — Right — Left ···',
+    '每分鐘 116 步，連貫做出三個分部動作'],
+  ['④ 三種開步口令', (function(){
+      return '<rect x="-52" y="-28" width="104" height="14" rx="4" fill="#fff" stroke="#C7D8C2"/>'
+        + T(0,-19,'多於一排：By the left',6.4,'#333','middle')
+        + '<rect x="-52" y="-12" width="104" height="14" rx="4" fill="#fff" stroke="#C7D8C2"/>'
+        + T(0,-3,'面向前後：Squad will advance',6.4,'#333','middle')
+        + '<rect x="-52" y="4" width="104" height="14" rx="4" fill="#fff" stroke="#C7D8C2"/>'
+        + T(0,13,'一排：Step off together',6.4,'#333','middle');
+    })(),
+    '面向前／後要加「Squad will advance（retire）」',
+    '「Step off together」用於一排時',
+    '開步嘅動令「march」喺右腳踭著地時發出'],
+  ['⑤ 慢步版（第5章§1）', fSFG({legs:[[17,-4,'heel'],[0,0,'flat']], arms:[[0,0,1],[0,0,1]]}) + fDIM(-1,33,18.5,33,'375mm',375),
+    '第一分部：左腳行前半步 375mm（外側斜向離地）',
+    '第二分部「Left foot — forward!」先完成 750mm',
+    '每分鐘 65 步：行到 375mm 時稍作停頓配合時間']
+], 2, '第4章§1・第5章§1・動令落邊隻腳請對「口令與動令時間表」卡');
+
+/* 7. 快步停步〔第4章§2〕 */
+D.cer.qhalt = fDGR('快步行進間停步（第4章§2）・Squad — HALT!', [
+  ['① Freeze!（右腳多行一步）', fSFG({legs:[[0,0,'flat'],[26,-6,'heel']], arms:[[74,84,1],[-78,-88,1]]}) + fDIM(-18.5,33,19,33,'750mm',750),
+    '右腳行前一步 750mm，左手前提、右手拉後',
+    '動令喺左腳腳踭著地時發出',
+    '重心放右腳、左腳尖著地、腳踭離地'],
+  ['② One!（左腳半歩）', fSFG({legs:[[15,-4,'flat'],[0,0,'flat']], arms:[[-70,-80,1],[66,76,1]]}) + fDIM(-1,33,18.5,33,'375mm',375),
+    '左腳行前半步 375 毫米',
+    '左腳腳掌平放、右腳尖著地',
+    '右手前提、左手拉後、身軀挺直'],
+  ['③ Two!（踏回並夾手）', fSFG({legs:[[0,0,'flat'],[88,10,'toe']], arms:[[-14,-24,1],[14,24,1]]}) + fARC(0,0,15,88,0),
+    '右腳向前提高至大腿與地面平行',
+    '同一時間將雙手用力夾回褲骨旁邊',
+    '然後踏下右腳在左腳旁，回復立正'],
+  ['④ 速度分配', (function(){
+      return '<path d="M-40,6 L-4,-14" stroke="#0D47A1" stroke-width="1.6" marker-end="none"/>'
+        + T(-22,-20,'一 → 二：116 步速',6.6,'#0D47A1','middle')
+        + '<path d="M4,6 L40,-20" stroke="#C62828" stroke-width="2.2"/>'
+        + T(24,-26,'二 → 三：雙倍速度',6.6,'#C62828','middle',1)
+        + fln(-40,10,40,10,'#B9B3A6',1.2);
+    })(),
+    '第一至第二分部照行進速度做',
+    '第二至第三分部要以雙倍速度完成',
+    '全隊打數：One — Two']
+], 2, '第4章§2・Freeze／One／Two 逐個做熟，先至連貫做完全動作');
+
+/* 8. 行進間向左／右轉〔第4章§3–4〕 */
+D.cer.marchturn = fDGR('行進間向左／向右轉（第4章§3–4）・Check — Down', [
+  ['① Freeze! 多行一步', fSFG({legs:[[24,-6,'heel'],[0,0,'flat']], arms:[[-74,-84,1],[78,88,1]]}) + fDIM(-19,33,18.5,33,'750mm',750),
+    '向左轉：左腳行前一步 750mm（重心放左腳）',
+    '動令 Down 喺右腳踭著地時發出',
+    '向右轉就係右腳行前一步，動作相反'],
+  ['② Two! 提膝夾手', fSFG({legs:[[0,0,'flat'],[88,10,'toe']], arms:[[-14,-24,1],[14,24,1]]}) + fARC(0,0,15,88,0),
+    '將右膝向前提起至大腿與地面平行',
+    '同一時間雙手用力夾回褲骨旁邊',
+    '左腳腳掌平放、膝蹬直，重心放左腳'],
+  ['③ Three! 以腳踭為軸轉 90 度', fTURN(90) + fDIM(6,34,25,34,'375mm',375),
+    '以左腳腳踭為軸向左轉 90 度',
+    '踏下右腳至左腳旁，並立即伸出半步 375mm',
+    '向右轉：以右腳踭為軸、向左轉就換邊'],
+  ['④ Forward! 繼續操', fSTRIDE(1),
+    '左腳繼續完成一步 750mm',
+    '向前提升之手要提升至與肩膊平',
+    '打數 Forward!・以每分鐘 116 步繼續向前操']
+], 2, '第4章§3–4・四分部（Freeze／Two／Three／Forward）逐個做熟先連貫');
+
+/* 9. 行進間向後轉〔第4章§5〕 */
+D.cer.marchabout = fDGR('行進間向後轉（第4章§5）・In—Left—Right—Left—Forward', [
+  ['① In! 收腳', fSFG({legs:[[22,-5,'flat'],[0,0,'flat']], arms:[[-16,-26,1],[16,26,1]]})
+    + fDIM(-15,33,22.5,33,'750mm',750) + fDIM(22.5,26,30,26,'150mm',150),
+    '左腳行前一步 750mm，右手前提左手拉後',
+    '右腳繼續行前一小步 150 毫米，同時夾手回褲骨',
+    '右腳踭緊貼左腳腳掌內側、雙膝蹬直'],
+  ['② Left! 轉 90 度', fTURN(90),
+    '提左腳至大腿與地面平行',
+    '同時以右腳腳踭為軸向右轉 90 度',
+    '盡快將左腳踏於右腳旁（已面向新方向）'],
+  ['③ Right! 再轉 90 度', fTURN(90),
+    '提右腳至大腿與地面平行',
+    '以左腳腳踭為軸再向右轉 90 度',
+    '踏右腳於左腳旁 — 兩段合埋即 180 度'],
+  ['④ Left! → Forward! 繼續操', fSTRIDE(0),
+    '提左腳踏回右腳旁，然後右腳行前 750mm',
+    '左手前提、右手拉後，回復行進姿勢',
+    '初學可將①②合併做（打數 In — Left）']
+], 2, '第4章§5・向後轉係兩次 90 度，唔准一腳掃過去');
+
+/* 10. 行進間換步〔第4章§6〕 */
+D.cer.changestep = fDGR('行進間換步（第4章§6）・Changing step, change — step!', [
+  ['① Left! 行前一步', fSTRIDE(1),
+    '左腳行前 750mm，右手前提左手拉後',
+    'Change 喺左腳踭著地、Step 喺右腳踭',
+    '右腳腳尖著地、腳踭離地'],
+  ['② Right! 踏喺左腳踭後', fSFG({legs:[[0,0,'flat'],[70,50,'toe']], arms:[[-16,-26,1],[16,26,1]]})
+    + '<circle cx="-3" cy="26" r="3" fill="none" stroke="'+fAD+'" stroke-width="1.2" data-note="heel"/>',
+    '右腳向前提高至大腿與地面平行，夾手回褲骨',
+    '右腳踏下於左腳腳踭後，內側緊貼左腳踭',
+    '⚠️ 呢格就係有冇換啱腳嘅關鍵'],
+  ['③ Left! 恢復行進', fSTRIDE(1),
+    '左腳行前一步 750mm 繼續操',
+    '後兩步要以雙倍速度完成',
+    '全隊打數 Left — Right — Left'],
+  ['④ 也可以左右相反', fSFG({legs:[[0,0,'flat'],[24,-6,'heel']], arms:[[74,84,1],[-78,-88,1]]}),
+    '手冊註：動令時間可左右相反',
+    '動作手脚同時相反，打數改為 Right — Left — Right',
+    '教識先試相反版，唔好兩版溝住用']
+], 2, '第4章§6・換步喺行進間完成，唔使停低（Change／Step 要連續發出）');
+
 /* 《步操手冊》第7章：旗手四式側面姿勢（竿角為重點） */
 D.cer.colour = svg(340,296,'旗操四式：持旗立正／攜旗／托旗／原地敬禮',
   MK
@@ -210,7 +578,7 @@ D.cer.drill = svg(340,168,'中式隊列基本動作示意圖',
   +T(0,-28,'步幅750mm',9.5,'#2E7D32')
   +'</g>'
   +T(290,112,'C 齊步——走',11,'#333',null,1)
-  +T(290,128,'左腳先行・每分鐘116步',9.5,'#8D6E63')
+  +T(290,128,'左腳先行・116 步/分',9.5,'#8D6E63')
   +T(170,158,'口令＝介令＋預令＋動令；原地停 1.5 秒；唔准用步操罰人',9.5,'#8D6E63')
 );
 

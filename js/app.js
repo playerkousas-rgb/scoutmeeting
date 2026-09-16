@@ -149,6 +149,15 @@ App.cerFig = function(c){
   return App.ph('cer-'+c.fig, c.figcap || '位置示意圖解', svgAlt);
 };
 
+/* 逐步圖解（手繪 SVG，照《步操手冊》分部動作）；冇呢個 key 就乜都唔出 */
+App.cerDgm = function(k, cap){
+  var dk = (k && typeof DIAGRAMS!=='undefined' && DIAGRAMS.cer) ? DIAGRAMS.cer[k] : '';
+  if(!dk) return '';
+  return '<details class="dgm-fold"><summary>📐 分部動作圖解（'+(cap||k)+'）— 撳開睇，列印會自動展開</summary>'
+    + '<figure class="dgm-fig"><div class="dgm-wrap">'+dk+'</div><figcaption>📐 '+(cap||'分部動作圖解')
+    + '・角度／距離已照手冊標示，可對住示範</figcaption></figure></details>';
+};
+
 App.printSec = function(el){
   if(!el || typeof document==='undefined' || !document.body) return;
   var doc = document;
@@ -161,6 +170,7 @@ App.printSec = function(el){
     Array.prototype.forEach.call(clone.querySelectorAll('.print-btn,.subnav,.chiprow,.no-print,button,input[type=checkbox]'), function(n){
       if(n.parentNode) n.parentNode.removeChild(n);
     });
+    Array.prototype.forEach.call(clone.querySelectorAll('details'), function(d){ d.open = true; });
   }
   var head = doc.createElement('div');
   head.className = 'pz-head';
@@ -658,8 +668,8 @@ App.ceremonySec = function(c, full){
   } else if(!full){
     body += '<div class="callout">⚠️ 呢套程序仍待官方核對，暫時只有文字＋參考文件連結；帶之前請先問熟悉程序之領袖。</div>';
   }
-  if(c.steps) body += '<ol class="steps">'+c.steps.map(function(st){return '<li><b>'+st.h+'</b>：'+st.d+'</li>';}).join('')+'</ol>';
-  if(c.types) body += '<ul class="bullet">'+c.types.map(function(t){return '<li><b>'+t.t+'：</b>'+t.d+'</li>';}).join('')+'</ul>';
+  if(c.steps) body += '<ol class="steps">'+c.steps.map(function(st){return '<li><b>'+st.h+'</b>：'+st.d+(st.dgm?App.cerDgm(st.dgm, st.dgmc||st.h):'')+'</li>';}).join('')+'</ol>';
+  if(c.types) body += '<ul class="bullet">'+c.types.map(function(t){return '<li><b>'+t.t+'：</b>'+t.d+(t.dgm?App.cerDgm(t.dgm, t.dgmc||t.t):'')+'</li>';}).join('')+'</ul>';
   if(c.when_to_salute) body += '<p><b>使用場合：</b></p><ul class="bullet">'+c.when_to_salute.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';
   if(c.safety) body += '<p class="safety"><b>⚠️ 注意：</b>'+c.safety+'</p>';
   if(c.note) body += '<div class="callout warn">'+c.note+'</div>';
