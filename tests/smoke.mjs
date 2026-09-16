@@ -718,6 +718,13 @@ console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間�
   }
   const html = readFileSync(root+'index.html','utf8');
   if (html.indexOf('營火會') < 0 || /<span>🔥<\/span>營火歌/.test(html)) { console.error('❌ index.html nav 未改做「營火會」'); process.exit(1); }
+  {
+    const mf = JSON.parse(readFileSync(root+'manifest.webmanifest','utf8'));
+    if (mf.description.indexOf('跟住做') >= 0 || mf.description.indexOf('營火歌') >= 0) {
+      console.error('❌ manifest description 仲有舊寫法（跟住做／營火歌）'); process.exit(1);
+    }
+    if (!mf.shortcuts.some(s => s.name.indexOf('營火會') >= 0)) { console.error('❌ manifest 捷徑未改做「營火會」'); process.exit(1); }
+  }
   /* 6) 制服：局部放大圖＋旅巾圖 */
   if (!ctx.DIAGRAMS.uniform.zoom || !/^<svg /.test(ctx.DIAGRAMS.uniform.zoom)) { console.error('❌ 冇徽章局部放大圖'); process.exit(1); }
   if (ctx.DIAGRAMS.uniform.zoom.indexOf('3cm') < 0 || ctx.DIAGRAMS.uniform.zoom.indexOf('1cm') < 0) { console.error('❌ 放大圖冇標實際距離'); process.exit(1); }
