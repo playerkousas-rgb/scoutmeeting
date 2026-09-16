@@ -13,18 +13,22 @@ const ok = (c, msg) => { console.log((c ? '✓ ' : '✗ FAIL ') + msg); if (!c) 
 
 /* ── 極簡 DOM stub（夠 render 用）── */
 function el(tag){
+  const classes = new Set();
   const o = {
-    tagName: (tag || 'div').toUpperCase(), innerHTML: '', className: '', textContent: '', value: '', href: '', id: '', title: '',
+    tagName: (tag || 'div').toUpperCase(), innerHTML: '', textContent: '', value: '', href: '', id: '', title: '',
     style: {}, dataset: {}, children: [], parentNode: null, attrs: {},
-    classList: { _s: new Set(),
-      add(...c){ c.forEach(x => this._s.add(x)); }, remove(...c){ c.forEach(x => this._s.delete(x)); },
-      toggle(c, v){ if (v === undefined) v = !this._s.has(c); v ? this._s.add(c) : this._s.delete(c); }, contains(c){ return this._s.has(c); } },
+    /* className 同 classList 要同步（同真瀏覽器一樣），否則行為測試冇意義 */
+    classList: { add(...c){ c.forEach(x => classes.add(x)); }, remove(...c){ c.forEach(x => classes.delete(x)); },
+      toggle(c, v){ if (v === undefined) v = !classes.has(c); v ? classes.add(c) : classes.delete(c); return v; },
+      contains(c){ return classes.has(c); } },
     appendChild(c){ if (c) { if (c.parentNode) c.parentNode.children.splice(c.parentNode.children.indexOf(c), 1); c.parentNode = o; o.children.push(c); } return c; },
     insertBefore(c){ return o.appendChild(c); },
     removeChild(c){ const i = o.children.indexOf(c); if (i >= 0) { o.children.splice(i, 1); c.parentNode = null; } return c; },
     setAttribute(k, v){ o.attrs[k] = v; if (k === 'id') o.id = v; if (k === 'class') o.className = v; if (k.startsWith('data-')) o.dataset[k.slice(5)] = v; },
     getAttribute(k){ return o.attrs[k] !== undefined ? o.attrs[k] : null; },
     removeAttribute(k){ delete o.attrs[k]; }, addEventListener(){}, focus(){}, click(){}, remove(){}, matches(){ return false; },
+    get className(){ return [...classes].join(' '); },
+    set className(v){ classes.clear(); [...String(v || '').split(/\s+/)].filter(Boolean).forEach(c => classes.add(c)); },
     cloneNode(){ const c = el(o.tagName); c.innerHTML = o.innerHTML; c.className = o.className; return c; },
     _all(out){ (o.children || []).forEach(c => { out.push(c); if (c._all) c._all(out); }); return out; },
     querySelectorAll(sel){ const cls = sel.replace(/^\./, '');
@@ -92,6 +96,38 @@ for (const m of DATA.meetings) {
     const panes = node.querySelectorAll('.tabpane');
     ok(panes.length >= 1, m.tid + ' 教案 render（' + panes.length + ' 版）');
   } catch (e) { ok(false, m.tid + '：' + e.message); }
+}
+
+/* 行為測試：教案頁「撳掣即換版」（唔係錨點跳位） */
+{
+  const page = App.renderMeeting('c16');
+  const panes = page.querySelectorAll('.tabpane');
+  const btns = page.querySelectorAll('.filter-btn');
+  ok(panes.length >= 2 && btns.length === panes.length, 'c16 每節一個分頁掣（' + panes.length + ' 版）');
+  const visible = () => panes.filter(p => !p.classList.contains('hidden'));
+  ok(visible().length === 1, '一開頭只顯示一版');
+  btns[2].onclick();
+  const vis2 = visible();
+  ok(vis2.length === 1 && vis2[0] === panes[2], '撳第 3 個掣 → 只換成第 3 版（' + (vis2[0] ? vis2[0].getAttribute('data-pane') : '冇') + '）');
+  const act = btns.filter(b => b.classList.contains('active'));
+  ok(act.length === 1 && act[0] === btns[2], 'active 狀態只落喺撳過嗰個掣');
+  ok(btns[2].getAttribute('aria-selected') === 'true' && btns[0].getAttribute('aria-selected') === 'false', 'aria-selected 有跟住更新');
+  /* 行動裝置／列印：所有 pane 都仍然喺 DOM（列印時 CSS 會全部展開） */
+  ok(panes.length === page.querySelectorAll('.tabpane').length, '分頁內容冇被移除（列印全部展開）');
+}
+
+/* 行為測試：活動庫分類掣（即換內容・唔影響其他篩選） */
+{
+  const page = App.pages.play();
+  const cards = page.querySelectorAll('.game-card');
+  const btns = page.querySelectorAll('.filter-btn');
+  ok(cards.length === DATA.games.length && btns.length >= 2, '活動庫 ' + cards.length + ' 張卡＋' + btns.length + ' 個分類掣');
+  btns[1].onclick();
+  const cat = btns[1].getAttribute('data-cat');
+  const shown = cards.filter(c => !c.classList.contains('hidden'));
+  ok(shown.length > 0 && shown.every(c => c.getAttribute('data-cat') === cat), '撳「' + cat + '」只顯示該類遊戲（' + shown.length + ' 個）');
+  btns[0].onclick();
+  ok(cards.filter(c => !c.classList.contains('hidden')).length === cards.length, '撳「全部」還原所有遊戲');
 }
 
 /* 畫面唔應該漏 undefined */

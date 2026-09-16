@@ -147,10 +147,13 @@ App.filterbar = function(items, cur, pick, root){
     var b = App.h('button','filter-btn'+((it.k===cur)?' active':''), (it.ic?it.ic+' ':'')+it.n);
     b.setAttribute('data-k', it.k);
     b.setAttribute('role','tab');
+    b.setAttribute('aria-selected', (it.k===cur)?'true':'false');
     b.onclick = function(){
-      if (b.classList) b.classList.add('active');
-      var sib = bar.children || [];
-      Array.prototype.forEach.call(bar.querySelectorAll('.filter-btn'), function(x){ if(x!==b && x.classList) x.classList.remove('active'); });
+      Array.prototype.forEach.call(bar.querySelectorAll('.filter-btn'), function(x){
+        var on = (x===b);
+        if (x.classList) x.classList.toggle('active', on);
+        x.setAttribute('aria-selected', on?'true':'false');
+      });
       if (root) App.showPane(root, it.k);
       pick(it.k);
     };
@@ -164,6 +167,8 @@ App.showPane = function(root, key){
   if (!root || !root.querySelectorAll) return;
   Array.prototype.forEach.call(root.querySelectorAll('.tabpane'), function(p){
     var on = p.getAttribute('data-pane') === key;
+    p.setAttribute('role','tabpanel');
+    p.setAttribute('aria-hidden', on?'false':'true');
     if (p.classList) p.classList.toggle('hidden', !on); else p.style.display = on ? '' : 'none';
   });
 };
@@ -1056,7 +1061,7 @@ App.pages.print = function(){
 App.printPanel = function(cat){
   var box = App.h('div','');
   if (cat === 'ws') {
-    var wsHtml = '<p class="mut">集會目錄每場教案入面都有同一份工作紙（跟住做時一齊印）；呢度係「淨係想印某張」嘅入口。</p>';
+    var wsHtml = '<p class="mut">同集會目錄每場教案用嘅係同一份工作紙。</p>';
     [{k:'會員章 c01–c06', from:0, to:6},{k:'探索 c07–c12', from:6, to:12},
      {k:'探索 c13–c18', from:12, to:18},{k:'標準／總結 c19–c24', from:18, to:24}].forEach(function(g){
       var list = DATA.meetings.slice(g.from,g.to).filter(function(m){return m.full&&m.data&&m.data.worksheet;});
@@ -1155,15 +1160,24 @@ App.pages.play = function(){
   var cats = [];
   DATA.games.forEach(function(g){ if(cats.indexOf(g.cat)<0) cats.push(g.cat); });
   var filt = App.h('div','filters');
+  filt.setAttribute('role','tablist');
   [{k:'all',n:'全部'}].concat(cats.map(function(c){return {k:c,n:c};})).forEach(function(b,i){
     var btn = App.h('button','filter-btn'+(i===0?' active':''),b.n);
     btn.setAttribute('data-cat',b.k);
+    btn.setAttribute('role','tab');
+    btn.setAttribute('aria-selected', i===0?'true':'false');
     btn.onclick = function(){
-      document.querySelectorAll('#view .filter-btn').forEach(function(x){x.classList.remove('active');});
-      btn.classList.add('active');
+      /* 只喺自己條 bar 切 active（唔會影響頁面其他篩選）＋即時換內容 */
+      Array.prototype.forEach.call(filt.querySelectorAll('.filter-btn'), function(x){
+        if(x.classList) x.classList.remove('active');
+        x.setAttribute('aria-selected','false');
+      });
+      if(btn.classList) btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
       var cat = b.k;
-      document.querySelectorAll('.game-card').forEach(function(card){
-        card.style.display = (cat==='all'||card.getAttribute('data-cat')===cat)?'':'none';
+      Array.prototype.forEach.call(wrap.querySelectorAll('.game-card'), function(card){
+        var on = (cat==='all' || card.getAttribute('data-cat')===cat);
+        if (card.classList) card.classList.toggle('hidden', !on); else card.style.display = on?'':'none';
       });
     };
     filt.appendChild(btn);

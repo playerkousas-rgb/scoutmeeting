@@ -617,3 +617,14 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 - 測試：smoke 加 v33 block（4／4／4／8 數量、關鍵字、圖齊、分頁 render、自查清單含領帶／巾圈／皮帶）、新 `plotCheck()` 檢查 SVG 文字唔出框。
 - SW cache → `scout-v33-c24-20260916`。
 - QA 手法（新）：冇 chromium／playwright，所以寫咗 `/tmp/svg2png.py`（純 Python 極簡 SVG rasterizer）＋`/tmp/svgaudit.mjs`（幾何座標出框檢查）嚟肉眼睇手繪圖——**只放 /tmp，唔入 repo**。
+
+## 29. v33 收尾：讀完 Drive #8＋互動測試＋無障礙
+
+- **Drive #8（`1sHG952U73znOwhSnZzoRpO1oSm_xZONG`）已讀**＝第五章「勳章及獎勵」＋第六章附錄（禮服／晚禮服款式、晚禮服黑色硬帽編號 UM01–UM05、金屬職級肩章）。**全部係成年成員／總監勳章範疇**，同 §3 用戶約定（範圍收斂：只做會員章＋日常集會）唔相關 → **決定唔入 app**，避免又開新範圍。連帶：#7 chunk 1 亦已讀（只係上頁最後一句）。
+- 手冊第三章現況：3.1／3.2／3.3／3.4／3.5／3.6 已落地；**3.7 制服毛衣、3.8 附加配件仍係掃描圖（無文字層）**，未有紙本可核對前唔寫。
+- 互動修正：
+  1. 活動庫分類掣唔再用全域 `document.querySelectorAll('#view .filter-btn')` 清 active（會誤清其他篩選 bar）→ 改為只喺自己條 bar 切換，卡片篩選 scope 喺本頁 `wrap`，並補 `role="tablist"`／`aria-selected`。
+  2. `App.filterbar`／`App.showPane` 補 `role="tab"`／`aria-selected`／`role="tabpanel"`／`aria-hidden`。
+  3. 素材庫工作紙嗰句「（跟住做時一齊印）；呢度係「淨係想印某張」嘅入口」＝agent 味 → 改寫成「同集會目錄每場教案用嘅係同一份工作紙。」
+- 測試（`tests/runtime.mjs`）：**(1) 行為測試**——撳第 3 個分頁掣 → 只顯示第 3 版、active／aria-selected 跟住移；活動庫撳分類 → 只顯示該類、撳「全部」還原。**(2) DOM stub 升級**：`className` 同 `classList` 同步（用 accessor），否則「一開頭只顯示一版」呢類測試會假過。
+- 文件：README 手動 QA 清單加 v32／v33 項目（分頁唔跳位、列印展開、活動篩選、制服配件、營火會區塊）；POSITIONING.md 字眼「營火歌」→「營火會」。
