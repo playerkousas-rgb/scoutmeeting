@@ -460,3 +460,30 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 
 ### 仍未有文字層（要紙本／再拆檔先補到）
 第7章 §1–§8（持旗立正・持旗稍息・攜旗・托旗・換手）；附錄乙「發出動令時間及打數表」總表（各節已散見，但總表冇）；附錄丙「檢閱會操」程序表前半（讀到嘅由 Seq 34 開始）。
+
+---
+
+## 23. v27：旗操 12 節全本＋附錄乙／丙落地（2026-09-16）
+
+用戶連_send_三次「我幫你一下」再講「繼續補」，意思係將《步操手冊》剩低未落地嘅章節全部補完。
+
+**⚠️ 最重要教訓（寫低以免再犯）**：上一輪我講「第7章 §1–§8、附錄乙、附錄丙前半電子檔冇文字層，要照紙本核對」——**全部錯**。手冊被用戶拆成 8 份 Drive 檔，每份有 2–3 個 chunk，`fetch_page` 只返第一 chunk，我冇讀 `totalChunks` 之後嘅部分就落結論。**規則：任何「讀唔到／要照紙本核對」嘅講法，必須先確認嗰份檔所有 chunk 都讀完。**
+
+**新增兩張儀式卡（`CEREMONY.cards` 而家 12 張）**
+- `colour` 旗操（第7章 §1–§12 全抄改寫）：持旗立正 Order・持旗稍息（兩腳踭 300mm、左手握拳蹬直拇指貼褲骨）・攜旗 Carry（右手提至身體正中央、竿底對準旗套、完成時右前臂與地面平行、右手喺口部對出、手背向前）・托旗 Slope（竿放右肩、**竿與地面 45 度**、旗身覆蓋竿由肩至手唔准外露）・換手（先提竿至右手肩膊水平再擺上左肩）・托旗↔攜旗（**轉托旗之前必須先轉為右手攜旗**）・讓旗幟飄揚／抓回（風大可用左手協助）・原地敬禮 Lower（向右橫掃、竿頂喺右腳前方微微離地、**竿夾腋下**、⚠️眼球必須向前直望唔准望住旗竿郁、雨天／泥濘橫掃至與地面平行就得）・慢／快步行進間敬禮（快步聽「Right」之後要繼續向前操兩步）·步操旗手口令（Carry／Slope／Order／Present — COLOUR）·旗手口號（CARRY COLOUR! 分三路、ORDER COLOUR!／AT EASE!／SALUTE!／CARRY ON!，全隊回 AW-AWAY-YEA，喊口號時旗置胸前）。重點 types：四種竿角（垂直／垂直／45°／平行）就係判別依據；口號「行進間用 Order Colour，停低就 Slope Colour」要糾正。
+- `commands` 口令與動令時間表：附錄甲（介令／預令／動令結構、Attention 只用於典禮、日常用 Alert、Open/Close March 預備「Double time」要連續、Squad CLOSE MARCH 两步完成、Blank file 唔准用作隊形、口號要響亮兼有氣魄）＋附錄乙 15 項逐項「動令喺邊隻腳落＋全隊打數」（HALT 快步=左腳踭著地／慢步=左腳經過右腳、QUICK/SLOW-MARCH 落腳位、RIGHT-TURN 打數 CHECK—DOWN、ABOUT-TURN 打數 IN—LEFT—RIGHT—LEFT—FORWARD、MARK-TIME 打數 IN、原地踏步 HALT/FORWARD 喺大腿提高至與地面平行時、CHANGE-STEP 行進間 LEFT—RIGHT—LEFT／原地 LEFT—LEFT—RIGHT、BREAK INTO QUICK/SLOW TIME、DRESS/IN CLINE/OPEN CLOSE ORDER、EYES RIGHT/LEFT + FRONT、RIGHT-FORM 成連時喊、SALUTE TO THE FRONT 長串打數、SALUTE TO THE RIGHT/LEFT UP—TWO—THREE—FOUR—FIVE—DOWN—SWING）＋打數規則（淨喺 ONE/UP—TWO THREE—ONE/DOWN 做動作、原地動作每分鐘 40 個、前後隊員相隔 30 米）。
+- **無 AI 圖**（第 13 次驗證：AI 畫唔啱腳序／手位／竿角）；旗手四式改用新手绘圖解 `D.cer.colour`。
+
+**改動其他卡**
+- `flag`：移除上輪擺落去嘅 5 項旗操 §9–§12 types ＋「§1–§8 冇文字層／照紙本核對」呢類講法，改為一句指向 `#ceremony/colour`（避免兩邊溝）。
+- `march`：補第 6 章 §10 **行進間注目禮**（Eyes — RIGHT (LEFT)! 打數 Up／Check — Up，慢步動令喺右腳腳外側著地、快步喺左腳腳踭著地，⚠️最右（左）前方嗰名隊員唔使轉頭；必須喺列隊期間做）。
+- `parade`：補**附錄丙 檢閱會操 12 步**（RIGHT — MARKER（14 步）→ MARKER OUTWARD — TURN → MARKER — STEADY → GET ON — PARADE（14 步）→ IN OPEN ORDER RIGHT — DRESS → STAND STILL 前／中／後排 → EYES — FRONT → CALL THE ROLL → STAND AT — EASE → PARADE — SHUN）＋**附錄丁結業會操第一號／第二號**收隊段分別（第一號 MOVE TO THE LEFT IN THREES + ON THE LEFT FORM — SQUAD；第二號 MOVE TO THE RIGHT IN THREES + 三次 LEFT — WHEEL），提示「揀咗邊號就成場跟返邊號，唔好溝住用」。
+
+**測試（`tests/smoke.mjs`，而家 151 項全綠）**
+- 新增 v27 斷言組：卡數 ≥12、旗操卡 11 條手冊原文、口令表 7 條、會操卡 8 條、march 注目禮 4 條，以及**禁止**升旗卡再出現「呢份電子檔冇文字層／仍待紙本」呢類過時講法。
+- `DIAGRAMS` 手繪圖解由 37 → **39 張**，全部要過 viewBox 文字溢出檢查（舊有 cer.drill 兩段溢出已縮短至界內）。
+- **新加「竿角幾何斷言」**：由 `D.cer.colour` 度旗竿路徑嘅角度，必須係 90°／90°／45°／≤25°（手冊 §2・§4・§5・§11）。第一次跑就揪出我托旗畫咗 34°，已改返啱 — 呢個做法值得推廣：**圖解入面凡是手冊寫明角度／距離嘅，用斷言度，唔好靠眼**。
+
+**未做／下一步**
+- 手冊第1–5章細節（各動作分部）仍有多 chunk 未逐個核對；如果之後要將每式動作都做圖解，按 §23 個方法（先讀晒 chunk → 寫卡 → 加角度斷言）。
+- 用戶仍可以要求補圖；補圖批次上限 10 張／AVIF／唔出制服／唔出繩結逐步圖，照舊。

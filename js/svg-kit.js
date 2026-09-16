@@ -99,6 +99,54 @@ function MD(n,label,cmd1,cmd2,cnt,note){
     +T(6,46,note,5.9,'#6D4C41','start')+'</g>';
 }
 
+function COL(n,title,angle,detail,kind,cue){
+  var col=(n-1)%2, row=Math.floor((n-1)/2);
+  var x=10+col*164, y=22+row*126;
+  var A='#37474F', F='#8DA9C4', P='#B0793F';
+  var fig='<circle cx="0" cy="-26" r="6" fill="'+A+'"/>'
+    +'<rect x="-6" y="-20" width="12" height="22" rx="5" fill="'+A+'"/>'
+    +'<path d="M-3,2 L-3,20 M4,2 L4,20" stroke="'+A+'" stroke-width="3.4" stroke-linecap="round"/>';
+  var pole='', cloth='';
+  if(kind==='flag 0'){
+    pole='<path d="M11,20 L11,-40" stroke="'+P+'" stroke-width="2.6" stroke-linecap="round"/>'
+      +'<path d="M11,-13 L11,10" stroke="'+A+'" stroke-width="3" stroke-linecap="round"/>';
+    cloth='<path d="M11,-40 q9,4 0,8 q-9,4 0,8 z" fill="'+F+'"/>';
+  } else if(kind==='flag 1'){
+    pole='<path d="M9,-4 L9,-46" stroke="'+P+'" stroke-width="2.6" stroke-linecap="round"/>'
+      +'<path d="M9,-4 L9,2 L2,-6" stroke="'+A+'" stroke-width="3" fill="none" stroke-linecap="round"/>';
+    cloth='<path d="M9,-46 q9,4 0,8 q-9,4 0,8 z" fill="'+F+'"/>';
+  } else if(kind==='flag 2'){
+    // 手冊§5：竿底放喺右肩、竿頭向前上、與地面成 45 度；旗身由肩至手覆蓋竿
+    pole='<path d="M2,-18 L24,-40" stroke="'+P+'" stroke-width="2.6" stroke-linecap="round"/>'
+      +'<path d="M2,-18 L-4,-9" stroke="'+A+'" stroke-width="3" stroke-linecap="round"/>';
+    cloth='<path d="M5,-21 L23,-39 L27,-35 L9,-17 z" fill="'+F+'"/>';
+  } else {
+    pole='<path d="M2,4 L36,-2" stroke="'+P+'" stroke-width="2.6" stroke-linecap="round"/>'
+      +'<path d="M2,4 L-4,0" stroke="'+A+'" stroke-width="3" stroke-linecap="round"/>';
+    cloth='<path d="M20,1 L40,-9 L40,-1 L20,9 z" fill="'+F+'"/>';
+  }
+  return '<g transform="translate('+(x+40)+','+(y+56)+')">'
+    +'<rect x="-32" y="-52" width="128" height="104" rx="8" fill="#EAF1E6" stroke="#C7D8C2"/>'
+    +'<path d="M-24,21 L88,21" stroke="#B9B3A6" stroke-width="1.4"/>'
+    +fig+pole+cloth
+    +T(-26,-42,title,8.6,'#1B5E20','start',1)
+    +T(-26,34,angle,7.6,'#2E7D32','start',1)
+    +T(-26,45,detail,7.2,'#6D4C41','start')
+    +T(-26,55,cue,7.2,'#C62828','start')
+    +'</g>';
+}
+
+/* 《步操手冊》第7章：旗手四式側面姿勢（竿角為重點） */
+D.cer.colour = svg(340,296,'旗操四式：持旗立正／攜旗／托旗／原地敬禮',
+  MK
+  +T(170,13,'旗操四式（第7章）・側面睇・竿角就係判別重點',9.6,'#1B5E20','middle',1)
+  + COL(1,'① 持旗立正 The Order','竿與地面垂直','竿底喺右腳尾趾旁','flag 0','唔准將旗拉緊')
+  + COL(2,'② 攜旗 The Carry','竿仍然垂直','竿插喺旗套・右手喺口部對出','flag 1','右前臂與地面平行')
+  + COL(3,'③ 托旗 The Slope','竿與地面成 45 度','竿放喺右肩・肩至手用旗身覆蓋','flag 2','手踭屈曲至前臂平行')
+  + COL(4,'④ 原地敬禮 Lower','竿橫掃・夾喺腋下','竿頂微微離開地面・旗身完全展開','flag 3','眼球保持向前直望')
+  +T(170,282,'持旗稍息：兩腳踭分開 300mm、左手握拳蹬直貼褲骨；風大時用左手協助抓回旗幟',8,'#8D6E63','middle')
+  +T(170,292,'快步敬禮：聽「Right」再操兩步才讓旗飄揚（打數 Check—Up）；慢步四步內完成（打數 Up）',8,'#8D6E63','middle'));
+
 /* 《步操手冊》第8章：七款集隊手號（司令員手部姿勢） */
 D.cer.handsign = svg(340,336,'集隊手號七款（司令員手部姿勢示意）',
   MK
