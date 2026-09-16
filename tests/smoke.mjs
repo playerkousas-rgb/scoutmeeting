@@ -149,7 +149,7 @@ console.log('✅ 集會現場工具函數齊（已併入手冊）');
 for (const p of ['print','play','skills','songs','badges','book','uniform','ceremony']) {
   try{ ctx.App.pages[p](); }catch(e){ console.error('❌ pages.'+p+':',e.message); process.exit(1); }
 }
-for (const s of ['open','close','footdrill','flag','oath','salute','howl']) { try{ ctx.App.pages.ceremony(s); }catch(e){ console.error('❌ pages.ceremony('+s+'):',e.message); process.exit(1); } }
+for (const s of ctx.CEREMONY.cards.map(c=>c.k)) { try{ ctx.App.pages.ceremony(s); }catch(e){ console.error('❌ pages.ceremony('+s+'):',e.message); process.exit(1); } }
 for (const s of ['land','sea','air','badge','check']) { try{ ctx.App.pages.uniform(s); }catch(e){ console.error('❌ pages.uniform('+s+'):',e.message); process.exit(1); } }
 for (const s of ['promise','patrol','tools','apply','course','refs']) { try{ ctx.App.pages.book(s); }catch(e){ console.error('❌ pages.book('+s+'):',e.message); process.exit(1); } }
 for (const s of ['rope','care','map','pack','camp','pioneer','track','field','aid']) { try{ ctx.App.pages.skills(s); }catch(e){ console.error('❌ pages.skills('+s+'):',e.message); process.exit(1); } }
@@ -213,9 +213,9 @@ console.log('✅ manifest：新 icon＋營火歌 shortcut');
 
 // sw.js
 const swSrc = readFileSync(root+'sw.js','utf8');
-if(!swSrc.includes('scout-v24') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v24'); process.exit(1); }
+if(!swSrc.includes('scout-v25') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v25'); process.exit(1); }
 if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js')){ console.error('❌ sw.js 未 cache v19 新檔'); process.exit(1); }
-console.log('✅ sw.js cache 已升級（v24 含 28 張示意圖）');
+console.log('✅ sw.js cache 已升級（v25 含 28 張示意圖）');
 
 // README
 const rm = readFileSync(root+'README.md','utf8');
@@ -344,7 +344,7 @@ if (!/唔係合十/.test(capOath)) { console.error('❌ 宣誓圖冇交代「唔
 if (!/中間唔准放嘢|唔可以插喺二人之間/.test(capOath)) { console.error('❌ 宣誓圖冇交代「旗唔准喺二人之間」'); process.exit(1); }
 if (!/照<b>右格<\/b>數|照右格/.test(FIGSJ['cer-salute'].cap + ceremonySrc)) { console.error('❌ 敬禮圖冇講明手指數以邊格作準'); process.exit(1); }
 if (!/右翼/.test(FIGSJ['cer-open'].cap)) { console.error('❌ 集隊圖冇講明右翼以邊個為準'); process.exit(1); }
-if (!/戴帽行三指禮|戴帽就行三指禮/.test(FIGSJ['cer-flag'].cap + ceremonySrc)) { console.error('❌ 升旗圖冇交代戴帽／無帽分別'); process.exit(1); }
+if (!/制服不整齊|制服整唔整齊/.test(FIGSJ['cer-flag'].cap + ceremonySrc)) { console.error('❌ 升旗圖冇交代「以制服整齊與否決定舉手」（手冊§6.3）'); process.exit(1); }
 if (FIGSJ['cer-open'].w*1 !== 1000 || FIGSJ['cer-open'].h === 747) { console.error('❌ cer-open 裁圖後 w/h 未更新（會 layout shift）'); process.exit(1); }
 if (GF['大風吹']) { console.error('❌ 大風吹唔准入 GAME_FIG（凳數畫錯）'); process.exit(1); }
 // 技能頁逐分頁 render：有圖用 ph-fig，冇圖退回 dgm-fig
@@ -368,6 +368,35 @@ for (const f of avifs) {
 if (Object.keys(SF).length < 8) { console.error('❌ SKILL_FIG 得 '+Object.keys(SF).length+' 項（應 8：ropecare/legend/tent/stove/rice/lost/knife/sos）'); process.exit(1); }
 for (const sub of ['camp','field']) { try { ctx.App.pages.skills(sub); } catch(e) { console.error('❌ pages.skills('+sub+') render 失敗：', e.message); process.exit(1); } }
 console.log('✅ 技能插畫 8/8 齊（刀/SOS 已用硬指令重出通過 QA）・圖檔 28 張全數入 FIGS＋sw');
-console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間、敬禮以右格作準、集隊右翼定義、升旗戴帽條文');
+// ── v25：《步操手冊》（DRILL MANUAL, HKSA 2000 新版）對照修正 ──
+{
+  const cer = ctx.CEREMONY.cards.reduce(function(a,c){a[c.k]=c;return a;},{});
+  const txt = function(c){ return JSON.stringify(c); };
+  const drill = txt(cer.footdrill), flagsrc = txt(cer.flag), sa = txt(cer.salute), op = txt(cer.open);
+  if (/腳尖[^；。]{0,14}約?\s*45\s*(度|°)/.test(drill)) { console.error('❌ 步操卡仲教腳尖 45 度（手冊第3章§2：與中線成 30 度）'); process.exit(1); }
+  if (!/30 度/.test(drill)) { console.error('❌ 步操卡冇「腳尖與中線成 30 度」'); process.exit(1); }
+  if (!/握拳/.test(drill)) { console.error('❌ 步操卡立正冇寫「雙手握拳・拇指壓食指貼褲骨」'); process.exit(1); }
+  if (!/不建議/.test(drill) || !/Squad Shun|Parade Shun/.test(drill)) { console.error('❌ 冇交代 Attention/Squad Shun/Parade Shun 只用於典禮（一般集會唔建議）'); process.exit(1); }
+  for (const [re, msg] of [[/116/, '快步步速 116 步/分鐘'], [/750 毫米|750mm/, '步幅 750 毫米'], [/1\.5 秒/, '標準停頓時距 1.5 秒'], [/介令/, '口令三部分'], [/375/, '彈前腳 375 毫米'], [/As you were|As You Were/, '取消口令 As you were']]) {
+    if (!re.test(drill)) { console.error('❌ 步操卡缺《步操手冊》數字：'+msg); process.exit(1); }
+  }
+  if (!/唔准用作懲罰|唔准用嚟罰人/.test(drill)) { console.error('❌ 冇寫「步操唔准用作懲罰」（手冊第2章§3.1）'); process.exit(1); }
+  if (!/標號員|引導翼/.test(op)) { console.error('❌ 集隊卡冇用官方術語（引導翼／標號員／睇齊）'); process.exit(1); }
+  if (!/手號/.test(op) || /開口正方形/.test(op) === false) { console.error('❌ 集隊卡冇列第8章七款集隊手號（或冇標明動作待核）'); process.exit(1); }
+  if (!/制服不整齊|只肅立/.test(flagsrc) || /未戴帽者行注目禮/.test(flagsrc)) { console.error('❌ 升旗卡敬禮條文未跟手冊§3(丙)/§6.3（以制服整齊與否為準，唔好再斷言無帽行注目禮）'); process.exit(1); }
+  if (!/MARCH TO ATTENTION/.test(sa) || !/EYES — RIGHT/.test(sa)) { console.error('❌ 敬禮卡冇行進間口令（MARCH TO ATTENTION！／EYES — RIGHT！）'); process.exit(1); }
+  if (!/最右方/.test(sa) || !/每日/.test(sa)) { console.error('❌ 敬禮卡冇「無人時最右方隊員代表」＋「每日向同一人只致敬一次」'); process.exit(1); }
+  const c01 = JSON.stringify(ctx.LESSONS ? ctx.LESSONS : {});
+  const c01src = readFileSync(root+'js/c01-lesson.js','utf8');
+  if (/腳尖向外打開約 45 度/.test(c01src)) { console.error('❌ c01 教案立正仲寫 45 度'); process.exit(1); }
+  if (!/Bend the left knee/.test(c01src) || !/Shoot the right foot forward/.test(c01src)) { console.error('❌ c01 冇抽膝踏步／彈前腳（手冊第3章§1）'); process.exit(1); }
+  const svgSrc = readFileSync(root+'js/svg-kit.js','utf8');
+  if (/腳尖向外約 45°/.test(svgSrc)) { console.error('❌ 圖解註解仲寫 45°'); process.exit(1); }
+  if (!/與中線成30°/.test(svgSrc) || !/每分鐘116步/.test(svgSrc)) { console.error('❌ 圖解冇更新立正/步速註解'); process.exit(1); }
+  if (!/步操手冊|DRILL MANUAL/.test(readFileSync(root+'js/ceremony.js','utf8'))) { console.error('❌ ceremony.js 冇列明《步操手冊》出處'); process.exit(1); }
+  if (!/drive\.google\.com\/file\/d\/1g4M6C7e1K7tVDkr2IADdkebm1CjljI-l/.test(readFileSync(root+'js/ceremony.js','utf8'))) { console.error('❌ CEREMONY.refs 冇《步操手冊》連結'); process.exit(1); }
+  console.log('✅ v25《步操手冊》對照：立正 30°/握拳/Alert・口令結構與步速步幅・抽膝彈前腳・致敬條文（§3丙/§5.1/§6.1-6.3）・集隊術語與手號待核・步操唔准做懲罰');
+}
+console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間、敬禮以右格作準、集隊右翼定義、升旗以制服整齊與否決定舉手');
 
-console.log('\n🎉 全部 smoke test 通過（v24：儀式逐張 QA 修正＋刀/SOS 重出）');
+console.log('\n🎉 全部 smoke test 通過（v25：《步操手冊》逐項對照修正）');
