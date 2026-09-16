@@ -1,4 +1,4 @@
-var CACHE = "scout-v33-c24-20260916";
+var CACHE = "scout-v34-c24-20260916";
 var ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./css/app.css",
   "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/diagrams.js", "./js/svg-kit.js", "./js/songs.js",
@@ -9,7 +9,7 @@ var ASSETS = [
   "./img/fig/game-ball.avif", "./img/fig/game-shape.avif", "./img/fig/game-tarp.avif",
   "./img/fig/game-pack.avif", "./img/fig/game-relay-cards.avif", "./img/fig/game-tug.avif",
   "./img/fig/game-aid.avif", "./img/fig/game-orienteer.avif",
-  "./img/fig/game-beachflag.avif", "./img/fig/game-water.avif",
+  "./img/fig/game-beachflag.avif", "./img/fig/game-water.avif", "./img/fig/game-chairs.avif",
   "./img/fig/skill-ropecare.avif", "./img/fig/skill-legend.avif", "./img/fig/skill-tent.avif",
   "./img/fig/skill-stove.avif", "./img/fig/skill-rice.avif", "./img/fig/skill-lost.avif",
   "./img/fig/game-lineup.avif",

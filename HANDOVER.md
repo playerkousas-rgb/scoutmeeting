@@ -1,7 +1,7 @@
 # Scout Hub — Handover Notes（交下一個 Agent 用）
 
-> 最後更新：2026-09-15
-> 目前 branch：`arena/01a0a749-scoutmeeting`（v19 完成：用戶 12 項回饋全落地！🎉 分頁化＋圖解＋指邊印邊＋營火歌 tab＋新 icon；v18 已併入）
+> 最後更新：2026-09-16
+> 目前 branch：`arena/01a0a8cb-scoutmeeting`（v34：新／熟手情境、手機 44px 操作、營火會六分頁、12/12 遊戲有圖、按鈕去重）
 > 本文件係交俾下一個 Agent 接手時嘅工作記錄，包含產品定位、技術架構、已完成項目、代碼約定、下一步優先次序。
 
 ---
@@ -350,6 +350,8 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 
 ## 19. v23 改動記錄（2026-09-16，補圖批次 3：技能 6 張＋有口難言；QA 擋走 3 張）
 
+> **歷史記錄**：下面對 `game-chairs` 嘅禁令已由 v34 §31 取代；v34 採用有 CC BY-SA 授權嘅網上真實相片（唔係被擋走嘅生成圖），現行測試要求保留。
+
 出咗 10 張、**收 7 張**，另外 3 張我 QA 自己 fail 咗冇放落 repo（原圖喺 `assets_src/figsrc/`，gitignore 內）：
 
 | 狀態 | 圖 | 理由 |
@@ -636,3 +638,43 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 - 顯示位置：制服「🧣 領巾領帶」分頁尾、每個支部頁「三組共通」callout、自查清單頁。**冇自創 3.7／3.8 內容**（避免估錯用品款式）。
 - 教訓／守則：手冊冇文字層嘅章節，一律用「指向供應社／官方」收尾，唔好靠估。
 - 之後：`gh pr merge 4 --merge`（repo 慣用 merge commit），main 由 `88c4f6e` 前進。
+
+## 31. v34：雙角色＋手機全面 QA、營火會六分頁、補齊遊戲圖片（2026-09-16）
+
+### 用戶要求（現行約定）
+1. 分別由**第一次帶集會嘅新領袖**同**熟手領袖**情境全面測試。
+2. 手機要方便；按鈕功能唔重複、定位清晰。
+3. 營火會總覽內容太多，要拆分頁。
+4. 除繩結外，缺圖內容要補圖；只可用網上圖片轉 AVIF／直接連結，**今輪不可自行生成圖片**。
+
+### 資訊架構及按鈕
+- `#plan` 頂部加兩張純提示卡：新領袖按「揀一場 → 領袖預備 → 安全注意」；熟手用下方素材庫／活動／技能／興趣章／營火會。提示唔另加捷徑，避免同既有導航重複。
+- 24 場目錄加 5 個即時篩選：全部、會員章 c01–06、探索 c07–18、標準／總結 c19–24、特別集會；手機將 7 欄表轉成整張可按卡，保留場次、月份、主題、獎章、形式、狀態及箭嘴。
+- 頂欄由「搜尋＋3 個外部工具」收成唯一**搜尋**＋**參考資料**入口；外部網站仍喺 `#book/refs`，冇刪功能。
+- 操作範圍固定：浮動 `投整頁`、section `印本節／投本節`、遊戲／素材卡 `印遊戲（或印呢張）／投講解（或投呢張）`。有逐卡操作嘅頁移除重複外層操作；搜尋改 `oninput` 即時出結果，冇第二個提交掣。
+
+### 營火會
+- `#songs` 預設流程；總覽拆成 6 個主導航：`flow` 流程、`cheers` 歡呼、`staff` 人手設備、`lead` 帶唱、`library` 14 首歌單、`safety` 安全考章。
+- `#songs/<song-key>` 14 條舊深層連結全部保留；單歌有上一首／下一首／返歌單。
+- 390px 實測頁高：flow 1559、cheers 1624、staff 1831、lead 2427、library 2476、safety 1321；唔再將所有資料塞入一個 8,000px+ 總覽。
+
+### 圖片（不可回退）
+- 遊戲現為 **12/12 有 AVIF 主圖**，而且每張仍保留 `DIAGRAMS.game` 俯視設場圖作補充／fallback；繩結照用戶要求唔補圖。
+- `game-chairs.avif` 唔係 v23 被擋嘅生成候選圖。現圖來自 Wikimedia Commons：Artaxerxes，*Musical chairs Lawn Jam Our Community Place Harrisonburg VA June 2008*，CC BY-SA 3.0；原相縮至 **800×474**、移除 metadata、轉 AVIF（約 23KB），**沒有使用生成式 AI**。
+- 授權、原始 URL、改動及用途限制寫喺 `img/fig/SOURCES.md`；卡內亦有作者／授權／來源連結。此署名及 ShareAlike 資料必須隨圖保留。
+- 相片只示範櫈圈同同方向走動；大風吹「參加者少一張櫈」、中央叫特徵及安全距離仍以文字＋俯視圖為準。
+
+### 手機修正
+- `@media(max-width:640px)`：可操作 button／文字及數字 input／select／textarea 最少 44px；section 操作亦由 40 提至 44px；checkbox／radio 24px 並由 label 提供可按範圍。
+- 修正 320px 全局溢出：目錄卡片化、9 段程序卡片化、長表格只喺自身容器捲、工作紙長字可換行、營火導航 3×2（320px 2×3）。`overflow-x:clip` 唔係唯一防線：真 Chromium 逐路由量過 `documentElement.scrollWidth === innerWidth`。
+- 制服官網圖 fallback 不再假設 sibling 一定存在；以 `.closest('.uniform-visual').querySelector(...)` 安全查找。QA 人為觸發 `onerror`：官網圖隱藏、本地 fallback 顯示、零 page error。
+
+### 測試結果
+- `npm test`：`tests/smoke.mjs`＋`tests/runtime.mjs` **全綠**；包含 24 份教案、12 個遊戲、38 張 AVIF、六個營火主路由、14 首歌深層路由、圖片來源／授權、投屏範圍及 renderer。
+- 真 Chromium 138（`/tmp/scout-browser`）測 **35 路由 × 4 viewport = 140 route-view**：320／390／768／1280px 全部無全局橫向溢出、無可見 broken image、無本地 request failure、無 page error；320／390px 所有納入操作控制均無小於 44px。
+- 390px 行為測試全過：新／熟手定位；6／12／6 階段篩選；鍵盤 Enter 開教案＋8 分頁只顯示一頁；即時搜尋；六個營火分頁；14 首歌深層連結及返回；遊戲 12→1 篩選；`投本節`／`投整頁` 各自打開；制服 fallback。
+- QA 詳細 JSON 留喺當次 sandbox `/tmp/scout-v34-browser-qa.json`（唔入 Git）；自動 smoke/runtime 先係 repo 內長期守門。
+
+### PWA／文件
+- `sw.js` cache：`scout-v34-c24-20260916`；預 cache 新 AVIF。38 張 AVIF 合計約 1,194KiB（仍低於 smoke 1,200KiB 上限）。
+- README 同本 HANDOVER 已同步。歷史 §19 嘅「game-chairs 禁止回流」只係針對錯櫈數生成候選圖，已由本節及現行 smoke 斷言取代。

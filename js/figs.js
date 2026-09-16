@@ -210,13 +210,21 @@ var FIGS = {
     src:'img/fig/game-lineup.avif', w:1000, h:545,
     alt:'活動室內一排十幾人企喺膠帶線上排順序，全部以手指貼住嘴示意唔准出聲，有人舉手指表示數字、有人指手錶、有人做生日蛋糕手勢，兩人禮讓地側身交換位置；線兩端用雪糕筒標示，背包同水樽排喺邊界線外，領袖企喺側面雙手背後觀察但唔幫手',
     cap:'設場：地下貼一條直線做對齊基準・兩端雪糕筒・袋水放喺界外唔好跣親；規則只有一條——出聲即出局（手勢得）。領袖淨係睇唔提點，排完先一齊檢查'
+  },
+  'game-chairs': {
+    src:'img/fig/game-chairs.avif', w:800, h:474,
+    alt:'戶外音樂椅活動相片：一群成人和兒童沿同一方向在一圈椅子外圍步行，椅背朝圈內，參加者之間留有距離',
+    cap:'大風吹設場參考：櫈背向圓心圍圈，參加者只沿同一方向行，停咗先搶位。相片係音樂椅，只用嚟睇櫈圈同走動方向；本 app 嘅大風吹要少一張櫈，由中間一人叫特徵，確實數量同位置請展開下面俯視圖。⚠️ 唔准推撞、撲櫈或疊坐',
+    note:'相片人物穿日常便服，只示櫈圈同走動方向；童軍制服標準請睇 <a href="#uniform">👕 制服</a>。',
+    credit:'Artaxerxes，Musical chairs，2008，CC BY-SA 3.0；由網上原相轉為 AVIF，並非 AI 生成',
+    source:'https://commons.wikimedia.org/wiki/File:Musical_chairs_Lawn_Jam_Our_Community_Place_Harrisonburg_VA_June_2008.jpg'
   }
 };
 
 /* 全域 FIGS_NOTE（app.js 嘅 App.ph 會自動加喺每張圖說後面）*/
 
-/* 🎮 遊戲名 → 插畫 key；未入表嘅遊戲（有口難言／大風吹）自動退回平面擺位圖，
-   因為「排一條直線」「圍圈少張凳」用俯視圖已經夠清楚，唔使佔用插畫額度 */
+/* 🎮 遊戲名 → 圖片 key。12 個遊戲全部有圖；大風吹用 Wikimedia Commons 授權相片，
+   其餘沿用本地 AVIF，並全部保留俯視圖作設場核對。 */
 var GAME_FIG = {
   '直呼其名':'game-ball',
   '有口難言':'game-lineup',
@@ -228,12 +236,13 @@ var GAME_FIG = {
   '急救情境賽':'game-aid',
   '定向尋寶':'game-orienteer',
   '沙灘旗':'game-beachflag',
-  '運水接力':'game-water'
+  '運水接力':'game-water',
+  '大風吹':'game-chairs'
 };
 
 /* 🪢 技能分頁 → 插畫 key；未入表者（繩結口訣、先鋒紮作、背囊分層、追蹤符號）自動退回平面圖解。
-   經歷：v23 時 skill-knife／skill-sos 曾 QA fail（刀刃向人交接／多一組音），v24 用硬指令重出先通過——
-   重出前嘅 prompt 寫法見 HANDOVER §20。game-chairs（大風吹）仍然 QA fail，冇放落 repo。*/
+   經歷：v23 時 skill-knife／skill-sos 曾 QA fail（刀刃向人交接／多一組音），v24 修正後先接入。
+   game-chairs 原生成候選圖因櫈數錯而棄用；v34 改用有授權嘅 Commons 真實相片，來源見 img/fig/SOURCES.md。*/
 var SKILL_FIG = {
   ropecare:'skill-ropecare',
   legend:'skill-legend',
