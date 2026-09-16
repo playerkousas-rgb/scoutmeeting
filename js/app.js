@@ -99,9 +99,9 @@ App.subnav = function(tab, items, cur){
   if (pages > 1) {
     var head = App.h('div','pg-row');
     head.innerHTML =
-      '<button class="pg-btn" '+(pi===0?'disabled':'')+' onclick="App.subnavShift(\''+tab+'\','+(from-1)+')" aria-label="前一版分頁">‹ 前 '+(pi>0?(Math.min(from,per)):0)+' 個</button>'+
-      '<span class="pg-of">第 '+(pi+1)+' / '+pages+' 版（共 '+items.length+' 頁）</span>'+
-      '<button class="pg-btn" '+(pi>=pages-1?'disabled':'')+' onclick="App.subnavShift(\''+tab+'\','+to+')" aria-label="後一版分頁">後 '+(items.length-to)+' 個 ›</button>';
+      '<button class="pg-btn" '+(pi===0?'disabled':'')+' onclick="App.subnavShift(\''+tab+'\','+(from-1)+')" aria-label="前一批分頁">‹ 前一批</button>'+
+      '<span class="pg-of">第 '+(pi+1)+'／'+pages+' 批（共 '+items.length+' 頁）</span>'+
+      '<button class="pg-btn" '+(pi>=pages-1?'disabled':'')+' onclick="App.subnavShift(\''+tab+'\','+to+')" aria-label="後一批分頁">後 '+Math.max(0,items.length-to)+' 個 ›</button>';
     nav.appendChild(head);
   }
 
@@ -821,10 +821,11 @@ App.pages.uniform = function(sub){
   if(cur==='badge'){
     var P = UNIFORM.placement;
     wrap.appendChild(App.h('p','lede','徽章唔好靠記憶擺位。下面兩張圖係照《儀容與制服手冊》畫嘅位置圖：圖上嘅 ①–⑨ 對返下面嘅表。同一個位置上下有幾層，係各有一行唔同嘅章。'));
+    var CIR = ['','①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
     function pTable(rows){
       return '<table class="meeting-table"><thead><tr><th width="46">圖上</th><th>位置</th><th>擺咩章</th></tr></thead><tbody>'+
         rows.map(function(r){
-          return '<tr><td class="pt-num">'+r.n+'</td><td><b>'+r.side+'</b>'+(r.note?'<br><small class="mut">'+r.note+'</small>':'')+
+          return '<tr><td class="pt-num">'+(CIR[r.n]||r.n)+'</td><td><b>'+r.side+'</b>'+(r.note?'<br><small class="mut">'+r.note+'</small>':'')+
             '</td><td>'+r.items.map(function(x){return '・'+x;}).join('<br>')+'</td></tr>';
         }).join('')+'</tbody></table>';
     }
@@ -1574,7 +1575,7 @@ App.toolsSecs = function(){
   var frag = App.h('div','');
   frag.appendChild(App.h('p','lede','🧰 集會現場即開即用：計分、抽人、倒數、分組。工具喺手機用得，撳「🖥️ 投大啲」就會出全畫面大字版——投影／大電視睇住同一個數字，成員唔會覺得係黑箱作業。'));
 
-  var sBoard = App.sec('🏆 小隊計分板', {print:false, id:'pt-board-sec'});
+  var sBoard = App.sec('🏆 小隊計分板', {print:false, proj:false, id:'pt-board-sec'});
   sBoard._body.innerHTML =
     '<div class="card"><p><b>今日有幾多隊？</b> '+
       '<button onclick="App.patrolCount(App.troop.count-1)">－</button> '+
@@ -1587,7 +1588,7 @@ App.toolsSecs = function(){
       '<p class="mut">分數暫存喺呢部機（轉頁唔會唔見，閂 App 先 reset）。想畀全場睇住加減，就撳「投大啲」，投影上面嘅分同呢度一模一樣。</p></div>';
   frag.appendChild(sBoard);
 
-  var sLots = App.sec('🎲 抽籤', {print:false});
+  var sLots = App.sec('🎲 抽籤', {print:false, proj:false});
   sLots._body.innerHTML =
     '<div class="card"><p>名單（一行一個）：</p><textarea id="pt-lots-names" rows="4" style="width:100%" placeholder="陳大文&#10;李小明&#10;…"></textarea>'+
     '<p>抽幾個？<input id="pt-lots-n" type="number" value="1" min="1" style="width:60px"> '+
@@ -1597,7 +1598,7 @@ App.toolsSecs = function(){
     '<p class="mut">抽籤用瀏覽器內置隨機數，抽完即刻投影出嚟。</p></div>';
   frag.appendChild(sLots);
 
-  var sCd = App.sec('⏱️ 倒數計時', {print:false});
+  var sCd = App.sec('⏱️ 倒數計時', {print:false, proj:false});
   sCd._body.innerHTML =
     '<div class="card"><p><button onclick="App.timerCmd(\'set\',1)">1 分鐘</button> '+
     '<button onclick="App.timerCmd(\'set\',2)">2 分鐘</button> '+
@@ -1605,13 +1606,13 @@ App.toolsSecs = function(){
     '<button onclick="App.timerCmd(\'set\',10)">10 分鐘</button> '+
     '<input id="pt-cd-m" type="number" value="5" min="0" style="width:56px"> 分 '+
     '<input id="pt-cd-s" type="number" value="0" min="0" max="59" style="width:56px"> 秒 '+
-    '<button onclick="App.countdownStart()">▶ 開始</button></p>'+
+    '<button onclick="App.countdownStart()">▶ 用呢個時間開始</button></p>'+
     '<p id="pt-cd-out">'+App.clockHtml(false)+'</p>'+
     '<p><button class="proj-big" onclick="Projector.live(\'timer\',\'⏱️ 倒數\')">🖥️ 投大啲（投影／大電視）</button></p>'+
     '<p class="mut">分組討論、遊戲計時用。投屏之後，投影同手機係同一個倒數，唔會各有各嘅時間。</p></div>';
   frag.appendChild(sCd);
 
-  var sGrp = App.sec('👥 隨機分組', {print:false});
+  var sGrp = App.sec('👥 隨機分組', {print:false, proj:false});
   sGrp._body.innerHTML =
     '<div class="card"><p>名單（一行一個）：</p><textarea id="pt-grp-names" rows="4" style="width:100%" placeholder="陳大文&#10;李小明&#10;…"></textarea>'+
     '<p>分幾多組？<input id="pt-grp-n" type="number" value="2" min="2" max="8" style="width:60px"> '+
