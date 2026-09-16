@@ -1,9 +1,9 @@
-var CACHE = "scout-v18-c24-20260916";
+var CACHE = "scout-v19-c24-20260915";
 var ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./css/app.css",
-  "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/diagrams.js",
+  "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/diagrams.js", "./js/svg-kit.js", "./js/songs.js",
   "./js/c01-lesson.js", "./js/c02-lesson.js", "./js/c03-lesson.js", "./js/c04-lesson.js", "./js/c05-lesson.js", "./js/c06-lesson.js", "./js/c07-lesson.js", "./js/c08-lesson.js", "./js/c09-lesson.js", "./js/c10-lesson.js", "./js/c11-lesson.js", "./js/c12-lesson.js", "./js/c13-lesson.js", "./js/c14-lesson.js", "./js/c15-lesson.js", "./js/c16-lesson.js", "./js/c17-lesson.js", "./js/c18-lesson.js", "./js/c19-lesson.js", "./js/c20-lesson.js", "./js/c21-lesson.js", "./js/c22-lesson.js", "./js/c23-lesson.js", "./js/c24-lesson.js", "./js/app.js",
-  "./icons/icon-192.png", "./icons/icon-512.png"
+  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"
 ];
 var EXTERNAL_PREFIX = "https://";
 

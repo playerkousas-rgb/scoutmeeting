@@ -1,7 +1,7 @@
 # Scout Hub — Handover Notes（交下一個 Agent 用）
 
 > 最後更新：2026-09-15
-> 目前 branch：`arena/01a0a4b6-scoutmeeting`（v18 完成：24 場教案＋10 tab＋歌紙＋SVG 圖解＋全站搜尋全齊！🎉，待合併 main；main 目前為 v14）
+> 目前 branch：`arena/01a0a749-scoutmeeting`（v19 完成：用戶 12 項回饋全落地！🎉 分頁化＋圖解＋指邊印邊＋營火歌 tab＋新 icon；v18 已併入）
 > 本文件係交俾下一個 Agent 接手時嘅工作記錄，包含產品定位、技術架構、已完成項目、代碼約定、下一步優先次序。
 
 ---
@@ -33,7 +33,7 @@
 | 🎮 活動（play） | 🟡 4 個常用遊戲 | 未來補更多 |
 | 🪢 技能（skills） | 🚧 WIP | 列出 9 大技能分類，圖解卡未做 |
 | 🎖️ 興趣章（badges） | ✅ 33 個興趣組專科徽章 | 含官方要求 + 建議考核方式，filter 分類 |
-| 🧑‍🤝‍🧑 小隊（patrol） | 🚧 WIP | 列出 5 個功能，未實作 |
+| 🔥 營火歌（songs，v19 取代小隊 tab） | ✅ | 11 首公版傳統營火歌歌紙（和弦/拍子/動作）＋領唱 5 招＋火圈編排圖；小隊制度已併入手冊 |
 
 **頂欄外連**（icon-only 按鈕）：
 - 🔍 搜尋（暫跳去 #book，未做 search 功能）
@@ -43,7 +43,8 @@
 
 ## 3. 重要用戶約定（唔可以改）
 
-1. **唔好抄 Cubs Hub 嘅 emoji icon**——用自製森林綠+金百合花飾
+0. **v19 用戶新约定（見下方第 16 節）**：①tab 內容要分頁（制服要陸/海/空小分頁）②兴趣组由团考核、興趣章 tab 唔放區總部報章系統連結③唔出繩結逐步圖卡（會錯）④儀式/活動/技能要補圖（興趣章唔使）⑤歌紙只用傳統童軍營火歌，唔自創唔放流行歌⑥列印指邊印邊⑦工作紙：上面教案「跟住做」＋素材庫「直接印」兩邊都要⑧集會目錄整行可撳
+1. **唔好抄 Cubs Hub 嘅 emoji icon**——用自製森林綠+金百合花飾（v19 已更新為 192/512/maskable 三 size，原圖來自 generate_image）
 2. **完全移除森林故事**（幼童軍先有，童軍支部冇）
 3. **下方第 4 tab = 🪢 技能，第 5 tab = 🧑‍🤝‍🧑 小隊**（唔好轉位）
 4. **「活動章」tab 改名「興趣章」，只做興趣組**（藍底技能組/紅底服務組/金邊教導組全外連 scoutbadge）
@@ -260,3 +261,26 @@ npm test                      # 跑 smoke test
 **最後完成**：v18（歌紙/17 SVG/搜尋85項索引）
 **smoke test**：108 項全通過
 **http server**：如需要可 `cd /home/user/scoutmeeting && python3 -m http.server 8080` 重開
+
+
+---
+
+## 16. v19 改動記錄（2026-09-15，用戶 12 項回饋）
+
+| # | 要求 | 做法 |
+|---|---|---|
+| 1 | tab 內容太長要分頁 | 新增 `App.subnav`（tab/sub 路由）＋`App.chiprow`（錨點跳位）；制服=陸/海/空/徽章/自查、儀式=7套逐一、手冊=6分頁、技能=9分頁、營火歌=11首歌紙分頁；集會詳情頁頂部加節位 chips |
+| 2 | 做 APP ICON | generate_image 出 1024 原圖→ImageMagick crop/resize：icons/icon-192.png、icon-512.png、icon-maskable-512.png；img/icon-192.svg 重畫成對應源檔；manifest 更新 |
+| 3 | 興趣章唔放區系統連結 | app.js badges 移除「📝 前往區總部報章系統」；interests.js howToApply 改「團內考核 7 步」（no system CTA）；topbar 📝 保留（供其他組用，註明只係報專科徽章用） |
+| 4 | 儀式加分頁補圖 | svg-kit.js 新增 DIAGRAMS.cer（open/close/drill/flag/oath/salute 6 套場位圖）；ceremony.js 每卡加 fig/figcap/rel；#ceremony/<k> 單頁模式＋上一套/下一套導航 |
+| 5 | 工作紙定位 | 素材庫直接列 24 場工作紙（.ws-item，逐張「只印呢張」）；集會頁內工作紙保留（跟住做）；lede 寫明上下定位分別 |
+| 6 | 列印指邊印邊 | `App.printSec(el)`：clone 目標 .sec/.card/.ws-item 去 #printzone＋body.print-one，@media print 收埋 #app 淨印 printzone；「只印本節」掣遍布各區塊；全場印＝「整場教案全部列印」明示按鈕 |
+| 7 | 唔出繩結卡 | 刪素材庫「繩結卡」區、技能「平結/八字/稱人圖解」卡、diagrams.js reef/fig8/bowline 資料；換成 warn callout 指向 c13/c14 教案 |
+| 8 | 活動/技能/儀式補圖（興趣章除外） | DIAGRAMS.game 12 張場地擺位圖；DIAGRAMS.skillx（ropecare/legend/tent/stove/knife/rice/sos/lost）；DIAGRAMS.fire（circle/flow/scarf）；badges 維持文字 |
+| 9 | 歌紙用童軍營火歌 | 新 js/songs.js：11 首 Public Domain 傳統歌（含兩隻老虎輪唱）＋有版權歌只列名（Kookaburra/熊熊烈火/友誼之光/童軍歌）；刪自創歌＋流行歌單＋自創工作坊 |
+| 10 | 小隊tab改營火歌 | 底部 #tabbar 第五格 = 🔥 營火歌 #songs；route 舊 #patrol → #book/patrol redirect；sw/manifest shortcut 更新 |
+| 11 | 小隊制度入手册 | book 新增「小隊制度」（制度/小隊長3職責/會議記錄表）＋「集會工具」（計分板/抽籤/倒數/分組）；歡呼庫去營火歌 tab |
+| 12 | 目錄整行可撳 | plan-table tr.meet-row onclick＋tabindex＋▶；hover 高亮 |
+
+**測試**：tests/smoke.mjs 已改 v19 版（加：svg-kit/songs 檔存在、icon 尺寸、無繩結卡/無區系統CTA negative test、DIAGRAMS.cer/game/skillx/fire 計數、傳統歌 positive/自創歌 negative、manifest maskable）——108+ 項全綠。
+**注意**：sw.js CACHE=scout-v19-c24-20260915（測試斷言 'scout-v19'）；#ceremony/#songs 用 hash sub，SW 唔使理。

@@ -131,4 +131,14 @@ UNIFORM.winter = {
   note: '冬天可穿長袖杏色恤（童軍／海／空童軍同各自恤衫色）、童軍外套（2024年9月推出）；應按總會最新通告為準。'
 };
 
+// v19：三大分支小分頁（方便直接點進自己團屬嘅制服資料）
+UNIFORM.branches = [
+  { k:'land', ic:'⛰️', n:'陸童軍', types:['scout_b','scout_g'],
+    note:'一般童軍團屬陸童軍：深綠色軟帽＋杏色恤＋草青色短褲／裙褲。差異重點喺帽同恤衫色。' },
+  { k:'sea', ic:'⚓', n:'海童軍', types:['sea_b','sea_g'],
+    note:'海童軍：白色恤＋深藍色短褲／裙褲＋深藍長襪，配海童軍白頂帽（連帽帶）；領巾同徽章佩戴方法與陸童軍相同。' },
+  { k:'air', ic:'🛩️', n:'空童軍', types:['air_b','air_g'],
+    note:'空童軍：淺藍色恤＋深藍色短褲／裙褲＋深藍長襪，配灰藍色軟帽（連童軍帽章）；領巾同徽章佩戴方法與陸童軍相同。' }
+];
+
 if (typeof module !== 'undefined' && module.exports) module.exports = UNIFORM;
