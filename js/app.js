@@ -128,6 +128,24 @@ App.block = function(title, innerHTML, opts){
 };
 
 /* ── 🖨️ 指邊印邊：只複製目標區塊去列印區 ── */
+/* 🖼️ 示意圖（v20）：優先 AVIF 插畫；無圖就退回平面圖解；圖 load 唔到（舊瀏覽器／缺檔）自動-show 平面圖解 */
+App.ph = function(key, cap, svgHtml){
+  var f = (typeof FIGS !== 'undefined' && FIGS) ? FIGS[key] : null;
+  if(!f) return svgHtml ? '<figure class="dgm-fig"><div class="dgm-wrap">'+svgHtml+'</div><figcaption>🖼️ '+(cap||'示意圖解')+'</figcaption></figure>' : '';
+  var onerr = "var p=this.closest('.ph-fig');if(p){p.classList.add('imgfail');var d=p.querySelector('details');if(d)d.open=true;}";
+  var img = '<div class="ph-wrap"><img src="'+f.src+'" width="'+(f.w||1000)+'" height="'+(f.h||750)+'" alt="'+(f.alt||'')+'" loading="lazy" decoding="async" onerror="'+onerr+'"></div>';
+  return '<figure class="ph-fig" data-fig="'+key+'">'+img+
+    (cap?'<figcaption>🖼️ '+cap+'</figcaption>':'')+
+    '<div class="ph-fail">📷 呢張圖load唔到（舊瀏覽器唔支援 AVIF／檔案未落 cache）；用下面嘅平面圖解代替。</div>'+
+    (svgHtml?'<details class="dgm-alt no-print"><summary>📐 平面／位置圖解（睇位用）</summary><div class="dgm-wrap">'+svgHtml+'</div></details>':'')+
+    '</figure>';
+};
+/* 攞儀式卡嘅圖（cer-＋fig key），冇圖先退回 SVG */
+App.cerFig = function(c){
+  var svgAlt = (c.fig && typeof DIAGRAMS!=='undefined' && DIAGRAMS.cer && DIAGRAMS.cer[c.fig]) ? DIAGRAMS.cer[c.fig] : '';
+  return App.ph(c.fig ? 'cer-'+c.fig : '', c.figcap || '位置示意圖解', svgAlt);
+};
+
 App.printSec = function(el){
   if(!el || typeof document==='undefined' || !document.body) return;
   var doc = document;
@@ -197,7 +215,7 @@ App.buildSearchIndex = function(){
     idx.push({type:'技能', title:sk.t, link:sk.l, desc:'技能卡（附圖解）', text:(sk.t+' '+sk.k).toLowerCase()});
   });
   CEREMONY.cards.forEach(function(c){
-    idx.push({type:'儀式', title:c.icon+' '+c.n, link:'#ceremony/'+c.k, desc:(c.fig?'附位置圖解':'文字程序'),
+    idx.push({type:'儀式', title:c.icon+' '+c.n, link:'#ceremony/'+c.k, desc:(c.fig?((typeof FIGS!=='undefined'&&FIGS['cer-'+c.fig])?'附示意插畫＋位置圖解':'附位置圖解'):'文字程序'),
       text:('儀式 '+c.n+' 升旗 宣誓 步操 敬禮 隊列 點名 降旗 團呼 開始 結束 '+ (c.steps||[]).map(function(s){return s.h+' '+s.d;}).join(' ')).toLowerCase()});
   });
   idx.push({type:'制服', title:'制服佩戴（陸／海／空小分頁）＋自查清單', link:'#uniform', desc:'', text:'制服 領巾 徽章 佩戴 恤衫 褲 帽 皮帶 襪 鞋 儀容 海童軍 空童軍 陸童軍'});
@@ -631,8 +649,8 @@ App.ceremonySec = function(c, full){
   }
   if(c.prep) body += '<p><b>預備物資：</b>'+c.prep+'</p>';
   if(c.intro) body += '<p><b>動作要點：</b>'+c.intro+'</p>';
-  if(c.fig && DIAGRAMS.cer && DIAGRAMS.cer[c.fig]){
-    body += '<figure class="dgm-fig"><div class="dgm-wrap">'+DIAGRAMS.cer[c.fig]+'</div><figcaption>🖼️ '+(c.figcap||'位置示意圖解')+'</figcaption></figure>';
+  if(c.fig){
+    body += App.cerFig(c);
   } else if(!full){
     body += '<div class="callout">⚠️ 呢套程序仍待官方核對，暫時只有文字＋參考文件連結；帶之前請先問熟悉程序之領袖。</div>';
   }
@@ -1070,10 +1088,13 @@ App.pages.songs = function(sub){
   }
 
   wrap.appendChild(App.h('p','lede','童軍營火歌歌紙＋音樂資訊：全部係流傳成百年嘅童軍／營火傳統歌（公版歌詞，放心唱放心印）。唔自創、唔放唔啱場合嘅歌。'));
+  var banner = App.h('div','song-banner');
+  banner.innerHTML = App.ph('fire-song', FIGS&&FIGS['fire-song']?FIGS['fire-song'].cap:'營火唱歌現場');
+  wrap.appendChild(banner);
   var hero = App.h('div','card song-hero');
   hero.innerHTML = '<h3>🔥 營火歌唱環節點樣帶</h3>'+
-    '<div class="svg-steps"><figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.circle:'')+'<figcaption>火圈座位：領唱企圈內・水／沙／急救箱放背後</figcaption></figure>'+
-    '<figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.flow:'')+'<figcaption>10–15 分鐘唱歌環節編排</figcaption></figure></div>';
+    App.ph('fire-circle', FIGS&&FIGS['fire-circle']?FIGS['fire-circle'].cap:'火圈座位：領唱企圈內・水／沙／急救箱放背後')+
+    '<div class="svg-steps"><figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.flow:'')+'<figcaption>10–15 分鐘唱歌環節編排</figcaption></figure></div>';
   wrap.appendChild(hero);
 
   wrap.appendChild(App.block('🎸 音樂資訊點樣睇（歌紙通用）',
@@ -1099,7 +1120,7 @@ App.pages.songs = function(sub){
   var mustHtml = '<div class="card"><p>'+must.why+'</p><ul class="bullet">'+must.list.map(function(m){
       return '<li>'+(m.must?'⭐必學：':'')+'<b>'+m.n+'</b> — '+m.tip+'</li>';
     }).join('')+'</ul><p class="tip">✅ '+must.check+'</p>'+
-    (DIAGRAMS.fire&&DIAGRAMS.fire.scarf?'<div class="svg-steps"><figure>'+DIAGRAMS.fire.scarf+'<figcaption>營火袍：縫至少兩枚布章（營火章要求第 3 項）</figcaption></figure></div>':'')+
+    (DIAGRAMS.fire&&DIAGRAMS.fire.scarf?App.ph('fire-robe', FIGS&&FIGS['fire-robe']?FIGS['fire-robe'].cap:'營火袍：縫至少兩枚布章', DIAGRAMS.fire.scarf):'')+
     '<p>💡 營火章考核要求詳見 <a href="#badges">🎖️ 興趣章→營火</a>。</p></div>';
   wrap.appendChild(App.block('⭐ 營火章「必識十首」＋有版權歌名單', mustHtml, {print:false}));
 

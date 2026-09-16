@@ -284,3 +284,36 @@ npm test                      # 跑 smoke test
 
 **測試**：tests/smoke.mjs 已改 v19 版（加：svg-kit/songs 檔存在、icon 尺寸、無繩結卡/無區系統CTA negative test、DIAGRAMS.cer/game/skillx/fire 計數、傳統歌 positive/自創歌 negative、manifest maskable）——108+ 項全綠。
 **注意**：sw.js CACHE=scout-v19-c24-20260915（測試斷言 'scout-v19'）；#ceremony/#songs 用 hash sub，SW 唔使理。
+
+---
+
+## 17. v20 改動記錄（2026-09-16，補圖：SVG → 真圖 AVIF，批次 1／3）
+
+用戶指正：**補圖唔好再用我手畫嘅 SVG**（唔專業、又好慢），一次大概只能出 10 張，圖檔格式用 **AVIF**。
+
+### 做法（pipeline，下次繼續照做）
+1. `generate_image` 出 1024 級原圖去 `assets_src/figsrc/<key>.png`（呢個 dir 已入 `.gitignore`，唔提交，每次只提交 AVIF）。
+2. prompt 必帶風格 lock：`Clean editorial flat illustration with soft shading, warm muted palette, very light off-white background, no text no letters no numbers no watermark no logos`＋**制服必須照 uniform.js 寫實**（陸童軍：深綠軟帽連帽章／杏色短袖恤兩胸袋／草青短褲／棕皮帶童軍扣／深草青直坑紋長襪／黑皮鞋／旅巾連巾圈）。
+3. 逐張 `read_file` 睇成品 **有冇畫錯**（手勢、指數、腳位、旗位）；錯嘅部分宁可 crop 走（例：cer-salute 右格半禮畫成兩指 → 淨 crop 左格全禮，半禮改做文字），**唔好擺錯圖教錯人**（同繩結卡同理）。
+4. 編 AVIF：`convert src.png -resize '1000x1000>' -strip -quality 58~64 -define avif:pixel-format=yuv420p img/fig/<key>.avif`（IM 6.9 有 libaom，0.5s/張；1000px 約 10–80KB）。
+5. 喺 `js/figs.js` 加 key：`{src,w,h,alt,cap}`（w/h 必填防 CLS；alt 寫清楚畫面內容俾螢幕閱讀器＋冇圖時嘅交代；cap 係圖說）。
+6. 渲染：`App.ph(key, cap, svgFallback)`（app.js）→ `<figure class="ph-fig">`＋`<img loading=lazy onerror=...>`＋`<details class="dgm-alt no-print">`（舊 SVG 變折疊後備）。load 唔到 AVIF（舊瀏覽器）→ `.imgfail` 收埋圖、auto-open 圖解。
+7. 收尾：sw.js ASSETS＋CACHE 版本、`index.html` script、`npm test`（smoke 已加 v20 斷言）。
+
+### 本批（批次 1／3）已出 9 張
+| key | 用咩位置 |
+|---|---|
+| cer-open / cer-close / cer-drill / cer-flag / cer-oath / cer-salute | `#ceremony/<k>` 每張儀式卡主圖（ceremony.js 用 `fig:'open'` → key `'cer-'+fig`；figcap 已改寫到啱「場景示意」） |
+| fire-circle | 🔥 營火歌 tab hero（取代 DIAGRAMS.fire.circle 做主圖；flow 仍係圖解） |
+| fire-song | 🔥 營火歌 tab 頂部 banner |
+| fire-robe | 營火章「營火袍」位（DIAGRAMS.fire.scarf 退居折疊後備） |
+
+cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI），caption 已註明「實際樣式以《隊列和升掛國旗及區旗指引》為準」。
+
+### 未做（下一批先做）
+- **批次 2**：遊戲 12 張場圖（`DIAGRAMS.game` 逐個換 AVIF；遊戲名做 key，建議 `game-<slug>`）。
+- **批次 3**：技能 8 張（ropecare／legend／tent／stove／knife／rice／sos／lost）＋補返 cer-salute 正確嘅「全禮＋半禮」兩格圖。
+- **永遠唔做**：繩結逐步圖（用戶明確禁止）。
+- 測試 guard：`smoke.mjs` 會 fail 掉任何 key 符合 `/knot|reef|bowline|fig8|繩結|結/` 嘅 FIGS 項目、任何 >140KB 嘅 AVIF、任何非 `ftypavif` header、以及 sw.js 漏 cache 嘅圖。
+
+**注意**：sw.js `CACHE=scout-v20-c24-20260916`（測試斷言 'scout-v20'）；改圖必需要改 CACHE 名，先至會踢走舊 cache。

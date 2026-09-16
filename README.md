@@ -72,7 +72,8 @@
 
 ## 技術
 - 純靜態 HTML/CSS/vanilla JS，無 build
-- PWA：Service Worker `scout-v18-c24-20260916`
+- PWA：Service Worker `scout-v20-c24-20260916`（逐檔 add，缺圖唔會拖冧核心預緩存）
+- 示意插畫：`img/fig/*.avif`（AVIF，9 張約 376KB），資料喺 `js/figs.js`
 - 森林綠＋金色百合花飾 icon
 - renderMeeting 已升級支援兩種教案格式（c01-c09 舊 inline 格式、c10+ 新多欄位格式），向下兼容；家長通知同時支援物件／長文；工作紙同時支援 prompts／fields 兩種格式；實戰後備支援物件／陣列兩種格式；小知識支援 h/d 同 q/a 兩種格式
 
@@ -88,4 +89,5 @@ npm test   # smoke test（c01–c24 全覆蓋＋四 tab render＋搜尋/圖解�
 
 ## 下一步（合併 main 後做）
 - 清走 `js/redesign.js` 死引用
-- （預留）更多 SVG 圖解、歌紙加歌
+- 補圖批次 2／3：12 張遊戲場圖＋8 張技能圖改做 AVIF 插畫（每批 10 張上限）
+- 歌紙加歌（繼續只用公版傳統營火歌）

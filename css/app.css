@@ -2929,3 +2929,33 @@ ul.motto li{ font-size:15px; }
   .ws-item .worksheet{border:none}
   .print-all-btn,.print-btn{display:none!important}
 }
+
+/* ════════════════════════════════════════════════
+   v20 示意插畫（AVIF 真圖・非 SVG 手畫）
+   ════════════════════════════════════════════════ */
+.ph-fig{margin:10px 0 12px;border:1.5px solid var(--line);border-radius:14px;background:#fff;overflow:hidden;break-inside:avoid;page-break-inside:avoid}
+.ph-fig .ph-wrap{background:#F2F0E9;line-height:0;min-height:120px}
+.ph-fig img{display:block;width:100%;height:auto;max-width:100%}
+.ph-fig figcaption{font-size:.78rem;color:var(--mute);padding:7px 10px;border-top:1px dashed var(--line);line-height:1.55;background:#FCFBF8}
+.ph-fig .ph-fail{display:none;padding:9px 10px;font-size:.78rem;color:#8D5B00;background:#FFF8E1;border-top:1px dashed var(--line);line-height:1.5}
+.ph-fig.imgfail .ph-wrap{display:none}
+.ph-fig.imgfail .ph-fail{display:block}
+.ph-fig .dgm-alt{border-top:1px dashed var(--line);background:#FBFAF6;padding:0 10px}
+.ph-fig .dgm-alt summary{cursor:pointer;font-size:.78rem;color:var(--mute);padding:7px 0;list-style:none;font-weight:700}
+.ph-fig .dgm-alt summary::-webkit-details-marker{display:none}
+.ph-fig .dgm-alt summary:before{content:'▸ '}
+.ph-fig .dgm-alt[open] summary:before{content:'▾ '}
+.ph-fig .dgm-alt .dgm-wrap{padding:6px 0 10px;text-align:center;overflow-x:auto;background:#fff}
+.ph-fig .dgm-alt svg{max-width:100%;height:auto}
+.song-banner .ph-fig{margin:12px 0 14px;border-radius:16px}
+@media (max-width:520px){
+  .ph-fig figcaption{font-size:.74rem}
+  .ph-fig{border-radius:12px}
+}
+@media print{
+  .ph-fig{border:1px solid #999;margin:3mm 0}
+  .ph-fig .ph-wrap{background:#fff;min-height:0}
+  .ph-fig img{max-height:95mm;width:auto;max-width:100%;margin:0 auto}
+  .ph-fig .dgm-alt,.ph-fig .ph-fail{display:none!important}
+  .ph-fig figcaption{color:#333;font-size:9pt;border-top:1px solid #ccc;background:#fff}
+}
