@@ -3108,3 +3108,12 @@ textarea{font-family:inherit;border:1.5px solid var(--line);border-radius:12px;p
 /* 投屏版字級：坐到最後一行都睇得到 */
 .pj-page{font-size:clamp(17px,1rem + 1vw,30px)}
 @media(min-width:1200px){.pj-page{font-size:clamp(20px,1rem + 1.4vw,34px)}}
+
+/* ── v32：教案頁「一行一個掣，撳咗即換版」── 列印時要全部展開（唔可以淨印當前嗰版）── */
+.tabpane{display:block}
+.tabhost{margin:10px 0 4px}
+.pane-note{font-size:.85rem;margin:4px 0 10px}
+@media print{
+  .tabpane{display:block!important}
+  .tabhost,.pane-note{display:none!important}
+}

@@ -578,3 +578,33 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 
 ### 合併
 - PR #3（`arena/01a0a749-scoutmeeting` → `main`）v19–v30 一次過合併；合併前 `npm test` 必綠＋`gh pr view 3 --json mergeable,mergeStateStatus` 要 `MERGEABLE/CLEAN`；repo 慣用 merge commit（main 頭先係「Merge pull request #2…」）。
+
+## 27. v32：真分頁／清 agent 字句／補圖／營火會（2026-09-16，用戶睇完 v31 追加 5 項）
+
+### 1. 清走「教你點用個 App」嘅字句（全站覆核）
+- 刪：首頁 lede「搵今日集會：撳一行任何位置…」、集會工具 lede「…成員唔會覺得黑箱作業」、活動庫「一版講一個遊戲，唔會一次過彈晒…」、各頁「想印邊張就撳…／投屏出嚟一齊讀…」等。
+- **寫法守則（以後照跟）**：UI 講內容同事實，唔講「你應該點撳」。`npm test` 有禁字檢查：`搵今日集會／黑箱作業／一版講一個遊戲／🅰️／🅱️`（app.js 連註解都唔准出現，projector.js 亦已改寫）。
+
+### 2. 錨點跳位清零（`App.jump`／`App.chiprow` 已刪）
+- 教案頁原本用 chip 行跳節：而家**改真分頁**——`App.filterbar(items, cur, pick, root)` 加 `root` 參數＋`App.showPane(root,key)`／`App.tabs()`；每個 section 包入 `div.tabpane[data-pane]`，撳掣即換版。
+- 實作重點：`renderMeeting` 內以 `secList` 記錄 section 次序（**唔可以靠 `wrap.children`**——smoke 嘅 DOM stub 冇呢個 property，會 `filter called on null`），並包住 `wrap.appendChild` 收集；`tabHost` 一定要 `wrap.appendChild(tabHost)`（漏咗就冇分頁條，肉眼睇唔出，只有撳唔到掣）。
+- 列印：`@media print{.tabpane{display:block!important}.tabhost,.pane-note{display:none!important}}`，所以「整場教案全部列印」照樣印晒；每節「🖨️ 只印本節」不變。
+- 全 app 掃過 `chiprow／App.jump／scrollIntoView` 已清零；素材庫／制服／技能／儀式本身已經係 `#tab/key` 路由（真轉頁）。
+
+### 3. 徽章位置局部放大圖（跟手冊做法）
+- 用戶指：**《儀容與制服手冊》本身有局部放大插圖**。`D.uniform.zoom` 照住做兩個放大圈：左胸袋（袋蓋上方 3cm ↔ 袋中央）、右袖肩膊（旅章肩膊下 2cm、地域章前區章後相距 1cm）。
+- 徽章頁加 callout 連去手冊第三章＋2023 年第 13 號通告 PDF 對照；另加 `D.uniform.scarf` 旅巾綁法（巾圈／3.5cm／12–15cm／巾尾唔超皮帶扣）。
+
+### 4. 補圖（除繩結外全部有圖）
+- 技能：`pioneer` 補 `figFor('pioneer')`（原本漏接）。
+- 制服：新增 `D.uniform.land／sea／air` 顏色示意圖（**本地 SVG，離線都睇得到**；官網圖係熱連，離線會冇圖），AI 制服圖禁令照舊。
+- 活動 12 個遊戲（11 AVIF＋1 俯視圖）、儀式 8 卡全部有圖；`tests/runtime.mjs` 逐項 check。
+
+### 5. 🔥 營火歌 → 營火會
+- 資料：`js/songs.js` 加 `staff`（4 位工作人員）、`ignition`（點火儀式＋3 款頌詞）、`cheers`（Bravo 三連呼／「童子軍，食雲吞」／「123，321，1234567」／拍手節奏呼／小隊吶喊／晚安呼）、`programme`（90 分鐘三段程序：熱身 → 高潮 → 寧靜結尾）、`gear`（設備清單）、`hostNote`。
+- **出處**：《香港童軍》月刊第 414 期〈談談營火會〉（顏明仁、馮源）— https://scout.org.hk/article_attach/31112/sa_hksm_414_p2-4.pdf （已 fetch，內容已落地；重點：歡呼代替鼓掌、短劇 ≤3 分鐘、上半場多唱舊歌）。
+- Nav／頁標題／搜尋索引全部改名「營火會」；`SONGS.meta.title`＝香港童軍營火會；SW cache `scout-v32-c24-20260916`。
+
+### 測試
+- `npm test` ＝ `tests/smoke.mjs` ＋ `tests/runtime.mjs`（**已修好舊 runtime**：佢以前引用 `js/jungle-data.js` 等唔存在嘅檔＋舊 API `App.vPlan`，載入次序亦錯（`js/data.js` 要用 C01 → 必須 lessons 先）。而家 runtime 會 render 全部頁面／分頁／24 場教案，並檢查畫面冇漏 `undefined`）。
+- ⚠️ 教訓：**static patch 完要驗「掛唔掛得上樹」** — tabHost 冇 append、`appendChild(projAll)` 喺 `var projAll` 之前，兩單都係 harness／smoke 捉唔到嘅（stub 唔 throw）。所以加咗 static 次序檢查＋`tabHost` 掛樹檢查。

@@ -674,4 +674,72 @@ console.log('✅ 急救 '+(Object.keys(AF).length+1)+' 張卡全部有圖（7 �
 console.log('✅ 徽章佩戴位置圖：SVG 手繪 ①–⑥（胸袋）＋⑦–⑨（全身）＋ UNIFORM.placement 對照表');
 console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間、敬禮以右格作準、集隊右翼定義、升旗以制服整齊與否決定舉手');
 
+// ═════════ v32：真分頁（唔再錨點跳位）＋營火會＋清 agent 字句＋補圖 ═════════
+{
+  const appSrc = readFileSync(root+'js/app.js','utf8');
+  /* 1) 唔准再有錨點跳位 helper */
+  if (appSrc.indexOf('App.jump =') >= 0 || appSrc.indexOf('App.chiprow = function') >= 0) {
+    console.error('❌ 仲有錨點跳位 helper（App.jump／App.chiprow）'); process.exit(1);
+  }
+  if (/App\.chiprow\(/.test(appSrc)) { console.error('❌ 仲有地方用 App.chiprow()'); process.exit(1); }
+  if (appSrc.indexOf('scrollIntoView') >= 0) { console.error('❌ 仲有 scrollIntoView 錨點跳位'); process.exit(1); }
+  /* 2) 一頁幾版＝撳掣即換內容 */
+  if (appSrc.indexOf('App.showPane') < 0 || appSrc.indexOf('tabpane') < 0 || appSrc.indexOf('data-pane') < 0) {
+    console.error('❌ 冇「撳掣即換版」嘅分頁實作（App.showPane／tabpane）'); process.exit(1);
+  }
+  if (typeof ctx.App.showPane !== 'function' || typeof ctx.App.tabs !== 'function') {
+    console.error('❌ app.js 未 export 分頁 API'); process.exit(1);
+  }
+  if (appSrc.indexOf('wrap.appendChild(tabHost)') < 0) { console.error('❌ 教案頁分頁條冇掛上去'); process.exit(1); }
+  if (appSrc.indexOf("pane.setAttribute('data-pane'") < 0) { console.error('❌ 分頁冇 data-pane 標記'); process.exit(1); }
+  /* 3) agent 指示字句／內部講法一律唔准出現喺 app */
+  for (const bad of ['搵今日集會','黑箱作業','一版講一個遊戲','🅰️','🅱️']) {
+    if (appSrc.includes(bad)) { console.error('❌ app.js 仲有「'+bad+'」呢類字句'); process.exit(1); }
+  }
+  /* 4) static 次序：appendChild(projAll) 一定要喺 var projAll 之後（曾出過 TypeError） */
+  for (const v of ['projAll']) {
+    const decl = appSrc.indexOf('var '+v+' = ');
+    const use = appSrc.indexOf('wrap.appendChild('+v+')');
+    if (decl < 0 || use < 0) { console.error('❌ 搵唔到 '+v+' 嘅宣告／使用'); process.exit(1); }
+    if (use < decl) { console.error('❌ '+v+' 未宣告就用（真瀏覽機會 TypeError）'); process.exit(1); }
+  }
+  /* 5) 🔥 營火會：歡呼＋時間表＋工作人員＋頌詞 */
+  const S = ctx.SONGS;
+  if (!S || !Array.isArray(S.programme) || S.programme.length < 5) { console.error('❌ SONGS.programme 時間表唔齊'); process.exit(1); }
+  if (!Array.isArray(S.cheers) || S.cheers.length < 5) { console.error('❌ SONGS.cheers 歡呼／吶喊唔齊'); process.exit(1); }
+  if (!Array.isArray(S.staff) || S.staff.length < 4) { console.error('❌ SONGS.staff 工作人員唔齊'); process.exit(1); }
+  if (!S.ignition || S.ignition.words.length < 3) { console.error('❌ SONGS.ignition 點火頌詞唔齊'); process.exit(1); }
+  if (S.ignition.how.indexOf('點火') < 0) { console.error('❌ 點火儀式冇寫法'); process.exit(1); }
+  if (!S.hostNote || S.hostNote.indexOf('414') < 0) { console.error('❌ 營火會程序冇標出處（月刊 414 期）'); process.exit(1); }
+  if (ctx.SONGS.meta.title.indexOf('營火會') < 0) { console.error('❌ SONGS.meta.title 未改做營火會'); process.exit(1); }
+  try { ctx.App.pages.songs(); } catch(e) { console.error('❌ 營火會頁 render 失敗：', e.message); process.exit(1); }
+  for (const t of ['一般營火會時間表','歡呼／吶喊','營火會工作人員','點火儀式','營火會點樣帶']) {
+    if (appSrc.indexOf(t) < 0) { console.error('❌ 營火會頁缺區塊：'+t); process.exit(1); }
+  }
+  const html = readFileSync(root+'index.html','utf8');
+  if (html.indexOf('營火會') < 0 || /<span>🔥<\/span>營火歌/.test(html)) { console.error('❌ index.html nav 未改做「營火會」'); process.exit(1); }
+  /* 6) 制服：局部放大圖＋旅巾圖 */
+  if (!ctx.DIAGRAMS.uniform.zoom || !/^<svg /.test(ctx.DIAGRAMS.uniform.zoom)) { console.error('❌ 冇徽章局部放大圖'); process.exit(1); }
+  if (ctx.DIAGRAMS.uniform.zoom.indexOf('3cm') < 0 || ctx.DIAGRAMS.uniform.zoom.indexOf('1cm') < 0) { console.error('❌ 放大圖冇標實際距離'); process.exit(1); }
+  if (!ctx.DIAGRAMS.uniform.scarf || ctx.DIAGRAMS.uniform.scarf.indexOf('3.5cm') < 0) { console.error('❌ 冇旅巾綁法圖'); process.exit(1); }
+  for (const b of ['land','sea','air']) {
+    if (!ctx.DIAGRAMS.uniform[b] || ctx.DIAGRAMS.uniform[b].indexOf('undefined') >= 0) { console.error('❌ 制服本地顏色圖缺：'+b); process.exit(1); }
+  }
+  if (appSrc.indexOf("DIAGRAMS.uniform.zoom") < 0) { console.error('❌ 徽章頁冇用局部放大圖'); process.exit(1); }
+  /* 7) 補圖：先鋒工程都要有圖 */
+  if (appSrc.indexOf("figFor('pioneer'") < 0) { console.error('❌ 先鋒工程冇圖'); process.exit(1); }
+  /* 8) 遊戲庫每個遊戲都有圖（插畫或俯視擺位圖） */
+  for (const g of ctx.DATA.games) {
+    const has = (ctx.GAME_FIG[g.n]) || (ctx.DIAGRAMS.game && ctx.DIAGRAMS.game[g.n]);
+    if (!has) { console.error('❌ 遊戲冇圖：'+g.n); process.exit(1); }
+  }
+  /* 9) 儀式 8 張卡全部有圖（插畫或 SVG 位置圖） */
+  for (const c of ctx.CEREMONY.cards) {
+    const dk = c.fig || c.dgm;
+    const has = c.fig ? !!ctx.FIGS['cer-'+c.fig] : !!(dk && ctx.DIAGRAMS.cer[dk]);
+    if (!has) { console.error('❌ 儀式卡冇圖：'+c.n); process.exit(1); }
+  }
+}
+console.log('✅ v32：真分頁（無錨點跳位）・營火會（時間表＋歡呼＋頌詞）・清 agent 字句・活動／技能／制服／儀式全部有圖');
+
 console.log('\n🎉 全部 smoke test 通過（v30：集會套包範圍收斂＋基本級 D 圖補晒——8 張儀式卡全部有圖）');

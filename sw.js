@@ -1,4 +1,4 @@
-var CACHE = "scout-v31-c24-20260916";
+var CACHE = "scout-v32-c24-20260916";
 var ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./css/app.css",
   "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/diagrams.js", "./js/svg-kit.js", "./js/songs.js",
