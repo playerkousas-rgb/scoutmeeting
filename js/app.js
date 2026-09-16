@@ -641,9 +641,9 @@ App.pages.ceremony = function(sub){
     }
   }
 
-  wrap.appendChild(App.h('p','lede','每套儀式一張卡：場位圖解＋逐步程序。步操／立正／稍息／敬禮／旗操／集隊手號嘅口令同尺寸均照《步操手冊》（香港童軍總會 2003 第二版）寫；新領袖第一次帶儀式，請先撳入下面分頁睇圖，再對住圖示範，實際動作必須由熟悉程序之領袖現場示範。'));
+  wrap.appendChild(App.h('p','lede','呢度淨係<strong>會員章＋日常集會</strong>用得到嘅儀式：開禮・禮成・集合／解散・立正／稍息（童軍動作）・敬禮・升旗・宣誓・團呼・基本整隊。<b>深嘅步操唔喺呢度教</b> —— 原地四轉、行進間轉向／換步、口令與動令時間表、旗手十二式、會操檢閱程序全部屬訓練班範圍：請上職前／進階訓練班，並人手一份《步操手冊》（香港童軍總會 2003 年 7 月第二版）照住做。新領袖第一次帶儀式：先撳入分頁睇圖，再對住圖示範；實際動作必須由熟悉程序之領袖現場示範。'));
   var ref = App.h('div','callout');
-  ref.innerHTML = '📚 <b>參考文件：</b><ul class="bullet" style="margin:6px 0 0 18px;">' +
+  ref.innerHTML = '📚 <b>參考文件：</b>（要教進階步操／帶會操，請用呢啲檔＋上訓練班，唔好靠記憶）<ul class="bullet" style="margin:6px 0 0 18px;">' +
     CEREMONY.refs.map(function(r){return '<li><a href="'+r.url+'" target="_blank" rel="noopener">'+r.n+'</a></li>';}).join('') +
     '</ul>';
   wrap.appendChild(ref);
