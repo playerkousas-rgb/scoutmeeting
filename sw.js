@@ -1,7 +1,7 @@
-var CACHE = "scout-v36-c24-20260916";
+var CACHE = "scout-v37-c24-20260916";
 var ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./css/app.css",
-  "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/dia.js", "./js/diagrams.js", "./js/svg-kit.js", "./js/songs.js",
+  "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/dia.js", "./js/songs.js",
   "./js/figs.js", "./js/projector.js",
   "./img/fig/cer-open.avif", "./img/fig/cer-close.avif", "./img/fig/cer-drill.avif",
   "./img/fig/cer-flag.avif", "./img/fig/cer-oath.avif", "./img/fig/cer-salute.avif",

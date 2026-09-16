@@ -817,19 +817,12 @@ D.fire.scarf = svg(300,124,'營火袍示意',
   +'<rect x="168" y="50" width="20" height="20" rx="3" fill="#BBDEFB" stroke="#1565C0"/>'
   +T(150,118,'布章至少兩枚縫喺袍上（營火章要求）',10,'#8D6E63')
 );
-/* ══════════ 👕 制服：徽章佩戴位置（v36 全部改用 AVIF 位置圖）══════════
-   用戶指正：手畫 SVG 唔靚、又容易畫錯比例。所以 v36 起制服圖全部係
-   img/dia/uniform-*.avif（乾淨制服底圖＋程式畫嘅位置線／尺寸／編號），
-   呢度只登記 key，再由檔案尾嘅 migration 換成 <img>。
-   圖載入唔到（舊瀏覽器／缺檔）就出 alt 文字後備（IMG.fallback 處理）。
-   位置依據：《儀容與制服手冊》3.2 基本徽章、3.3 制服帽、3.4 領巾／領帶、
-   3.5 基維爾巾圈及木章、4.6 袋蓋上方標誌及徽章、4.7 制服標誌及徽章佩戴。 */
-D.uniform = {};
-['chest','zoom','sleeve','body','scarf','ties','kilwell','cap','branch'].forEach(function(k){
-  D.uniform[k] = (typeof IMG !== 'undefined' && IMG.html)
-    ? IMG.html('uniform.'+k, 'dia-img', 'onerror="'+IMG.onerr('uniform.'+k)+'"')
-    : '';
-});
+/* ══════════ 👕 制服：徽章佩戴位置 ══════════
+   v36 起制服 9 張位置圖（chest／zoom／sleeve／body／scarf／ties／kilwell／cap／branch）
+   全部係「乾淨制服底圖＋程式照《儀容與制服手冊》疊位」直接畫成 AVIF，冇手繪 SVG 底稿；
+   前端由 js/dia.js 嘅 IMG.map 直接出圖，所以呢度唔使（亦唔應該）再畫。
+   位置依據：手冊 3.2 基本徽章、3.3 制服帽、3.4 領巾／領帶、3.5 基維爾巾圈及木章、
+   4.6 袋蓋上方標誌及徽章、4.7 制服標誌及徽章佩戴。 */
 
 /* 復原臥式（側臥）手繪圖解——AI 圖未出之前先用呢張；出咗圖會自動轉用插畫，呢張變折疊後備 */
 D.skillx.faint = svg(340,132,'復原臥式側臥示意', MK
@@ -846,36 +839,13 @@ D.skillx.faint = svg(340,132,'復原臥式側臥示意', MK
   +T(170,128,'轉身前後都要睇呼吸；唔好墊枕頭、唔好仰臥',8.5,'#A1887F')
 );
 
-/* ══════════ v35：圖解改用 AVIF 圖檔（用戶要求唔再出 SVG） ══════════
- * 上面所有手繪 SVG 只係「底稿」：喺度一次過換成 img/dia/*.avif（由同一張底稿放大 raster 出嚟，靚好多）。
- * 換走嘅 SVG 會存落 IMG.svg，只做後備——瀏覽器唔支援 AVIF 或者圖檔 load 唔到時自動換返。
+/* ══════════ 呢個檔係 build-only 底稿（v37 起唔會入前端 bundle） ══════════
+ * 用途：留低 45 張手繪圖解嘅原始 vector，做兩件事——
+ *   1) 重建 img/dia/*.avif（見 img/dia/SOURCES.md 嘅重製步驟）
+ *   2) tests/smoke.mjs 驗「圖上畫咗／寫咗乜」（尺寸線比例、角度、文字唔出框）
+ * 前端出圖一律經 js/dia.js（IMG.map → DIAGRAMS），只會出 <img src="img/dia/*.avif">，
+ * 唔會有任何 <svg>；圖載入唔到就出 alt 文字後備（IMG.fallback）。
  */
-(function(){
-  if (typeof IMG === 'undefined' || !IMG.map) return;
-  var groups = [['cer', D.cer], ['uniform', D.uniform], ['game', D.game], ['skillx', D.skillx], ['fire', D.fire]];
-  groups.forEach(function(g){
-    var name = g[0], box = g[1];
-    if (!box) return;
-    Object.keys(box).forEach(function(k){
-      var key = name + '.' + k;
-      if (!IMG.map[key] || typeof box[k] !== 'string') return;
-      if (box[k].indexOf('<svg') !== 0) return;
-      IMG.svg[key] = box[k];
-      box[k] = IMG.html(key, 'dia-img', 'onerror="' + IMG.onerr(key) + '"');
-    });
-  });
-  [['top', D, ['compass', 'pack']], ['track', D.track, null]].forEach(function(g){
-    var prefix = g[0], box = g[1], only = g[2];
-    if (!box) return;
-    (only || Object.keys(box)).forEach(function(k){
-      var key = prefix + '.' + k;
-      if (!IMG.map[key] || typeof box[k] !== 'string') return;
-      if (box[k].indexOf('<svg') !== 0) return;
-      IMG.svg[key] = box[k];
-      box[k] = IMG.html(key, 'dia-img', 'onerror="' + IMG.onerr(key) + '"');
-    });
-  });
-})();
 
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = DIAGRAMS;

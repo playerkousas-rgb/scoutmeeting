@@ -1,8 +1,11 @@
-/* dia.js — 示意圖圖檔對照表（v35）
- * 用戶要求：唔再用 SVG 出圖（手畫 vector 唔靚），手繪圖解一律先 raster 成 AVIF 再出。
- * 做法：svg-kit.js 載入後會將 DIAGRAMS 內嘅手繪 SVG 換成呢度嘅 <img>；
- *       原本嘅 SVG 只留作「瀏覽器唔支援 AVIF／圖檔缺失」時嘅後備（IMG.svg）。
- * 圖檔：img/dia/*.avif（由手繪 SVG 用 resvg-js 放大 raster 再轉 AVIF；來源、授權、尺寸見 img/dia/SOURCES.md）
+/* dia.js — 圖解圖檔對照表＋DIAGRAMS 產生器（v37）
+ * 用戶要求：唔要 SVG（手畫 vector 唔靚），圖解一律用 AVIF 真圖。
+ * 呢個檔係前端唯一嘅圖解入口：
+ *   1) IMG.map  = 每張圖解嘅 AVIF 檔案／尺寸／alt 文字
+ *   2) DIAGRAMS = 由 IMG.map 自動砌返出嚟（每個 key 一個 <img>），所以 app.js 照舊寫 DIAGRAMS.cer.open
+ * 前端由頭到尾唔會有 <svg>：圖檔 load 唔到就出 alt 文字（IMG.fallback），唔會退回 SVG。
+ * 手繪 SVG 底稿已經搬離前端（assets_src/diasvg/，build-only），只留做重建 AVIF 嘅來源。
+ * 圖檔來源、製作方法、授權見 img/dia/SOURCES.md。
  */
 var IMG = {};
 IMG.map = {
@@ -59,29 +62,43 @@ IMG.map = {
   'uniform.scarf': { f:'img/dia/uniform-scarf.avif', w:1200, h:2078, alt:'旅巾佩戴圖：左邊係戴起嘅樣（巾圈套喺衣領尖）、右上係照比例畫嘅規格尺寸線（一捲直徑 3.5cm、底至尖 12–15cm、皮帶線）、下面係捲巾四步實物圖，最後列出領巾 4 種同巾圈 4 種' },
   'uniform.sleeve': { f:'img/dia/uniform-sleeve.avif', w:1200, h:1160, alt:'右袖徽章位置圖：由上至下 1 旅章（肩膊位下方 2cm）、2 地域章／區章（再 2cm、兩章相距 1cm）、3 環境／社區參與／維護自然世界章、4 優異旅團章，另外 5 童軍小隊章喺袖口縫線上方 3cm，左邊有 2cm／3cm 尺寸線' },
   'uniform.ties': { f:'img/dia/uniform-ties.avif', w:1200, h:1262, alt:'領帶四色圖：棗紅色（深資童軍）、深綠色（樂行＋成年）、黑色（海童軍）、深藍色（空童軍），右邊列出佩戴要點（領帶結對稱、寬帶尖觸及皮帶扣上端等）' },
-  'uniform.zoom': { f:'img/dia/uniform-zoom.avif', w:1200, h:1259, alt:'局部放大圖（左胸袋同右袖肩膊兩個放大圈）：袋蓋上方 3cm、2cm、袋蓋上方、袋中央四條線；右袖肩膊顯示旅章 2cm、地域章區章再 2cm、兩章相距 1cm' },
+  'uniform.zoom': { f:'img/dia/uniform-zoom.avif', w:1200, h:1259, alt:'局部放大圖（左胸袋同右袖肩膊兩個放大圈）：袋蓋上方 3cm、2cm、袋蓋上方、袋中央四條線；右袖肩膊顯示旅章 2cm、地域章區章再 2cm、兩章相距 1cm' }
 };
-IMG.alt = function(key){ var m = IMG.map[key]; return m ? m.alt : (key || "示意圖"); };
-/* 出一張圖（img 標籤）；冇登記就回傳空字串，由呼叫者決定要唔要出後備 */
+IMG.alt = function(key){ var m = IMG.map[key]; return m ? m.alt : (key || '示意圖'); };
+/* 出一張圖（img 標籤）：一律加 dia-img 類＋onerror 文字後備；冇登記就回傳空字串，由呼叫者決定要唔要出後備 */
 IMG.html = function(key, cls, attrs){
   var m = IMG.map[key];
-  if(!m) return "";
+  if(!m) return '';
   return '<img src="'+m.f+'" width="'+m.w+'" height="'+m.h+'" alt="'+m.alt+'" loading="lazy" decoding="async"'
-    + (cls ? ' class="'+cls+'"' : '') + (attrs ? ' '+attrs : '') + '>';
+    + ' class="dia-img'+(cls?' '+cls:'')+'" onerror="'+IMG.onerr(key)+'"'+(attrs?' '+attrs:'')+'>';
 };
 IMG.has = function(key){ return !!IMG.map[key]; };
-/* 原本嘅手繪 SVG：svg-kit.js 載入時逐個存落嚟，只做後備 */
-IMG.svg = {};
+/* 圖檔 load 唔到（舊瀏覽器唔支援 AVIF／缺檔）＝出 alt 文字，唔會退回 SVG */
 IMG.fallback = function(key, self){
-  var s = IMG.svg[key];
   var box = self && self.parentNode ? self.parentNode : null;
-  if(!s || !box || !document.createElement) return;
+  if(!box || !document.createElement) return;
   var d = document.createElement('div');
   d.className = 'dgm-fallback';
-  d.innerHTML = s;
+  d.setAttribute('role','img');
+  d.setAttribute('aria-label', IMG.alt(key));
+  d.innerHTML = '<b>🖼️ 圖未顯示</b><span>'+IMG.alt(key)+'</span>';
   box.replaceChild(d, self);
 };
 IMG.onerr = function(key){
   return "IMG.fallback('" + key + "',this)";
 };
-if (typeof module !== "undefined" && module.exports) module.exports = IMG;
+/* ══════════ DIAGRAMS：由 IMG.map 砌返（前端唯一出圖路徑）══════════
+   'uniform.chest' → DIAGRAMS.uniform.chest｜'top.compass' → DIAGRAMS.compass｜'track.arrow' → DIAGRAMS.track.arrow
+   所以 app.js／ceremony.js 照舊寫 DIAGRAMS.cer.open、DIAGRAMS.uniform.body，出到嘅一定係 <img src="img/dia/*.avif">。 */
+var DIAGRAMS = (typeof window !== 'undefined' && window.DIAGRAMS) ? window.DIAGRAMS : {};
+(function(){
+  Object.keys(IMG.map).forEach(function(key){
+    var i = key.indexOf('.');
+    if (i < 0) return;
+    var grp = key.slice(0, i), name = key.slice(i + 1);
+    var host = (grp === 'top') ? DIAGRAMS : (DIAGRAMS[grp] = DIAGRAMS[grp] || {});
+    host[name] = IMG.html(key);
+  });
+})();
+if (typeof window !== 'undefined') window.DIAGRAMS = DIAGRAMS;
+if (typeof module !== 'undefined' && module.exports) module.exports = { IMG: IMG, DIAGRAMS: DIAGRAMS };

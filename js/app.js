@@ -268,10 +268,9 @@ App.ph = function(key, cap, svgHtml){
     (svgAltHtml?'<details class="dgm-alt no-print"><summary>📐 平面／位置圖解（睇位用）</summary><div class="dgm-wrap">'+svgAltHtml+'</div></details>':'')+
     '</figure>';
 };
-/* 平面圖解：DIAGRAMS 內嘅手繪圖已經全部換成 img/dia/*.avif（svg-kit.js 載入時換），
-   呢個 helper 係俾「直接用 DIAGRAMS.xxx 字串」嘅位用，順便有圖就出圖、冇就先出底稿 */
+/* 平面圖解：所有圖解由 js/dia.js 嘅 IMG.map 出（一律 <img src="img/dia/*.avif">，冇 SVG） */
 App.dgmFigure = function(key, cap, cls){
-  var html = (typeof IMG!=='undefined' && IMG.map[key]) ? IMG.html(key, 'dia-img'+(cls?' '+cls:''), 'onerror="'+IMG.onerr(key)+'"') : '';
+  var html = (typeof IMG!=='undefined' && IMG.map[key]) ? IMG.html(key, cls) : '';
   if(!html) return '';
   return '<figure class="dgm-fig">'+html+'<figcaption>📐 '+(cap||IMG.alt(key))+'</figcaption></figure>';
 };

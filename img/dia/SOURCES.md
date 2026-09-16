@@ -2,13 +2,14 @@
 
 ## 呢啲圖係咩
 
-兩條唔同嘅製作線，出圖格式一樣（AVIF），前端一樣由 `js/svg-kit.js` 尾段換成 `<img>`：
+兩條唔同嘅製作線，出圖格式一樣（AVIF），前端一樣由 `js/dia.js` 嘅 `IMG.map` 出 `<img>`（v37 起前端零 SVG）：
 
 | | 邊 45 張 | 制服 9 張（`uniform-*`） |
 | --- | --- | --- |
 | 圖解內容 | 儀式／遊戲／技能／營火／追蹤／指南針／背囊 | chest、zoom、sleeve、body、scarf、ties、kilwell、cap、branch |
-| 底稿 | app 自己嘅**手繪 SVG**（`js/diagrams.js`／`js/svg-kit.js`，`DIAGRAMS.*`） | **乾淨服裝底圖（AI 生成，中性衣物、零徽章零文字）＋ 程式疊位** |
-| 後備 | SVG 存落 `IMG.svg`，AVIF load 唔到就 `IMG.fallback()` 換返手繪版（**所以要留底稿**） | 冇 SVG 底稿；後備＝`alt` 文字＋`figcaption` |
+| 底稿 | app 自己嘅**手繪 SVG**（`assets_src/diasvg/diagrams.src.js`＋`svg-kit.src.js`，build-only） | **乾淨服裝底圖（AI 生成，中性衣物、零徽章零文字）＋ 程式疊位** |
+| 前端出圖 | `js/dia.js` `IMG.map` → `DIAGRAMS.*` → `<img src="img/dia/*.avif">`（45 張底稿唔會下載） | 同左（v36 起直接登記 `IMG.map`，冇底稿） |
+| 後備 | v37 起**冇 SVG 後備**：AVIF load 唔到就 `IMG.fallback()` 出 `alt` 文字（`.dgm-fallback`） | 同左（`alt` 文字＋`figcaption`） |
 | 測試 | `tests/smoke.mjs` 驗底稿尺寸線比例（0.05 px/mm）／角度／文字唔出框 | 驗 9 個 key 有 AVIF、冇 SVG 底稿、alt 有齊實際距離（3cm／2cm／1cm／3.5cm） |
 
 ### 制服 9 張點解要另做一條線（v36）
@@ -40,6 +41,7 @@
 
 ### 手繪 45 張
 
+0. **v37 起底稿位置**：`assets_src/diasvg/diagrams.src.js`（指南針／背囊／追蹤 6）＋ `assets_src/diasvg/svg-kit.src.js`（儀式／遊戲／技能／營火／復原臥式）；呢兩個檔**唔會**入前端 bundle（`index.html`／`sw.js` 都冇），只係重建 AVIF 同俾測試驗圖用。
 1. 底稿 SVG（340 單位闊，除遊戲圖）→ `resvg-js` raster：
    - `cer`／`game`／`skillx`／`fire`：放大 3 倍
    - 指南針／背囊：放大 4 倍　·　追蹤符號：放大 5 倍
@@ -75,7 +77,7 @@
 ## 重製方法
 
 ```bash
-# 手繪 45 張
+# 手繪 45 張（底稿喺 assets_src/diasvg/）
 node /home/user/svgrender/render-dia.js    # 底稿 → /tmp/diapng → img/dia/*.avif（約 25 秒）
 node /home/user/svgrender/gen-dia-js.js    # 按渲染結果更新 js/dia.js（含 alt 文字表）
 node /home/user/svgrender/qa-textink.js    # 檢查文字壓圖
@@ -85,12 +87,13 @@ python /tmp/build/fig_uniform.py           # 底圖＋位置線 → /tmp/build/o
 convert /tmp/build/out/chest.png -resize '1200x>' -strip -quality 46 -define avif:pixel-format=yuv420p img/dia/uniform-chest.avif
 ```
 
-改咗底稿（`js/diagrams.js`／`js/svg-kit.js`）之後一定要重跑上面三步，否則 app 出嘅 AVIF 會同底稿唔一致。
+改咗底稿（`assets_src/diasvg/diagrams.src.js`／`svg-kit.src.js`）之後一定要重跑上面三步，否則 app 出嘅 AVIF 會同底稿唔一致。
+加新圖解：① 底稿加 key（例如 `D.cer.xxx`）② 出 AVIF 落 `img/dia/` ③ `js/dia.js` 嘅 `IMG.map` 加 `'cer.xxx'` 一行（尺寸＋alt）④ `sw.js` ASSETS 加圖檔 ⑤ `npm test`。前端唔使改任何嘢——`DIAGRAMS.cer.xxx` 會自動有圖。
 改咗 `js/uniform.js` 嘅 `placement`／`cap` 之後要重跑制服管線，否則圖上嘅位置會同條文脫節。
 
 ## 注意
 
-- 手繪 45 張嘅比例係 **0.05 px = 1 mm**（`fS`）；尺寸線一律用 `fDIM()` 出，測試會逐條核對。
+- 手繪 45 張嘅比例係 **0.05 px = 1 mm**（`fS`）；尺寸線一律用 `fDIM()` 出，測試會逐條核對（讀 `assets_src/diasvg/*.src.js`）。
 - 制服 9 張嘅比例係**逐張底圖量度**得出嘅 px/cm（唔可以假設），尺寸標籤同圖上距離用同一套換算。
 - 【v21 禁令】AI **唔可以**畫制服實物／徽章位置：底圖只可以是**中性衣物**，位置一律由程式疊。
   AI 插畫（`img/fig/`）亦只畫中性練習衫（灰 T＋深灰短褲、冇帽冇領巾冇章）。
