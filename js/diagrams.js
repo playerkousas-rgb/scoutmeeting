@@ -47,24 +47,8 @@ water: '<svg viewBox="0 0 90 60" width="90" height="60"><path d="M8,32 Q20,16 32
 msg: '<svg viewBox="0 0 90 60" width="90" height="60"><polygon points="45,8 76,52 14,52" fill="none" stroke="#37474F" stroke-width="6" stroke-linejoin="round"/><circle cx="45" cy="40" r="4" fill="#37474F"/></svg>'
 };
 
-/* ── 平結 3 步（紅 vs 藍：左壓右） ── */
-DIAGRAMS.reef = [
-'<svg viewBox="0 0 170 95" width="170" height="95"><line x1="12" y1="47" x2="158" y2="47" stroke="#C62828" stroke-width="8" stroke-linecap="round"/><line x1="85" y1="8" x2="85" y2="87" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/></svg>',
-'<svg viewBox="0 0 170 95" width="170" height="95"><line x1="12" y1="47" x2="158" y2="47" stroke="#C62828" stroke-width="8" stroke-linecap="round"/><circle cx="85" cy="47" r="21" fill="none" stroke="#1565C0" stroke-width="8"/><line x1="85" y1="8" x2="85" y2="26" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/><line x1="85" y1="68" x2="85" y2="87" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/></svg>',
-'<svg viewBox="0 0 170 95" width="170" height="95"><ellipse cx="60" cy="50" rx="26" ry="18" fill="none" stroke="#C62828" stroke-width="8"/><ellipse cx="110" cy="50" rx="26" ry="18" fill="none" stroke="#1565C0" stroke-width="8"/><line x1="60" y1="32" x2="60" y2="8" stroke="#C62828" stroke-width="8" stroke-linecap="round"/><line x1="110" y1="32" x2="110" y2="8" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/><line x1="48" y1="66" x2="32" y2="88" stroke="#C62828" stroke-width="8" stroke-linecap="round"/><line x1="122" y1="66" x2="138" y2="88" stroke="#1565C0" stroke-width="8" stroke-linecap="round"/></svg>'
-];
+/* ⚠️ v19：已按用戶要求移除「繩結逐步圖解」（reef/fig8/bowline）——圖畫錯會教錯人。
+ * 繩結教學只依 c13/c14 教案嘅文字口訣＋領袖現場示範。DIAGRAMS 嘅新增圖解喺 js/svg-kit.js。 */
 
-/* ── 八字結 3 步 ── */
-DIAGRAMS.fig8 = [
-'<svg viewBox="0 0 170 95" width="170" height="95"><circle cx="85" cy="52" r="28" fill="none" stroke="#6D4C41" stroke-width="8"/><line x1="85" y1="8" x2="85" y2="24" stroke="#6D4C41" stroke-width="8" stroke-linecap="round"/><line x1="85" y1="80" x2="85" y2="90" stroke="#6D4C41" stroke-width="8" stroke-linecap="round"/></svg>',
-'<svg viewBox="0 0 170 95" width="170" height="95"><circle cx="85" cy="52" r="28" fill="none" stroke="#6D4C41" stroke-width="8"/><circle cx="85" cy="52" r="15" fill="none" stroke="#6D4C41" stroke-width="6"/><line x1="85" y1="8" x2="85" y2="24" stroke="#6D4C41" stroke-width="8" stroke-linecap="round"/><line x1="85" y1="80" x2="85" y2="90" stroke="#6D4C41" stroke-width="8" stroke-linecap="round"/></svg>',
-'<svg viewBox="0 0 170 95" width="170" height="95"><ellipse cx="85" cy="32" rx="15" ry="14" fill="none" stroke="#6D4C41" stroke-width="8"/><ellipse cx="85" cy="63" rx="15" ry="14" fill="none" stroke="#6D4C41" stroke-width="8"/><line x1="85" y1="6" x2="85" y2="18" stroke="#6D4C41" stroke-width="8" stroke-linecap="round"/><line x1="85" y1="77" x2="85" y2="90" stroke="#6D4C41" stroke-width="8" stroke-linecap="round"/></svg>'
-];
 
-/* ── 稱人結 4 步（兔仔故事：出洞→繞樹→返洞） ── */
-DIAGRAMS.bowline = [
-'<svg viewBox="0 0 170 95" width="170" height="95"><circle cx="85" cy="58" r="20" fill="none" stroke="#2E7D32" stroke-width="8"/><line x1="85" y1="8" x2="85" y2="38" stroke="#2E7D32" stroke-width="8" stroke-linecap="round"/></svg>',
-'<svg viewBox="0 0 170 95" width="170" height="95"><circle cx="85" cy="58" r="20" fill="none" stroke="#2E7D32" stroke-width="8"/><line x1="85" y1="8" x2="85" y2="38" stroke="#2E7D32" stroke-width="8" stroke-linecap="round"/><line x1="85" y1="90" x2="85" y2="30" stroke="#F9A825" stroke-width="8" stroke-linecap="round"/><polyline points="77,40 85,28 93,40" fill="none" stroke="#F9A825" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-'<svg viewBox="0 0 170 95" width="170" height="95"><circle cx="85" cy="62" r="18" fill="none" stroke="#2E7D32" stroke-width="8"/><line x1="85" y1="8" x2="85" y2="44" stroke="#2E7D32" stroke-width="8" stroke-linecap="round"/><ellipse cx="85" cy="28" rx="16" ry="11" fill="none" stroke="#F9A825" stroke-width="7"/><line x1="85" y1="39" x2="85" y2="52" stroke="#F9A825" stroke-width="7" stroke-linecap="round"/></svg>',
-'<svg viewBox="0 0 170 95" width="170" height="95"><circle cx="62" cy="55" r="30" fill="none" stroke="#2E7D32" stroke-width="8"/><circle cx="108" cy="42" r="11" fill="none" stroke="#2E7D32" stroke-width="8"/><line x1="108" y1="6" x2="108" y2="31" stroke="#2E7D32" stroke-width="8" stroke-linecap="round"/><path d="M108,53 C108,66 96,70 92,80" fill="none" stroke="#F9A825" stroke-width="7" stroke-linecap="round"/></svg>'
-];
+if (typeof module !== "undefined" && module.exports) module.exports = DIAGRAMS;
