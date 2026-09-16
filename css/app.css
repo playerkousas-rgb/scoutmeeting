@@ -2961,6 +2961,8 @@ ul.motto li{ font-size:15px; }
 }
 
 /* ═══════ v21：中性練習衫示意圖（唔畫制服）＋圖說聲明 ═══════ */
+.svg-steps .ph-fig{flex:1 1 100%;min-width:0}
+.svg-steps .dgm-fig{flex:0 1 auto}
 .ph-fig .ph-note{display:block;margin-top:5px;padding-top:5px;border-top:1px dotted var(--line);font-size:.74rem;color:#8D5B00;line-height:1.5}
 .ph-fig .ph-note a{color:var(--or);font-weight:700}
 .game-banner .ph-fig{margin:12px 0 14px;border-radius:16px}

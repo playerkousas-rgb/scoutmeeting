@@ -6,7 +6,9 @@ const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/dat
   'img/fig/cer-open.avif','img/fig/cer-close.avif','img/fig/cer-drill.avif','img/fig/cer-flag.avif',
   'img/fig/cer-oath.avif','img/fig/cer-salute.avif','img/fig/fire-circle.avif','img/fig/fire-song.avif',  'img/fig/game-ball.avif','img/fig/game-shape.avif','img/fig/game-tarp.avif','img/fig/game-pack.avif',
   'img/fig/game-relay-cards.avif','img/fig/game-tug.avif','img/fig/game-aid.avif','img/fig/game-orienteer.avif',
-  'img/fig/game-beachflag.avif','img/fig/game-water.avif', ...lessonFiles];
+  'img/fig/game-beachflag.avif','img/fig/game-water.avif','img/fig/game-lineup.avif',
+  'img/fig/skill-ropecare.avif','img/fig/skill-legend.avif','img/fig/skill-tent.avif',
+  'img/fig/skill-stove.avif','img/fig/skill-rice.avif','img/fig/skill-lost.avif', ...lessonFiles];
 for (const f of files) {
   if (!existsSync(root + f)) { console.error('❌ Missing', f); process.exit(1); }
   console.log('✅', f);
@@ -209,9 +211,9 @@ console.log('✅ manifest：新 icon＋營火歌 shortcut');
 
 // sw.js
 const swSrc = readFileSync(root+'sw.js','utf8');
-if(!swSrc.includes('scout-v22') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v22'); process.exit(1); }
+if(!swSrc.includes('scout-v23') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v23'); process.exit(1); }
 if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js')){ console.error('❌ sw.js 未 cache v19 新檔'); process.exit(1); }
-console.log('✅ sw.js cache 已升級（v22 含 19 張示意圖）');
+console.log('✅ sw.js cache 已升級（v23 含 26 張示意圖）');
 
 // README
 const rm = readFileSync(root+'README.md','utf8');
@@ -222,7 +224,7 @@ const figSandbox = {}; createContext(figSandbox);
 runInContext(readFileSync(root+'js/figs.js','utf8'), figSandbox, {filename:'js/figs.js'});
 const FIGSJ = figSandbox.FIGS || {};
 const figKeys = Object.keys(FIGSJ);
-if (figKeys.length < 19) { console.error('❌ FIGS 不足 19 張，實際', figKeys.length); process.exit(1); }
+if (figKeys.length < 26) { console.error('❌ FIGS 不足 26 張，實際', figKeys.length); process.exit(1); }
 if (figKeys.some(k => k === 'note' || typeof FIGSJ[k] === 'string')) { console.error('❌ FIGS 混咗非圖項目（note 應該用全域 FIGS_NOTE）'); process.exit(1); }
 if (figSandbox.FIGS_NOTE !== undefined && !/唔代表制服標準/.test(figSandbox.FIGS_NOTE)) { console.error('❌ FIGS_NOTE 冇寫明唔代表制服標準'); process.exit(1); }
 for (const k of figKeys) {
@@ -288,7 +290,7 @@ for (const nm of gfKeys) {
   if (!FIGSJ[GF[nm]]) { console.error('❌ GAME_FIG 指向冇圖嘅 key：'+nm+' → '+GF[nm]); process.exit(1); }
 }
 const noImg = ctx.DATA.games.filter(g => !GF[g.n]);
-if (noImg.length !== 2) { console.error('❌ 仲未補圖嘅遊戲應該得 2 個，實際 '+noImg.map(g=>g.n).join(',')); process.exit(1); }
+if (noImg.length !== 1 || noImg[0].n !== '大風吹') { console.error('❌ 仲未補圖嘅遊戲應該得「大風吹」，實際 '+noImg.map(g=>g.n).join(',')); process.exit(1); }
 let phCnt = 0, dgmCnt = 0;
 for (const g of ctx.DATA.games) {
   const gk = GF[g.n] || '';
@@ -304,7 +306,7 @@ for (const g of ctx.DATA.games) {
   }
   if (html.includes('undefined')) { console.error('❌ 遊戲 '+g.n+' markup 洩漏 undefined'); process.exit(1); }
 }
-if (!(phCnt===10 && dgmCnt===2)) { console.error('❌ 遊戲插畫覆蓋異常：ph='+phCnt+' dgm='+dgmCnt); process.exit(1); }
+if (!(phCnt===11 && dgmCnt===1)) { console.error('❌ 遊戲插畫覆蓋異常：ph='+phCnt+' dgm='+dgmCnt); process.exit(1); }
 for (const k of Object.keys(FIGSJ).filter(x=>x.indexOf('game-')===0)) {
   const f = FIGSJ[k];
   if (/帽章|領巾|布章|巾圈|旅巾|制服|團員|童軍帽/.test(f.alt)) { console.error('❌ '+k+' alt 描述咗制服／身份：', f.alt); process.exit(1); }
@@ -316,6 +318,36 @@ for (const k of Object.keys(FIGSJ).filter(x=>x.indexOf('game-')===0)) {
   if (!swSrc.includes(FIGSJ[k].src)) { console.error('❌ sw.js 未 cache 遊戲圖：'+k); process.exit(1); }
 }
 try { ctx.App.pages.play(); } catch(e) { console.error('❌ pages.play 插畫接入後 render 失敗：', e.message); process.exit(1); }
-console.log('✅ 遊戲插畫：10 張 AVIF 場地圖＋2 個退回平面圖（ph='+phCnt+'/dgm='+dgmCnt+'）・sw 預 cache 齊');
+console.log('✅ 遊戲插畫：11 張 AVIF 場地圖＋1 個退回平面圖（ph='+phCnt+'/dgm='+dgmCnt+'）・sw 預 cache 齊');
 
-console.log('\n🎉 全部 smoke test 通過（v22：補圖批次 2——遊戲 10 張場地圖）');
+// ═════════ v23：批次 3 — 技能插畫 ＋ QA fail 名單（唔准回流） ═════════
+const SF = figSandbox.SKILL_FIG || {};
+if (Object.keys(SF).length < 6) { console.error('❌ SKILL_FIG 只覆蓋 '+Object.keys(SF).length+' 項技能（應 6）'); process.exit(1); }
+for (const nm of Object.keys(SF)) { if (!FIGSJ[SF[nm]]) { console.error('❌ SKILL_FIG 指向冇圖嘅 key：'+nm); process.exit(1); } }
+// QA fail 咗嘅三張（刀交接／SOS 節奏／凳數）絕唔准悄悄放返入 repo
+for (const banned of ['skill-knife.avif','skill-sos.avif','game-chairs.avif']) {
+  if (existsSync(root+'img/fig/'+banned)) { console.error('❌ '+banned+' 返咗入面（QA fail：會教錯人）'); process.exit(1); }
+}
+if (SF.knife || SF.sos) { console.error('❌ knife/sos 唔准入 SKILL_FIG（AI 畫錯傳刀同音節）'); process.exit(1); }
+if (GF['大風吹']) { console.error('❌ 大風吹唔准入 GAME_FIG（凳數畫錯）'); process.exit(1); }
+// 技能頁逐分頁 render：有圖用 ph-fig，冇圖退回 dgm-fig
+for (const sub of ['care','map','camp','field','aid']) {
+  try { ctx.App.pages.skills(sub); } catch(e) { console.error('❌ pages.skills('+sub+') 接入插畫後失敗：', e.message); process.exit(1); }
+}
+const figHtmlCamp = ctx.App.ph('skill-tent', FIGSJ['skill-tent'].cap, ctx.DIAGRAMS.skillx.tent);
+if (!figHtmlCamp.includes('img/fig/skill-tent.avif') || !figHtmlCamp.includes('45 度')) { console.error('❌ 帳篷圖／圖說唔啱'); process.exit(1); }
+const figHtmlRope = ctx.App.ph('skill-ropecare', FIGSJ['skill-ropecare'].cap, ctx.DIAGRAMS.skillx.ropecare);
+if (!/圈繞.*照文字/.test(figHtmlRope)) { console.error('❌ 收繩圖冇寫明「步驟照文字」（唔准出結圖）'); process.exit(1); }
+const figHtmlSos = ctx.App.ph('', 'SOS 哨音節拍（三短三長三短）', ctx.DIAGRAMS.skillx.sos);
+if (!figHtmlSos.includes('class="dgm-fig"')) { console.error('❌ SOS 應該退回平面節拍圖'); process.exit(1); }
+// 冇孤兒圖：img/fig 入面每張都要有 FIGS 項目＋喺 sw
+const { readdirSync } = await import('fs');
+const avifs = readdirSync(root+'img/fig').filter(f=>/\.avif$/.test(f));
+const allSrc = figKeys.map(k=>FIGSJ[k].src.replace('img/fig/',''));
+for (const f of avifs) {
+  if (!allSrc.includes(f)) { console.error('❌ img/fig/'+f+' 冇喺 FIGS 入面（孤兒圖，要咪刪走咪補 entry）'); process.exit(1); }
+  if (!swSrc.includes(f)) { console.error('❌ sw.js 漏 cache img/fig/'+f); process.exit(1); }
+}
+console.log('✅ 技能插畫 6 張＋QA fail 名單守住（刀/SOS/凳 唔准回流）・圖檔 26 張全數入 FIGS＋sw');
+
+console.log('\n🎉 全部 smoke test 通過（v23：補圖批次 3——技能 6 張＋有口難言；QA 擋走 3 張）');

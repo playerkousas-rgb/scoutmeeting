@@ -958,7 +958,9 @@ App.pages.skills = function(sub){
   wrap.appendChild(App.subnav('skills',subs,cur));
   var sk = DIAGRAMS.skillx || {};
   function figFor(name, cap){
-    return (sk[name] ? '<figure class="dgm-fig"><div class="dgm-wrap">'+sk[name]+'</div><figcaption>🖼️ '+cap+'</figcaption></figure>' : '');
+    var k = (typeof SKILL_FIG!=='undefined' && SKILL_FIG[name]) ? SKILL_FIG[name] : '';
+    var fcap = (k && typeof FIGS!=='undefined' && FIGS[k] && FIGS[k].cap) ? FIGS[k].cap : cap;
+    return App.ph(k, fcap, sk[name] || '');
   }
   var secs = {};
   secs.rope = App.block('🪢 繩結（10 個・文字口訣為準）',

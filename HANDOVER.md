@@ -346,3 +346,24 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 - smoke test 新增：`GAME_FIG` 覆蓋 10／未補圖必須得 2／逐遊戲 render 檢查 ph-fig 或 dgm-fig／game-* 嘅 alt 命中 `帽章|領巾|布章|巾圈|旅巾|制服|童軍帽` 即 fail／alt 出現繩結打法名即 fail／sw 漏圖即 fail
 
 **批次 3（最後一輪）待辦**：`DIAGRAMS.skillx` 八張（ropecare／legend／tent／stove／knife／rice／sos／lost）換 AVIF ＋ `game-lineup 有口難言`、`game-chairs 大風吹`。注意 `skillx.rope care`／`stove`／`knife` 三張：只畫**場合同要點**（捲繩手法唔出逐步圖、爐具只示擺位同通風、刀只示「唔傳刀、刀尖向自己」呢類原則），涉及結法／包紮／切法步驟一律留文字＋教案連結。
+
+## 19. v23 改動記錄（2026-09-16，補圖批次 3：技能 6 張＋有口難言；QA 擋走 3 張）
+
+出咗 10 張、**收 7 張**，另外 3 張我 QA 自己 fail 咗冇放落 repo（原圖喺 `assets_src/figsrc/`，gitignore 內）：
+
+| 狀態 | 圖 | 理由 |
+|---|---|---|
+| ✅ | skill-ropecare / skill-legend / skill-tent / skill-stove / skill-rice / skill-lost | 動作＋距離＋位置講得啱（45° 營繩、3 米線、抬高過心口、氣罐直立分開） |
+| ✅ | game-lineup（有口難言） | 直線＋手指貼嘴＋袋水放界外，冇可畫錯嘅細節 |
+| ❌ | skill-knife | 右格畫成「刃向人交接」（應該俾柄）＋左格扶木隻手喺刀前；呢類一錯就會傷人 |
+| ❌ | skill-sos | 天上音波畫咗 4 組（要 3 短 3 長 3 短）；節奏错＝教錯 |
+| ❌ | game-chairs | 凳數冇滿足「少一張」，睇圖設場會玩唔成 |
+
+**守住唔准回流**：`tests/smoke.mjs` 有斷言——`img/fig/skill-knife.avif`／`skill-sos.avif`／`game-chairs.avif` 一出現即 fail；`SKILL_FIG` 出現 `knife`／`sos` 即 fail；`GAME_FIG` 出現「大風吹」即 fail；`img/fig` 有孤兒圖（冇入 FIGS 或冇入 sw）即 fail。
+=> 下一批重出呢三張時，prompt 要寫死：刀「blade folded, handle toward receiver, blade end held by giver only」；SOS「exactly three groups of arcs: 3 short, 3 long, 3 short, nothing else」；凳「chairs = players − 1, count them: 10 chairs, 11 players」。
+
+### 其他接入
+- `App.pages.skills` 嘅 `figFor()` 改行 `SKILL_FIG` → 有圖用 `App.ph()`（AVIF＋折疊平面圖解），冇圖（rope 口訣/SOS/先鋒紮作）自動退回 `dgm-fig`；`css` 加 `.svg-steps .ph-fig{flex:1 1 100%}`
+- 圖說全部寫明邊度「圖冇畫、要照文字」：收繩圈繞步驟、爐具漏氣／熄火次序、包紮力度與燙傷五步
+- `sw.js` CACHE=`scout-v23-c24-20260916`，ASSETS 26 張圖；全場插畫 886KB（AVIF q58–64／1000px）
+- 而家覆蓋率：儀式 6/6、遊戲 11/12、技能 6/8（另 2 張刻意用圖解）、營火／歌 3/3、制服 0（只用官網圖，永久規則）、興趣章 0（用戶話唔使）
