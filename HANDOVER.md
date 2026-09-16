@@ -576,5 +576,7 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 - **面板內文字溢出 checker**：巢式 `translate/scale` 疊乘後比較所屬 160×126 面板框（舊 checker 净係睇 viewBox，跨格疊字睇唔到）。`tests` 行 `node --check` 先至算數。
 - ⚠️ 教訓：**自己寫嘅 QA 要自己先驗** — 第一版 panel checker 用咗面板原點去算 art 內座標（冇乘 0.86 scale），誤報 9 條；改返逐層疊乘至正確。
 
-### 合併
-- PR #3（`arena/01a0a749-scoutmeeting` → `main`）v19–v30 一次過合併；合併前 `npm test` 必綠＋`gh pr view 3 --json mergeable,mergeStateStatus` 要 `MERGEABLE/CLEAN`；repo 慣用 merge commit（main 頭先係「Merge pull request #2…」）。
+### 合併（已執行）
+- ✅ **PR #3 已合併入 `main`**（2026-09-16，merge commit `88c4f6e`；main 由 `3d404cf` → `88c4f6e`，v30 commit `e997069`）。PR 原本係 draft → 要先 `gh pr ready 3` 先 merge 到（draft 狀態 merge 會俾 GitHub 拒）。
+- 合併前檢查照做：`npm test` 149 項全綠、`gh pr view 3 --json mergeable,mergeStateStatus` = `MERGEABLE/CLEAN`（push 完即去 `UNKNOWN`，要等佢 recompute，先至可以 merge）。
+- 之後要改返 main 嘅嘢（包括本檔呢段紀錄）→ 開新 PR；呢段「已合併」紀錄留喺 `arena/01a0a749-scoutmeeting` ＋ `scoutmeeting-player`。
