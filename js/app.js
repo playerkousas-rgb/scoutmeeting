@@ -143,8 +143,10 @@ App.ph = function(key, cap, svgHtml){
 };
 /* 攞儀式卡嘅圖（cer-＋fig key），冇圖先退回 SVG */
 App.cerFig = function(c){
-  var svgAlt = (c.fig && typeof DIAGRAMS!=='undefined' && DIAGRAMS.cer && DIAGRAMS.cer[c.fig]) ? DIAGRAMS.cer[c.fig] : '';
-  return App.ph(c.fig ? 'cer-'+c.fig : '', c.figcap || '位置示意圖解', svgAlt);
+  var dk = c.fig || c.dgm;
+  var svgAlt = (dk && typeof DIAGRAMS!=='undefined' && DIAGRAMS.cer && DIAGRAMS.cer[dk]) ? DIAGRAMS.cer[dk] : '';
+  if(!c.fig) return svgAlt ? '<figure class="dgm-fig"><div class="dgm-wrap">'+svgAlt+'</div><figcaption>📐 '+(c.figcap||'位置圖解')+'</figcaption></figure>' : '';
+  return App.ph('cer-'+c.fig, c.figcap || '位置示意圖解', svgAlt);
 };
 
 App.printSec = function(el){
@@ -629,7 +631,7 @@ App.pages.ceremony = function(sub){
     }
   }
 
-  wrap.appendChild(App.h('p','lede','每套儀式一张卡：場位圖解＋逐步程序。新領袖第一次帶儀式，請先撳入下面分頁睇圖，再對住圖示範；實際手勢步操必須由熟悉程序之領袖現場示範。'));
+  wrap.appendChild(App.h('p','lede','每套儀式一張卡：場位圖解＋逐步程序。步操／立正／稍息／敬禮／旗操／集隊手號嘅口令同尺寸均照《步操手冊》（香港童軍總會 2003 第二版）寫；新領袖第一次帶儀式，請先撳入下面分頁睇圖，再對住圖示範，實際動作必須由熟悉程序之領袖現場示範。'));
   var ref = App.h('div','callout');
   ref.innerHTML = '📚 <b>參考文件：</b><ul class="bullet" style="margin:6px 0 0 18px;">' +
     CEREMONY.refs.map(function(r){return '<li><a href="'+r.url+'" target="_blank" rel="noopener">'+r.n+'</a></li>';}).join('') +
@@ -651,7 +653,7 @@ App.ceremonySec = function(c, full){
   }
   if(c.prep) body += '<p><b>預備物資：</b>'+c.prep+'</p>';
   if(c.intro) body += '<p><b>動作要點：</b>'+c.intro+'</p>';
-  if(c.fig){
+  if(c.fig || c.dgm){
     body += App.cerFig(c);
   } else if(!full){
     body += '<div class="callout">⚠️ 呢套程序仍待官方核對，暫時只有文字＋參考文件連結；帶之前請先問熟悉程序之領袖。</div>';

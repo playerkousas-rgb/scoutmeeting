@@ -2,7 +2,7 @@
  * 參考：官方 2026-09-01 集會套包程序表
  *      《隊列和升掛國旗及區旗指引》（2024）https://www.scout.org.hk/uploads/tc/circulars/16450/
  *      《童軍基本技能教材手冊》二.禮儀篇
- *      《步操手冊》DRILL MANUAL（香港童軍總會，2000 新版）— 立正/稍息/抽膝/彈前腳/口令/步速步幅/致敬 全部照呢本
+ *      《步操手冊》DRILL MANUAL（香港童軍總會 2003 年 7 月第二版）— 立正/稍息/休息/轉法/抽膝/彈前腳/口令/步速步幅/致敬/旗操/集隊手號 全部照呢本
  * 注意：所有程序為文字指引；手勢、步操實際動作必須由熟悉正式程序之領袖現場示範。
  */
 
@@ -12,7 +12,7 @@ CEREMONY.source = {
   title:'童軍團集會儀式及中式隊列基本動作',
   refs:[
     '《童軍基本技能教材手冊》二.禮儀篇',
-    '《步操手冊》DRILL MANUAL（香港童軍總會，2000 新版・第2章施教步操／第3章立定步操／第6章排列隊形／第7章旗操／第8章集隊手號）',
+    '《步操手冊》DRILL MANUAL（香港童軍總會 2003 年 7 月第二版・第2章施教步操／第3章立定步操／第4章快步步操／第5章慢步步操／第6章排列隊形／第7章旗操／第8章集隊手號／附錄甲口令表・戊檢閱須知）',
     '《隊列和升掛國旗及區旗指引》（2024年版）',
     '官方 2026-09-01 童軍團集會套包'
   ]
@@ -73,11 +73,15 @@ CEREMONY.cards = [
     intro:'童軍動作：提起左腳直至大腿和地面平衡、左小腿放鬆；用力將左腳向外踏下，雙腳距離約與肩膀同寬；同時雙手沿身體向後移，直至身後中央位置，立即由拳變為掌，並將右掌疊在左掌上，雙手拇指緊扣。（出處：官方套包 Week 1）',
     steps:[
       { h:'1. 立正〔手冊第3章§2〕', d:'口令「<b>Alert！</b>」：兩腳掌平放地面、腳尖向外分開<strong>與中線成 30 度角</strong>（即兩腳尖之間約 60 度；舊版寫 45 度係錯）；雙膝蹬直；<strong>雙手握拳</strong>、手踭蹬直、母指指甲向前放喺食指上面、母指壓住褲骨；身體挺直、後顎繫貼衣領、眼望無限遠。⚠️ 手冊註明：Attention／Squad Shun／Parade Shun 動作跟立正一樣，但只適用於典禮、訓練班或其他制服團體，<strong>一般童軍集會不建議用</strong>——集會就嗌「立正（Alert）」。' },
-      { h:'2. 稍息／休息〔手冊第3章§2〕', d:'手冊將「立正、稍息及休息」（Stand at ease／Stand easy）排喺同一節；中式隊列版本：左腳向左橫移一步（約與肩同寬）、雙手在背後交叉握好（左手握右手腕）、身體保持挺直。手冊「稍息／休息」原文頁我哋份冇可讀文字 → 動作細節照紙本核對先教。' },
+      { h:'2. 稍息〔手冊第3章§2・圖7〕', d:'口令「Stand at — <b>ease</b>!」，打數「Out!」：提起左腳直至大腿與地面平行、左小腿放鬆，用力將左腳向外踏下；同一時間雙手沿身體向後移，直至身後中央，<b>立即由拳變為掌，右掌疊喺左掌上面，雙手拇指緊扣</b>。姿勢：腳掌平放、腳尖向外與中線成 30 度、<b>兩腳腳踭分開 305 毫米</b>（約肩寬）、雙膝蹬直、重心放喺兩腳之間、<b>所有手指同手踭都要蹬直</b>、頸至頭保持立正向前。⚠️ 唔係「左手握右手腕」（嗰個係中式跨立）——手冊版本同「童軍動作」係同一個手勢。' },
+      { h:'3. 休息〔手冊第3章§2・圖8〕', d:'口令「Stand — <b>easy</b>!」（無打數）：喺稍息嘅基礎上，淨係<strong>將雙手手踭自然放鬆</strong>，其餘身體部位不變。回到稍息：口令「<b>Squad</b>!」— 手踭用力拉緊蹬直。' },
+      { h:'4. 轉姿勢嘅順序〔手冊第3章§2 注意〕', d:'由稍息轉立正：「<b>Alert</b>!」打數「In!」— 提起左腳至大腿平行、腳尖微微指向地下、用力踏返右腳旁；同一時間雙手<strong>由掌變拳</strong>沿身體向前移，直至母指去到褲骨。⚠️ <strong>唔准由立正直接轉休息</strong>，一定要先稍息；同樣唔准由休息直接轉立正。' },
       { h:'3. 抽膝踏步〔手冊第3章§1〕', d:'口令「Bend the left (right) knee!」：原地提高左（右）腳至<strong>大腿與地面平行</strong>，小腿放鬆；支撐腳腳掌平放、膝頭蹬直；雙手握拳緊貼褲骨，身體保持立正向前；然後盡快將腳踏回另一腳旁。' },
       { h:'4. 彈前腳〔手冊第3章§1〕', d:'口令「Shoot the right (left) foot forward!」：向前彈出<strong>半步（375 毫米）</strong>；支撐腳腳掌平放地面、前腳腳掌離地、雙膝蹬直、重心放支撐腳、身軀保持立正。兩步熟咗之後交替練：「Bend the left knee, shoot the right foot forward!」' },
-      { h:'5. 向右／左／後轉〔中式〕', d:'向右轉：以右腳跟為軸，右腳跟與左腳尖同時用力向右轉 90 度，左腳靠攏成立正。左轉、後轉類推。' },
+      { h:'5. 原地向右／左／後轉〔手冊第3章§3–5〕', d:'口令「Turning, right (left, about) — <b>turn</b>!」，打數「<b>One — Two — Three — One</b>」（Two—Three 係停留時間，唔准郁）。① 微微提高右腳脚尖同左腳腳踭，以<strong>右腳踭＋左腳尖為軸</strong>，用頭、肩膊同身體嘅力向右轉 90 度（後轉轉 180 度、斜轉轉 45 度）；② 向前提高左膝至大腿與地面平行，盡快將左腳踏喺右腳旁。⚠️ 全程雙手緊貼身體兩旁；用標準停頓時距（每分鐘 40 個動作）連貫做。斜轉：「Inclining, right (left) — <b>incline</b>!」' },
       { h:'6. 齊步——走／立——定〔中式＋手冊第2章§12〕', d:'預令「齊步」、動令「走」，聽動令後左腳先邁出，兩臂自然擺動；「立——定」預令「立」動令「定」，動令落於右腳，左腳再向前一步後右腳靠攏成立正。手冊數字：<strong>步幅快及慢步操 750 毫米</strong>（大跨步 830、短跨步 530、加快步 1000、橫移 305 毫米）；<strong>步速快步操每分鐘 116 步</strong>（新隊員可快至最多 140）、慢步操 65 步、加快 180 步。' },
+      { h:'6a. 原地向前敬禮〔手冊第3章§7・圖15–16〕', d:'口令「Saluting, salute to the front — <b>salute</b>!」，打數「<b>Up — Two — Three — Down</b>」。Up：右手向橫提升至<strong>與肩膊平</strong>，握成童軍敬禮手號，再用力將右前臂擺至食指喺右眼對上；姿勢＝雙腳平放、雙膝蹬直、<strong>左手握拳緊貼褲骨</strong>、右手前臂與指尖成一直線、頭向前望、<strong>右食指放喺右眼眼球中心對上 25 毫米（1 英吋）</strong>。Down：右手握拳用<strong>最短距離</strong>放回右邊褲骨。（手冊無寫「要接触帽沿」— 帽沿講法屬中式／單位慣例）' },
+      { h:'6b. 橫移〔手冊第3章§8〕', d:'口令「<b>One pace, left (right) close — march</b>!」，打數「One — Two」（多於一步時，每步完成後加一個「Up」，最後一步唔加）。動作：左腳向左橫移約 300 毫米，右腳不動；再提起右膝至大腿平行、踏返左腳旁。<strong>橫移不得多於 8 步</strong>。' },
       { h:'7. 口令結構〔手冊第2章§7–9〕', d:'口令分三部分：<strong>介令</strong>（Move to the right in threes）→<strong>預令</strong>（Right）→<strong>動令</strong>（March）；有時毋須介令（Squad — halt）。時間：原地動作預令與動令之間停「標準停頓時距」＝<strong>1.5 秒（即每分鐘 40 個動作嘅一個動作）</strong>；快步行進由預令至動令唔好多於<strong>四步</strong>、慢步唔多於<strong>三步</strong>。' },
       { h:'8. 打數練習法〔手冊第2章§11〕', d:'初學一定用打數：全隊一邊做一邊叫數，叫「Two—Three」期間<strong>全身保持不動</strong>；每課開始先複習上課動作，純熟先教新動作。課節盡量喺一小時內完成，課與課之間 10 分鐘休息。' },
       { h:'9. 教具〔手冊第2章§3〕', d:'拍子機、鼓、步規。進行原地分部動作時鼓手企喺<strong>全隊後方</strong>跟打數打鼓；原地動作時可將拍子機預先校每分鐘 40 次放喺身旁地上（放到隊員聽唔到嘅距離）；步規用嚟量步幅同排與排距離——教練喺全隊最前位置打開示範，隊員熟咗之後不時喺隊後抽查。' },
@@ -104,6 +108,14 @@ CEREMONY.cards = [
       { h:'5. 禮畢', d:'國歌完畢後聽口令「禮畢」，方可放手或轉動頭部。' },
       { h:'6. 降旗（儀式完結時）', d:'降旗同樣肅立敬禮，旗幟不得碰觸地面；降下後小心摺疊保管。' }
     ],
+    types:[
+      { t:'讓旗幟飄揚〔§9〕', d:'右手立即放鬆讓旗幟飄揚，隨即再緊握旗竿保持平行，回復<strong>攜旗</strong>姿勢。' },
+      { t:'抓回旗幟〔§10〕', d:'右手立即抓回旗幟，回復攜旗動作。⚠️ 風大時可用左手協助抓回。' },
+      { t:'原地敬禮〔§11 Lower the colour at the halt〕', d:'收到「General Salute」先讓旗幟飄揚；收到「Salute」時：① 右前臂擺回貼緊旗竿，右手握竿微微<strong>向上</strong>提起，直至旗竿底部剛好離開旗套，同一時間左手向前移緊握旗套及竿底；② 用右手把旗向<strong>右方橫掃</strong>（若風從右方吹來則向左掃），直至旗竿頂部去到右腳前方、微微離開地面，左手擺回身旁；③ 完成後旗身完全展開喺旗竿右方，旗竿<strong>夾喺腋下</strong>、右手手背向地、手踭緊貼身軀。⚠️ 移動旗竿時<strong>眼球必須保持向前直望</strong>，唔准望住旗竿郁；雨天或泥濘地面橫掃至與地面平行就得。' },
+      { t:'慢步行進間敬禮〔§11〕', d:'口令「Eyes — RIGHT!」，打數「Up」，動令喺<strong>右腳腳外側著地</strong>時發出；動作須四步完成：聽「Eyes」做讓旗幟飄揚 → 聽「Right」握竿上提＋左手握旗套 → 向右橫掃至旗竿頂部在前方、整支竿與地面平行 → 旗身展開喺竿下方、夾腋下、右手手背向地。回復：「Eyes — FRONT!」打數「Down」— 右手把竿升到身體正前方、插入旗套，右前臂提升至與地面平行、右手握竿放喺口部對出、手背向前。' },
+      { t:'快步行進間敬禮〔§12〕', d:'口令「Eyes — RIGHT!」，打數「Check — Up」，動令喺<strong>左腳腳踭著地</strong>時發出：聽「Right」之後<strong>繼續向前操兩步</strong>，先做讓旗幟飄揚。回復「Eyes — FRONT!」打數「Check — Down」— 立即做抓回旗幟。' }
+    ],
+    note:'⚠️ 第7章 §1–§8（概言・持旗立正・持旗稍息・攜旗動作・托旗動作・換手・托旗轉攜旗・攜旗轉持旗立正）呢份電子檔冇文字層 → 呢八節要照紙本核對先教；上面 §9–§12 已照手冊原文寫好。',
     safety:'注意事項：(1) 國歌奏唱時必須站立、肅穆、不可談話或走動；(2) 國旗永遠在較高及中央位置；(3) 旗幟破損或褪色不可使用；(4) 惡劣天氣（八號風球或以上、暴雨警告）不舉行戶外升旗；(5) 手冊第2章§5.1：行進間遇國旗、區旗及會旗都屬於要致敬嘅對象。'
   },
   {
@@ -138,16 +150,16 @@ CEREMONY.cards = [
     duration:'練習 3–5 分鐘',
     when:'課程或每次集會小隊時間練習',
     types:[
-      { t:'全禮（大禮）', d:'右手舉至右眉／帽沿旁，食指、中指、無名指並攏伸直，指尖接觸帽沿或眉梢，拇指壓住小指，手心向前略向下；適用於升旗、國歌、宣誓、見長官、正式典禮。' },
+      { t:'全禮（大禮）〔手冊第3章§7〕', d:'右手先<strong>向橫提升至與肩膊平</strong>，握成童軍敬禮手號，再用力將右前臂擺至食指對上眼：官方準則係<strong>右食指放喺右眼眼球中心對上 25 毫米（1 英吋）</strong>；食指、中指、無名指並攏伸直，拇指壓住小指，手心向前略向下；左手握拳緊貼褲骨，頭向前望。打數「Up — Two — Three — Down」，Down 時用<strong>最短距離</strong>握拳放回右邊褲骨。（「指尖接觸帽沿或眉梢」屬中式禮節講法 — 教嘅時候講清邊個場合跟邊個。）適用於升旗、國歌、宣誓、見長官、正式典禮。' },
       { t:'半禮', d:'手停於肩高，約離肩膀一拳距離，手心向下；食指對齊約右眼對上 2 厘米位置；一般場合向上級或長官問候時使用。' },
       { t:'握手禮', d:'用左手握手，是童軍獨有之禮儀；代表信任——右手空出可幫忙他人。' },
       { t:'注目禮', d:'面向受禮者立正，目迎目送，頭部左右轉動不超過 45 度；適用未戴帽、持旗、或隊列中不便舉手時。行進間隊員就係行注目禮（手冊第2章§5.1）。' },
       { t:'誰來舉手〔手冊§6.1／§6.2〕', d:'兩人以上需要致敬時，由<strong>一名領袖或領隊</strong>負責舉手敬禮，其餘童軍立正；若冇領袖或領隊在場，就由<strong>全隊最右方嘅一名隊員</strong>舉手，其他人立正。' },
-      { t:'唔舉手嘅情況〔手冊§3(丙)／§6.3〕', d:'奏國歌時穿便服 → 只須肅立；制服不整齊時 → 只須立正，<strong>不須舉手敬禮</strong>（宁可不举，唔好穿住唔整齊嘅制服舉手）。' },
+      { t:'唔舉手嘅情況〔手冊§3(丙)／§6.3〕', d:'奏國歌時穿便服 → 只須肅立；制服不整齊時 → 只須立正，<strong>不須舉手敬禮</strong>（寧可不舉手，唔好穿住唔整齊嘅制服舉手）。' },
       { t:'行進間致敬〔手冊§5.1〕', d:'領隊先發「MARCH TO ATTENTION！」，全隊準備；再發「EYES — RIGHT！」或「EYES — LEFT！」，同時領隊自己舉手敬禮，其他同行領袖亦須舉手。' }
     ],
     when_to_salute:[
-      '唱國歌、升國旗／區旗時（行全禮，戴帽時）',
+      '唱國歌、升國旗／區旗時（制服整齊先舉手；隊列中童軍立正致敬）',
       '宣誓儀式（行全禮）',
       '團呼時（按正式程序）',
       '遇見團長、區總監、總監等高級領袖時',
@@ -167,7 +179,86 @@ CEREMONY.cards = [
     duration:'約 1–2 分鐘',
     when:'正式開始及結束儀式',
     note:'⚠️ 童軍團呼程序與幼童軍 Grand Howl 不同。本卡文字仍待核對《儀容與制服手冊》及《童軍基本技能教材手冊》第五章正式程序後補上；現階段請由熟悉程序之領袖帶領。摺旗／繫旗、隊長就職、晉團儀式亦待官方示範核對後補。'
-  }
+  },
+  {
+    k:'march',
+    n:'快步行進／慢步行進',
+    icon:'🥾',
+    dgm:'march',
+    figcap:'行進間動作嘅口令、動令落腳時間同打數（手繪圖解）',
+    rel:['c08'],
+    duration:'每次 5–10 分鐘；一個動作練一課',
+    when:'步操時段、會操排練、大會操前',
+    intro:'教初學一定要用「分部動作」：司令員逐個 Squad One／Two／Three… 分開喊，熟咗先連實做完整動作（手冊每一節都係呢個格式）。',
+    steps:[
+      { h:'1. 快步開步〔第4章§1〕', d:'多於一排：「By the (right / left), QUICK — MARCH!」；面向前／後方：「Squad will advance (retire), by the (right / left), quick — march!」；只有一排：「Step off together, quick — march!」。打數 Left — Right — Left；每步 750 毫米、<strong>每分鐘 116 步</strong>；腳踭先著地，前面隻手提升至與肩膊平、後面隻手盡量拉後。' },
+      { h:'2. 快步停步〔第4章§2〕', d:'「Squad — HALT!」打數 One — Two；動令喺<strong>左腳腳踭著地</strong>時發出。順序：右腳行前一步 750mm → 左腳行前半步 375mm → 提起右腳至大腿與地面平行、同一時間雙手用力夾回褲骨 → 踏下右腳喺左腳旁。後面兩個分部要用<strong>雙倍速度</strong>完成。' },
+      { h:'3. 行進間向左／右轉〔第4章§3–4〕', d:'「Turning, left (right) — TURN!」打數 <strong>Check — Down</strong>。四個分部：① 行前一步 750mm（右手前、左手後）② 提起另一腳至大腿平行、雙手夾回褲骨 ③ 以支撐腳腳踭為軸、用頭肩身嘅力轉 90 度，踏落嗰隻腳並立即向前伸出半步 375mm ④ 繼續完成一步再向前操。慢步版打數係 Freeze — Two — Three — Forward。' },
+      { h:'4. 行進間向後轉／換步〔第4章§5–6〕', d:'向後轉「Turning, about — TURN!」打數 In — Left — Right — Left — Forward（每次以腳踭為軸轉 90 度，轉完兩次再多行一步）。換步「Changing step, CHANGE — STEP!」打數 Left — Right — Left；「Change」喺左腳腳踭著地時喊、「Step」喺右腳腳踭著地時喊，後兩步用雙倍速度。' },
+      { h:'5. 原地踏步〔第4章§10／第5章§7〕', d:'由立正開始：「Quick mark — TIME!」（慢步：「MARK — TIME!」）打數 Left — Right — Left；左右腳交替提至大腿與地面平行、小腿放鬆、<strong>雙手握拳緊貼褲骨</strong>；快步 116 步/分鐘、慢步 65 步/分鐘。行進間轉踏步：「Mark — time!」（先做快步行進間向後轉嘅第一分部，再轉踏步）。踏步轉停步「Squad — halt!」；踏步繼續前行「FORWARD!」。' },
+      { h:'6. 慢步操〔第5章§1–2〕', d:'「By the left (right, centre), SLOW — MARCH!」— <strong>每分鐘 65 步</strong>，步幅同快步（750mm）；第一步行到 375mm 時要稍作停頓以配合時間。停步同樣「Squad — halt!」打數 One — Two（動令喺左腳經過右腳之時）。慢步行進間向後轉打數 One Stop — Two Stop — Three Stop — Forward。' },
+      { h:'7. 快步↔慢步轉換〔第5章§8〕', d:'轉慢步：「Break into slow time, SLOW — MARCH!」（動令喺右腳腳踭著地）。轉快步：「Break into quick time, QUICK — MARCH!」—「Break／into／quick／time」逐個喺腳外側著地時喊，喊完再向前操四步先喊「quick」，再行前一步喊「march」。' },
+      { h:'8. 行進間向右／左敬禮〔第4章§7–8〕', d:'「Saluting, salute to the right (left) — SALUTE!」打數 <strong>Up — Two — Three — Four — Five — Down — Swing</strong>。Up：行前兩步後，右手向橫提升至與肩平 → 握成童軍敬禮手號 → 前臂擺至食指喺右眼對上 25mm，同時頭轉 90 度（三件事要同一時間完成，左手握拳留喺左邊褲骨）；Two—Five：保持姿勢用快步操四步；Down：頭用力轉回向前＋右手握拳以最短距離放回褲骨；Swing：繼續向前操。' },
+      { h:'9. 行進間向前敬禮〔第4章§9〕', d:'「Saluting, salute to the front — SALUTE!」— 先行進間停步，再以標準停頓時距做<strong>兩次</strong>原地向前敬禮，跟住原地向後轉，最後向前操。手冊註明：呢個動作係<strong>模擬領取證書、獎章及獎項</strong>嘅形式（兩次敬禮之間就係頒獎時間）；打數「Two — Three」期間唔准做任何動作。' },
+      { h:'10. 斜轉與轉彎〔第6章§9〕', d:'斜轉「Diagonal march, left (right) — INCLINE!」打數 Down!（慢步）／Check — Down!（快步）— 同行進間轉向一樣，但角度係 <strong>45 度</strong>；斜行時格外注意睇齊。轉彎「Right (Left) — WHEEL!」：隊形<strong>不得超過 6 排</strong>、面向左或右；翼側最前嘅隊員收到口令後以<strong>半徑 600 毫米</strong>喺 4 步內完成 90 度轉向，其後同排隊員按距離跟住轉。' }
+    ],
+    safety:'行進間敬禮必須係單行，或排三排時<strong>已排成開闊排</strong>（手冊兩處都寫明）；練習前清場、留夠直線距離；新隊員步速可放快至最多 140 步/分鐘，唔好為咗整齊拖到無節拍。',
+    note:'⚠️ 步操唔准用嚟做懲罰（第2章§3.1(己)）；練習位置唔准面向太陽或當風（§2.1）。'
+  },
+  {
+    k:'fallin',
+    n:'集隊手號・睇齊・解散',
+    icon:'🖐️',
+    dgm:'handsign',
+    figcap:'《步操手冊》第8章七款集隊手號（司令員手部姿勢）— 手繪圖解，唔靠 AI 生成',
+    rel:['c01','c08'],
+    duration:'集隊 1 分鐘；手號練習 5 分鐘',
+    when:'每次集會集隊、小隊時間、會操排練',
+    intro:'童軍有獨有的集隊手號：司令員先立正 → 發出口令（例如「Scout / Troop, FALL-IN!」）→ 立即用雙手做手號，全團就排成所需隊形。',
+    steps:[
+      { h:'1. 距離同跟手動作〔第8章概言〕', d:'司令員與最前排隊員相距 <strong>2250 毫米（90 英吋）</strong>。隊排好之後大家<strong>仍要保持立正</strong>，直至司令員<strong>放下雙手</strong>，先一次過由立正轉為稍息。' },
+      { h:'2. 直線 Line〔§1〕', d:'兩手握拳向身旁<strong>兩側平提升</strong>至兩手與肩膀成一直線。各分隊喺司令員前 2250mm 排成一直線；企喺正中央嘅隊員面對司令員；每名隊員相距 <strong>750mm</strong>，隊與隊之間 <strong>1500mm</strong>。' },
+      { h:'3. 直線（由高至矮）〔§2〕', d:'左（右）手握拳喺面前舉起，前臂與上臂成 <strong>90 度</strong>、手背向前；另一手握拳向側平提升至與肩齊。最高嘅隊員面對司令員，其餘按高矮次序排喺其右（左）方，相距 750mm。' },
+      { h:'4. 直行 Columns〔§3〕', d:'兩手握拳<strong>向前</strong>提升至與肩齊、<strong>手背向天</strong>。以隊為單位排成直行：隊長喺隊員前方、副隊長最後，前後相距 750mm；第二隊喺第一隊<strong>左方</strong>，隊與隊 750mm；整隊中央前方位置對齊司令員。' },
+      { h:'5. 闊橫排 Open Order〔§4〕', d:'兩手握拳向左右平提升至與肩齊，<strong>前臂向上彎 90 度、手背向外</strong>。第一隊橫排每人左右 750mm（隊長喺全隊右方、副隊長最左）；第二隊喺第一隊<strong>後方 1500mm</strong>。' },
+      { h:'6. 窄橫排 Close Order〔§5〕', d:'兩手握拳向前提升至與肩齊，<strong>前臂向上彎 90 度、手背向前</strong>。第一隊橫排 750mm；第二隊喺後方 <strong>750mm</strong>。' },
+      { h:'7. 馬蹄鐵形 Horse Shoe〔§6〕', d:'雙手<strong>蹬直向前（連手掌）</strong>，<strong>左手腕疊喺右手腕上</strong>、手背向前。以隊為單位排 U 形，隊長喺右、副隊長喺左，所有隊員面向內；左右 750mm、隊間約 1500mm。' },
+      { h:'8. 開口正方形 Open Square〔§7〕', d:'雙手手掌互相緊握，<strong>右手手背向前，高舉喺頭頂上</strong>。以隊為單位排開口正方形，面向內；750mm、隊間約 1500mm。' },
+      { h:'9. 集隊成三排〔第6章§1〕', d:'「Squad, FALL — IN!」— 用快步操去自己位置：最先到嘅企 <strong>F1（右標號員）</strong>，跟住 C1、R1、F2… 依次向左伸延；到咗位置先<strong>面向司令員</strong>，隨即由立正轉稍息。' },
+      { h:'10. 報數／排高矮〔第6章§2〕', d:'「From the right — NUMBER!」由右至左報數，報數時頭同眼唔准郁；<strong>最後一位除咗號碼之外要加喊 Sir!／Madam!</strong>；中排同後排唔使報，跟返前排嘅號數。排高矮：「Sizing, tallest on the right, shortest on the left, in single rank — SIZE!」→「Stand fast the right hand man, remainders right — TURN!」→「Form three ranks, quick — MARCH!」。四種排列法以「高嘅喺兩邊、矮嘅喺中央」最常用。' },
+      { h:'11. 空行（人唔啱數）〔第6章§1〕', d:'「BLANK — FILE!」打數 One — Two — Up — One — Two。例：排五行欠一名 → 企 R4 嘅隊員向左橫移兩步，佢橫移第一步（喊 Up）之後，C4 隊員向後移一步，兩人要同時到定位。原則：留空<strong>最左手邊數起第二行</strong>嘅中排（或中排＋後排）。' },
+      { h:'12. 睇齊〔第6章§4〕', d:'「Dressing, right — DRESS!」打數 <strong>Up — Two — Three — Move</strong>：除右標號員外，前排右手握拳<strong>向橫</strong>提升至與肩平（手背向天）、頭轉右 90 度；最右行嘅中排及後排右手<strong>向前</strong>提升；再用碎步移到與右邊隊員得<strong>一隻手位</strong>。完成後「EYES — FRONT!」打數 Down — 右手放回右邊褲骨、頭轉回向前。熟咗之後唔使起手，淨係轉頭。兩排版：「Dressing, in two ranks, right — dress!」前排右手<strong>叉腰</strong>（手背向天、手放喺皮帶對上），行與行相隔 <strong>375mm</strong>、排與排 1500mm。' },
+      { h:'13. 開闊排／收窄排〔第6章§5〕', d:'開闊排「Dressing, in open order, right — DRESS!」：前排行前一步 750mm、中排唔郁、後排行後一步 750mm → 排與排 1500mm（前排腳踭對後排腳尖）。收窄排「Dressing, in close order, right — DRESS!」：前排向後、後排向前 → 排與排 750mm。行進間版本：「Marching in open (close) — ORDER!」— 前排斜操四步、後排反方向斜操四步、中排照行。' },
+      { h:'14. 轉變隊形方向／成單行〔第6章§6–7〕', d:'「Change direction right, at the halt, right — FORM!」→「SLOW — MARCH!」：第一排最右嘅隊員原地向右轉再操五步停步，第一排其他隊員向右 45 度斜行返自己位置，其他人以「行（file）」形式操返定位，全程同右鄰保持合適距離。三排轉單行：「Front rank, quick — march!」→「Centre rank, quick — march!」（動令喺前排最後一名經過中排最前時發）→「Rear rank, quick — march!」；回三排「Reform three ranks on the front rank, centre and rear ranks, quick — march!」。' },
+      { h:'15. 解散〔第6章§8〕', d:'暫時性（要致敬）：「Turn to the right, and salute, FALL — OUT!」；暫時性（唔使致敬）：「Turn to the right, do not salute, FALL — OUT!」；正式解散：「Turn to the right, and salute, DISMISS!」— 打數 One—Two—Three—One—Two—Three—Up—Two—Three—Down—Two—Three—Left—Right—Left：向右轉 →（原地向前敬禮）→ 向前操三步 → 自行解散。⚠️ 隊形必須係<strong>開闊排或單行、面向前方</strong>（Squad will advance）。' }
+    ],
+    types:[
+      { t:'小隊位置〔第8章〕', d:'幼童軍團及童軍團以小隊為基本單位：<strong>小隊長喺所有隊員最右方，副隊長喺最左</strong>；排直行時小隊長最前、副隊長最後。隊員次序按各團習慣（入團先後或高矮）。深資童軍團／樂行童軍團無小隊制，按傳統習慣（活動小組、高矮或入團先後）。' },
+      { t:'標號員／引導翼〔第6章§1〕', d:'F1 係<strong>右標號員</strong>（Right marker），最左邊係左標號員；全隊用<strong>引導翼</strong>（Directing Flank）嗰邊嚟睇齊。前後排名稱：前排 Front rank、中排 Centre rank、後排 Rear rank；「行」叫 File。' },
+      { t:'口號一覽表〔附錄甲〕', d:'手冊附錄甲將每個動作都列明「介令／預令／動令」，例如：Fall In = Squad — Fall — <strong>IN</strong>；Dismiss = Turn to the right and salute — <strong>DISMISS</strong>；立正 = <strong>ALERT</strong>；Stand at Ease = Stand at — <strong>EASE</strong>；Right Turn = (Move to the right in threes) Right — <strong>TURN</strong>；Mark Time = Quick mark — <strong>TIME</strong>；Dressing = (In two/three ranks) Right — <strong>DRESS</strong>。教小隊長時直接照呢組口令喊。' }
+    ],
+    safety:'戶外集隊時司令員要企喺整隊中央前方對齊；場地細可以按比例縮短距離，但每人 750mm 呢個位唔好慳；做手號之前自己一定要先立正。',
+    note:'⚠️ 上面七款手號係《步操手冊》第8章嘅官方手號。我哋之前寫嘅「橫排＝單臂平伸、馬蹄＝雙手舉過頭頂成弧形」等屬自創，已撤銷 — 教小隊長之前請照呢頁再對手冊圖 131–144。'
+  },
+  {
+    k:'parade',
+    n:'會操／檢閱須知',
+    icon:'🎖️',
+    rel:['c08'],
+    duration:'視乎規模；排練至少 2 節',
+    when:'大會操、就職典禮、頒獎禮、訓練班結業、區級檢閱',
+    intro:'手冊第1章§4：會操分兩類 — <strong>檢閱會操（Muster Parade）</strong>適用於大型場合點算人數、安排人手、公佈事項；<strong>結業會操（Passing Out Parade）</strong>適用於大型典禮（大會操、就職典禮、頒獎禮及訓練結業），有兩種型式，按實際情況揀。',
+    steps:[
+      { h:'1. 五條一般指引〔第1章§4.2〕', d:'① 會操之前必須先<strong>檢閱</strong>參加嘅童軍成員；② 不論領袖或童軍，進入或離開會場必須先<strong>向總司令員報告並得其同意</strong>；③ 唔係參加步操嘅童軍<strong>唔准橫越會場</strong>；④ 總司令員同籌備步操者必須事前慎密策劃整個步操形式；⑤ 會操結束時參加者須<strong>向總司令員致敬</strong>。' },
+      { h:'2. 結業會操次序〔附錄丁摘要〕', d:'GET ON PARADE → march on（BY THE LEFT/RIGHT, QUICK — MARCH）→ SQUAD — HALT → PARADE WILL ADVANCE LEFT/RIGHT — TURN → DRESSING, RIGHT — DRESS → EYES — FRONT → FORM TWO RANKS → dress → STAND AT — EASE →（副司令員等司令員到場並移交會操）→ PARADE — SHUN → GENERAL SALUTE — SALUTE → 報告「Sir, XX, XX persons are forming up ready for your inspection please」「Sir, permission to carry on please」→ FORM THREE RANKS → dress → MOVE TO THE RIGHT IN THREES, RIGHT — TURN → MARCH PAST, BY THE LEFT — QUICK MARCH → 各小隊 LEFT — WHEEL／BY THE RIGHT, EYES — RIGHT → EYES — FRONT → 收隊：DRESSING, IN CLOSE ORDER, RIGHT — DRESS → 請求准離場「Sir, May I have your permission to march off, please」→ IN COLUMN OF ROUTES, RIGHT — TURN → MARCH OFF, BY THE LEFT, QUICK — MARCH。⚠️ 全長 47 步，邊個喊、做完啲咩都照手冊附錄丁逐項執行；呢度淨係順序提示。' },
+      { h:'3. 步操之前要check嘅嘢〔附錄戊§1–2〕', d:'必須先檢閱參加步操嘅隊伍，確保：正確穿著制服；帽、帽徽、皮具、衣服、鞋及襪保養良好及整潔；儀容整潔及精神飽滿。<strong>檢閱進行時所有受檢閱嘅隊伍必須立正</strong>。' },
+      { h:'4. 檢閱時檢查項目〔附錄戊§3–11〕', d:'先查「有冇正確立正」「有冇睇齊並整齊排列」；到達每一名隊員前面要<strong>盡快</strong>檢查。細節：頭部（帽整潔正確佩帶／帽徽位置正確潔亮／頭髮整齊長度適中）、上身（衣領整潔／領巾或領呔正確／上衣稱身整齊已熨／<strong>衣袋唔准隆起</strong>／徽章勳章位置正確潔亮／鈕扣全扣唔准露線頭）、皮帶（合身唔寬唔緊／皮帶扣喺身前正中／潔亮扣好）、褲或裙褲（前後熨骨、稱身、扣好鈕扣拉鏈）、裙（熨好、稱身）、襪（合乎本團顏色、長度恰當、拉直無扭曲）、鞋（潔亮、鞋帶綁緊唔易鬆脫）。' },
+      { h:'5. 檢閱員唔准做〔附錄戊§12〕', d:'唔准：與隊員爭吵；<strong>用手接觸隊員身體任何部分</strong>；取笑或羞辱個別隊員；企喺某一名隊員前面太耐；讓陪同檢閱嘅人去檢閱隊員；含糊咁指出錯處。' },
+      { h:'6. 檢閱員必須做〔附錄戊§13〕', d:'必須：作風一致、唔准針對個別隊員；清楚向陪同嘅領袖或隊長講明要佢做啲咩；值得稱讚時就稱讚。' }
+    ],
+    safety:'會操前確認場地、集合線、受禮者位置同退場路線；行進間敬禮（EYES — RIGHT）要先排成開闊排；八號風球或以上或暴雨警告唔舉行戶外會操。',
+    note:'呢張卡係俾領袖睇次序用；真正帶會操要人手一份《步操手冊》附錄丙／丁／戊 — 誰喊邊個口令、動令喺邊隻腳落，全部照表。'
+  },
 ];
 
 // 升旗／隊列相關參考檔
@@ -175,7 +266,7 @@ CEREMONY.refs = [
   { n:'《隊列和升掛國旗及區旗指引》（2024版）', url:'https://www.scout.org.hk/uploads/tc/circulars/16450/guidelines-of-chinese-foot-drill-and-national-flag-and-regional-flag-raising.pdf' },
   { n:'《支部成員徽章佩戴指引》（2023 通告13號）', url:'https://www.scout.org.hk/uploads/tc/circulars/11057/p013-23.pdf' },
   { n:'《儀容與制服手冊》官方網站', url:'https://uniform.scouting.org.hk/' },
-  { n:'《步操手冊》DRILL MANUAL（2000 新版・本檔立正／口令／步速／致敬條文嘅出處）', url:'https://drive.google.com/file/d/1g4M6C7e1K7tVDkr2IADdkebm1CjljI-l/view' }
+  { n:'《步操手冊》DRILL MANUAL（2003 年 7 月第二版・本檔立正／口令／步速／致敬／集隊條文嘅出處）', url:'https://drive.google.com/file/d/1g4M6C7e1K7tVDkr2IADdkebm1CjljI-l/view' }
 ];
 
 if (typeof module !== 'undefined' && module.exports) module.exports = CEREMONY;

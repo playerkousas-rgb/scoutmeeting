@@ -66,6 +66,72 @@ D.cer.close = svg(340,150,'團集會結束流程示意',
   +T(87,124,'之成員不得自行離開',10,'#C62828')
 );
 
+
+/* 《步操手冊》第8章／第4–6章圖解用嘅小工具 */
+function HS(n,label,cap1,cap2,pose){
+  var col=(n-1)%3, row=Math.floor((n-1)/3);
+  var x=14+col*110, y=26+row*98;
+  var A='#37474F', arms='';
+  if(pose==='flat') arms='<path d="M-15,4 L-32,4 M15,4 L32,4" stroke="'+A+'" stroke-width="3.2" stroke-linecap="round"/><circle cx="-34" cy="4" r="3.4" fill="'+A+'"/><circle cx="34" cy="4" r="3.4" fill="'+A+'"/>';
+  else if(pose==='oneUp') arms='<path d="M-15,4 L-20,-10 L-7,-16" stroke="'+A+'" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="-5" cy="-17" r="3.4" fill="'+A+'"/><path d="M15,4 L32,4" stroke="'+A+'" stroke-width="3.2" stroke-linecap="round"/><circle cx="34" cy="4" r="3.4" fill="'+A+'"/>';
+  else if(pose==='fwd') arms='<path d="M-12,3 L-8,-10 M12,3 L8,-10" stroke="'+A+'" stroke-width="3.2" stroke-linecap="round"/><rect x="-12" y="-16" width="8" height="6" rx="2.4" fill="'+A+'"/><rect x="4" y="-16" width="8" height="6" rx="2.4" fill="'+A+'"/>';
+  else if(pose==='sideUp') arms='<path d="M-15,4 L-28,4 L-28,-11 M15,4 L28,4 L28,-11" stroke="'+A+'" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="-32" y="-17" width="8" height="6.5" rx="2.4" fill="'+A+'"/><rect x="24" y="-17" width="8" height="6.5" rx="2.4" fill="'+A+'"/>';
+  else if(pose==='fwdUp') arms='<path d="M-12,3 L-10,-9 L-15,-18 M12,3 L10,-9 L15,-18" stroke="'+A+'" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="-20" y="-24" width="9" height="6.5" rx="2.4" fill="'+A+'"/><rect x="11" y="-24" width="9" height="6.5" rx="2.4" fill="'+A+'"/>';
+  else if(pose==='cross') arms='<path d="M-12,3 L-5,-15 M12,3 L5,-15" stroke="'+A+'" stroke-width="3" stroke-linecap="round"/><rect x="-8" y="-22" width="16" height="7" rx="3" fill="'+A+'"/><path d="M-1,-22 L-1,-15" stroke="#EAF1E6" stroke-width="1.5"/>';
+  else arms='<path d="M-12,3 L-6,-20 M12,3 L6,-20" stroke="'+A+'" stroke-width="3" stroke-linecap="round"/><rect x="-7" y="-28" width="14" height="8" rx="3.6" fill="'+A+'"/>';
+  return '<g transform="translate('+(x+47)+','+(y+34)+')">'
+    +'<rect x="-42" y="-30" width="84" height="58" rx="8" fill="#EAF1E6" stroke="#C7D8C2"/>'
+    +'<circle cx="0" cy="-18" r="5.6" fill="'+A+'"/>'
+    +'<rect x="-7" y="-12" width="14" height="17" rx="5" fill="'+A+'"/>'+arms
+    +T(-40,40,'①②③④⑤⑥⑦'.charAt(n-1)+' '+label,8.2,'#1B5E20','start',1)
+    +T(-40,51,cap1,6.8,'#6D4C41','start')
+    +T(-40,60,cap2,6.8,'#6D4C41','start')+'</g>';
+}
+function MD(n,label,cmd1,cmd2,cnt,note){
+  var col=n%3===0?2:(n%3===1?0:1), row=Math.floor((n-1)/3);
+  var x=14+col*108, y=26+row*58;
+  return '<g transform="translate('+x+','+y+')">'
+    +'<rect x="0" y="0" width="102" height="50" rx="7" fill="#EAF1E6" stroke="#C7D8C2"/>'
+    +T(6,13,n+'. '+label,9,'#1B5E20','start',1)
+    +T(6,21,cmd1,6.4,'#333','start')
+    +T(6,29,cmd2,6.4,'#333','start')
+    +T(6,38,'打數 '+cnt,6.4,'#0D47A1','start')
+    +T(6,46,note,5.9,'#6D4C41','start')+'</g>';
+}
+
+/* 《步操手冊》第8章：七款集隊手號（司令員手部姿勢） */
+D.cer.handsign = svg(340,336,'集隊手號七款（司令員手部姿勢示意）',
+  MK
+  +T(170,13,'集隊手號七款（第8章）・司令員先立正 → 發口令 → 做手號',9,'#1B5E20','middle',1)
+  +'<g font-family="sans-serif">'
+  + HS(1,'直線','兩手握拳向兩側平提升','與肩膀成一直線','flat')
+  + HS(2,'直線・高矮','一手面前屈肘90°手背向前','另一手向側平伸・最高居中','oneUp')
+  + HS(3,'直行','兩手握拳向前平升至與肩齊','手背向天','fwd')
+  + HS(4,'闊橫排','兩手向側平伸','前臂上彎90°手背向外','sideUp')
+  + HS(5,'窄橫排','兩手向前平伸','前臂上彎90°手背向前','fwdUp')
+  + HS(6,'馬蹄鐵形','雙手蹬直向前（連手掌）','左手腕疊喺右手腕上','cross')
+  + HS(7,'開口正方形','雙手手掌互相緊握','右手背向前・高舉過頭頂','over')
+  +'</g>'
+  +T(170,318,'隊員喺司令員前 2250mm 排好後仍保持立正，待佢放下雙手先轉稍息',8.2,'#8D6E63','middle')
+  +T(170,330,'隊員左右 750mm；隊與隊：直線／馬蹄／開口正方形 1500mm，直行／窄橫排 750mm',7.6,'#8D6E63','middle'));
+
+/* 《步操手冊》第4–6章：動令落腳時間＋打數 */
+D.cer.march = svg(340,214,'行進間口令：動令落腳時間與打數',
+  MK
+  +T(170,13,'行進間動作・動令落邊隻腳＋打數（第4–6章）',9.6,'#1B5E20','middle',1)
+  +'<g font-family="sans-serif">'
+  + MD(1,'開步','By the right (left),','QUICK — MARCH','Left—Right—Left','116 步/分・步幅 750mm')
+  + MD(2,'停步','Squad —','HALT','One—Two','動令：左腳腳踭著地')
+  + MD(3,'左／右轉','Turning, left (right),','TURN','Check—Down','轉 90°・出半步 375mm')
+  + MD(4,'向後轉','Turning, about,','TURN','In—Left—Right—Left','慢步：One—Two—Three Stop')
+  + MD(5,'原地踏步','Quick mark —','TIME','Left—Right—Left','大腿與地面平行・拳貼褲骨')
+  + MD(6,'換步','Changing step,','CHANGE — STEP','Left—Right—Left','後兩步用雙倍速度')
+  + MD(7,'行進間敬禮','Salute to the right,','SALUTE','Up—2—3—4—5—Down','食指喺右眼對上 25mm')
+  + MD(8,'睇齊','Dressing, right,','DRESS','Up—Two—Three—Move','移一隻手位；EYES—FRONT 打數 Down')
+  + MD(9,'轉彎','Right (left),','WHEEL','沒有','半徑 600mm・4 步・不超過 6 排')
+  +'</g>'
+  +T(170,205,'初學逐個分部喊「Squad — two／three…」，熟咗先連實做完整動作',8.4,'#8D6E63','middle'));
+
 /* 中式隊列／步操手冊：立正腳位（腳尖 30°・握拳貼褲骨）・童軍動作・齊步（三格） */
 D.cer.drill = svg(340,168,'中式隊列基本動作示意圖',
   MK
@@ -77,7 +143,7 @@ D.cer.drill = svg(340,168,'中式隊列基本動作示意圖',
   +'<path d="M-26,-28 A32,32 0 0 1 26,-28" fill="none" stroke="#2E7D32" stroke-width="1.5" stroke-dasharray="3,3"/>'
   +T(0,-40,'腳尖向外與中線成30°',9.5,'#2E7D32')
   +T(0,22,'腳跟靠攏・腳掌平放',9.5,'#666')+'</g>'
-  +T(48,112,'A 立正',11,'#333',null,1)+T(48,128,'握拳・拇指壓食指・貼褲骨',9.5,'#8D6E63')
+  +T(48,112,'A 立正',11,'#333',null,1)+T(48,128,'握拳・拇指壓食指',9.5,'#8D6E63')
   /* B 童軍動作：後面睇 */
   +'<g transform="translate(170,64)">'
   +'<circle cx="0" cy="-30" r="9" fill="#37474F"/>'
@@ -97,7 +163,7 @@ D.cer.drill = svg(340,168,'中式隊列基本動作示意圖',
   +'</g>'
   +T(290,112,'C 齊步——走',11,'#333',null,1)
   +T(290,128,'左腳先行・每分鐘116步',9.5,'#8D6E63')
-  +T(170,158,'口令＝介令＋預令＋動令（「齊步——走！」）；原地停 1.5 秒；步操唔准用嚟罰人',10,'#8D6E63')
+  +T(170,158,'口令＝介令＋預令＋動令；原地停 1.5 秒；唔准用步操罰人',9.5,'#8D6E63')
 );
 
 /* 升旗禮：旗桿與觀眾位置 */
