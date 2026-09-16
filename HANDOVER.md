@@ -608,3 +608,12 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 ### 測試
 - `npm test` ＝ `tests/smoke.mjs` ＋ `tests/runtime.mjs`（**已修好舊 runtime**：佢以前引用 `js/jungle-data.js` 等唔存在嘅檔＋舊 API `App.vPlan`，載入次序亦錯（`js/data.js` 要用 C01 → 必須 lessons 先）。而家 runtime 會 render 全部頁面／分頁／24 場教案，並檢查畫面冇漏 `undefined`）。
 - ⚠️ 教訓：**static patch 完要驗「掛唔掛得上樹」** — tabHost 冇 append、`appendChild(projAll)` 喺 `var projAll` 之前，兩單都係 harness／smoke 捉唔到嘅（stub 唔 throw）。所以加咗 static 次序檢查＋`tabHost` 掛樹檢查。
+
+## 28. v33：制服配件補齊（2026-09-16，用戶：「一併補埋」）
+
+- 依《儀容與制服手冊》**第三章 3.4–3.6**（Drive #7，fetch 到文字層）補齊：領巾 4 種、**巾圈 4 種**、捲巾 8 步規格、**領帶 4 色**、基維爾巾圈／領巾／木章（3.5）、皮帶／皮鞋／襪（3.6）。
+- 落地位置：`js/uniform.js` 新增 `UNIFORM.neckwear`（scarves／rings／ringsOther／wear／ties／tieWear／rules）、`UNIFORM.kilwell`、`UNIFORM.beltSocks`；`js/app.js` 制服 subnav 加 `{k:'acc',ic:'🧣',n:'領巾領帶'}`；`js/svg-kit.js` 加 `D.uniform.ties`（4 色）＋`D.uniform.kilwell`（木章皮繩位置）。
+- 註：3.6 原文「戶外活動尼龍皮帶：童軍成員（小童軍除外）穿著戶外活動服裝時可佩戴」；3.7 制服毛衣／3.8 附加配件喺掃描圖冇文字層，未入 app（需要就跟紙本核對）。
+- 測試：smoke 加 v33 block（4／4／4／8 數量、關鍵字、圖齊、分頁 render、自查清單含領帶／巾圈／皮帶）、新 `plotCheck()` 檢查 SVG 文字唔出框。
+- SW cache → `scout-v33-c24-20260916`。
+- QA 手法（新）：冇 chromium／playwright，所以寫咗 `/tmp/svg2png.py`（純 Python 極簡 SVG rasterizer）＋`/tmp/svgaudit.mjs`（幾何座標出框檢查）嚟肉眼睇手繪圖——**只放 /tmp，唔入 repo**。

@@ -349,6 +349,7 @@ App.buildSearchIndex = function(){
       text:('儀式 '+c.n+' 升旗 宣誓 步操 敬禮 隊列 點名 降旗 團呼 開始 結束 '+ (c.steps||[]).map(function(s){return s.h+' '+s.d;}).join(' ')).toLowerCase()});
   });
   idx.push({type:'制服', title:'制服佩戴（陸／海／空小分頁）＋自查清單', link:'#uniform', desc:'', text:'制服 領巾 徽章 佩戴 恤衫 褲 帽 皮帶 襪 鞋 儀容 海童軍 空童軍 陸童軍'});
+  idx.push({type:'制服', title:'🧣 領巾・巾圈・領帶（4 色）・皮帶皮鞋襪', link:'#uniform/acc', desc:'按手冊 3.4–3.6', text:'領巾 巾圈 領帶 顏色巾圈 童軍巾圈 小隊活動巾圈 基維爾巾圈 基維爾領巾 木章 皮帶 皮鞋 長襪 襪帶 捲巾 3.5cm 12至15cm windsor 棗紅 深綠 黑 深藍 配件 對照'});
   idx.push({type:'制服', title:'🎖️ 徽章佩戴位置圖（胸袋上下層＋衫袖＋專章帶）', link:'#uniform/badge', desc:'附位置圖', text:'徽章 佩戴 位置 圖 胸袋 袋蓋 3cm 肩帶 專章帶 小隊章 旅章 區章 地域章 香港章 服務年星 進度性獎章 會員章 圖解'});
   idx.push({type:'手冊', title:'誓詞規律銘言＋小隊制度＋報班', link:'#book', desc:'', text:'誓詞 規律 銘言 準備 報章 報班 訓練班 考章'});
   idx.push({type:'手冊', title:'小隊制度＋小隊長職責＋會議記錄表', link:'#book/patrol', desc:'已併入手冊', text:'小隊 小隊長 制度 會議記錄 團隊長 副小隊長'});
@@ -832,7 +833,7 @@ App.pages.uniform = function(sub){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'👕 制服'));
   var subs = UNIFORM.branches.map(function(b){return {k:b.k,ic:b.ic,n:b.n};})
-    .concat([{k:'badge',ic:'🎖️',n:'徽章佩戴'},{k:'check',ic:'✅',n:'自查清單'}]);
+    .concat([{k:'badge',ic:'🎖️',n:'徽章佩戴'},{k:'acc',ic:'🧣',n:'領巾領帶'},{k:'check',ic:'✅',n:'自查清單'}]);
   var cur = 'land';
   subs.forEach(function(x){ if(x.k===sub) cur = sub; });
   wrap.appendChild(App.subnav('uniform',subs,cur));
@@ -884,6 +885,37 @@ App.pages.uniform = function(sub){
     wrap.appendChild(App.h('p','tip','💡 集會前逐個章對位檢查。'));
     return wrap;
   }
+  if(cur==='acc'){
+    var NW = UNIFORM.neckwear, KW = UNIFORM.kilwell, BS = UNIFORM.beltSocks;
+    var bd = (typeof DIAGRAMS!=='undefined' && DIAGRAMS.uniform) ? DIAGRAMS.uniform : {};
+    wrap.appendChild(App.h('p','lede','領巾・巾圈・領帶：按《儀容與制服手冊》3.4–3.6。宣誓後才可佩戴；童軍支部一般戴領巾，領帶部分屬深資／樂行／成年成員，列出嚟方便對照。'));
+    wrap.appendChild(App.block('🔑 四條通則',
+      '<div class="card"><ul class="bullet">'+NW.rules.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.block('🧣 領巾 4 種（邊個戴）',
+      '<div class="card"><ul class="bullet">'+NW.scarves.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.block('🔘 巾圈 4 種',
+      '<div class="card"><ul class="bullet">'+NW.rings.map(function(x){return '<li><b>'+x.n+'</b>：'+x.who+'</li>';}).join('')+'</ul>'
+      +'<p class="mut">'+NW.ringsOther+'</p></div>'));
+    wrap.appendChild(App.block('🧣 領巾點戴（捲巾 8 步＋規格）',
+      '<div class="svg-steps"><figure>'+(bd.scarf||'')+
+      '<figcaption>捲巾直徑約 3.5cm、底至尖 12–15cm；巾圈套喺衣領尖，巾尾唔可超越皮帶扣</figcaption></figure></div>'
+      +'<div class="card"><ol class="steps">'+NW.wear.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ol></div>'));
+    wrap.appendChild(App.block('👔 領帶 4 色＋佩戴',
+      '<div class="svg-steps"><figure>'+(bd.ties||'')+
+      '<figcaption>棗紅（深資）・深綠（樂行＋成年）・黑（海童軍）・深藍（空童軍）</figcaption></figure></div>'
+      +'<div class="card"><ul class="bullet">'+NW.ties.map(function(x){return '<li><b>'+x.n+'</b>：'+x.who+'</li>';}).join('')+'</ul>'
+      +'<ol class="steps">'+NW.tieWear.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ol></div>'));
+    wrap.appendChild(App.block('🪵 基維爾巾圈・基維爾領巾・木章（成年成員對照）',
+      '<div class="svg-steps"><figure>'+(bd.kilwell||'')+
+      '<figcaption>木章皮繩位置：領巾／領帶制服掛喺前面，禮服藏翻領內只露木珠</figcaption></figure></div>'
+      +'<div class="card"><ul class="bullet">'+KW.points.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'
+      +'<p class="mut">'+KW.note+'</p>'
+      +'<ul class="bullet">'+KW.wear.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.block('👖 皮帶・皮鞋・襪',
+      '<div class="card"><ul class="bullet">'+BS.items.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.h('div','callout','📚 出處：'+NW.source+'；'+BS.source+'。原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>'));
+    return wrap;
+  }
   if(cur==='check'){
     var cl = '<ul class="bullet">'+UNIFORM.checklist.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
       '<p><i>'+UNIFORM.winter.note+'</i></p>'+
@@ -898,7 +930,7 @@ App.pages.uniform = function(sub){
   var br = UNIFORM.branches.find(function(b){return b.k===cur;}) || UNIFORM.branches[0];
   wrap.appendChild(App.h('div','callout','<b>'+br.ic+' '+br.n+'制服要點：</b>'+br.note));
   br.types.forEach(function(tk){ wrap.appendChild(App.h('div','', typeCard(byKey[tk]))); });
-  wrap.appendChild(App.h('div','callout','🧣 三組共通：旅巾＋巾圈、徽章佩戴位置、集會前自查清單。'));
+  wrap.appendChild(App.h('div','callout','🧣 三組共通：旅巾＋巾圈、徽章佩戴位置、領巾領帶規格、集會前自查清單。'));
   return wrap;
 };
 

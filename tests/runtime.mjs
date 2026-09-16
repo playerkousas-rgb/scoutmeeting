@@ -75,7 +75,7 @@ for (const p of pages) {
 for (const s of ['rope', 'care', 'map', 'pack', 'camp', 'pioneer', 'track', 'field', 'aid']) {
   try { App.pages.skills(s); ok(true, 'skills/' + s + ' render'); } catch (e) { ok(false, 'skills/' + s + '：' + e.message); }
 }
-for (const s of ['land', 'sea', 'air', 'badge', 'check']) {
+for (const s of ['land', 'sea', 'air', 'badge', 'acc', 'check']) {
   try { App.pages.uniform(s); ok(true, 'uniform/' + s + ' render'); } catch (e) { ok(false, 'uniform/' + s + '：' + e.message); }
 }
 for (const c of sb.CEREMONY.cards) {

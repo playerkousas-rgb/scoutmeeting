@@ -742,4 +742,42 @@ console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間�
 }
 console.log('✅ v32：真分頁（無錨點跳位）・營火會（時間表＋歡呼＋頌詞）・清 agent 字句・活動／技能／制服／儀式全部有圖');
 
+/* 粗檢：SVG 內每個 <text> 嘅 y 座標唔可以超出 viewBox 高度（防止圖文出框） */
+function plotCheck(svgStr, name){
+  const m = svgStr.match(/viewBox="0 0 (\d+) (\d+)"/);
+  if (!m) { console.error('❌ '+name+' 冇 viewBox'); process.exit(1); }
+  const h = +m[2];
+  const ys = [...svgStr.matchAll(/<text[^>]*\sy="(-?[\d.]+)"/g)].map(x => +x[1]);
+  for (const y of ys) {
+    if (y > h - 2) { console.error('❌ '+name+' 有文字出框（y='+y+'／高 '+h+'）'); process.exit(1); }
+  }
+}
+// ═════════ v33：制服配件（領巾／巾圈／領帶／基維爾／皮帶襪）═════════
+{
+  const NW = ctx.UNIFORM.neckwear, KW = ctx.UNIFORM.kilwell, BS = ctx.UNIFORM.beltSocks;
+  if (!NW || !KW || !BS) { console.error('❌ UNIFORM 缺 neckwear／kilwell／beltSocks'); process.exit(1); }
+  if (NW.scarves.length !== 4) { console.error('❌ 領巾唔係 4 種'); process.exit(1); }
+  if (NW.rings.length !== 4) { console.error('❌ 巾圈唔係 4 種'); process.exit(1); }
+  if (NW.ties.length !== 4) { console.error('❌ 領帶唔係 4 色'); process.exit(1); }
+  if (NW.wear.length !== 8) { console.error('❌ 捲巾佩戴唔係 8 步'); process.exit(1); }
+  const nwAll = JSON.stringify(NW) + JSON.stringify(KW) + JSON.stringify(BS);
+  for (const t of ['3.5 厘米','12–15 厘米','Windsor','棗紅色領帶','深綠色領帶','黑色領帶','深藍色領帶','顏色巾圈','童軍巾圈','小隊活動巾圈','基維爾巾圈','基維爾領巾','木章','襪帶','鞋碼','棕色皮帶']) {
+    if (nwAll.indexOf(t) < 0) { console.error('❌ 制服配件缺資料：'+t); process.exit(1); }
+  }
+  if (NW.source.indexOf('3.4') < 0 || BS.source.indexOf('3.6') < 0) { console.error('❌ 制服配件冇標章節出處'); process.exit(1); }
+  for (const k of ['ties','kilwell','scarf','zoom']) {
+    const svg = ctx.DIAGRAMS.uniform[k];
+    if (!svg || !/^<svg /.test(svg) || svg.indexOf('undefined') >= 0) { console.error('❌ 制服圖缺失／壞：'+k); process.exit(1); }
+  }
+  plotCheck(ctx.DIAGRAMS.uniform.ties, '領帶圖');
+  try { const node = ctx.App.pages.uniform('acc'); if (!node) throw new Error('冇回傳'); }
+  catch(e) { console.error('❌ 制服「領巾領帶」分頁 render 失敗：', e.message); process.exit(1); }
+  const appSrcV33 = readFileSync(root+'js/app.js','utf8');
+  if (appSrcV33.indexOf("k:'acc'") < 0) { console.error('❌ 制服 subnav 冇「領巾領帶」分頁'); process.exit(1); }
+  /* 自查清單要包含配件規格 */
+  const cl = ctx.UNIFORM.checklist.join(' ');
+  for (const t of ['領帶','巾圈','皮帶']) { if (cl.indexOf(t) < 0) { console.error('❌ 自查清單缺：'+t); process.exit(1); } }
+}
+console.log('✅ v33：制服配件（領巾 4 種・巾圈 4 種・領帶 4 色・基維爾木章・皮帶皮鞋襪）＋ 兩張新圖');
+
 console.log('\n🎉 全部 smoke test 通過（v30：集會套包範圍收斂＋基本級 D 圖補晒——8 張儀式卡全部有圖）');
