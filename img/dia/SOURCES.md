@@ -1,19 +1,35 @@
-# `img/dia/` 手繪圖解來源（54 張 AVIF）
+# `img/dia/` 圖解來源（54 張 AVIF）
 
 ## 呢啲圖係咩
 
-- 全部由 app 自己嘅**手繪 SVG 底稿** raster 而成：底稿喺 `js/diagrams.js`／`js/svg-kit.js`（`DIAGRAMS.*`）。
-- 2026-09 用戶回饋「SVG 好醜，盡量唔要 SVG」→ 54 張手繪圖解一律先 raster 成 PNG 再轉 AVIF 出圖；
-  前端仍然用 `DIAGRAMS.*`，由 `js/svg-kit.js` 尾段一次過換成 `<img src="img/dia/…">`。
-- 換走嘅 SVG 會存落 `IMG.svg`，**只做後備**：瀏覽器唔支援 AVIF 或者圖檔 load 唔到時，`IMG.fallback()` 會換返手繪版。
-  所以底稿唔可以刪——`tests/smoke.mjs` 亦係驗底稿入面嘅尺寸線／角度（見下）。
+兩條唔同嘅製作線，出圖格式一樣（AVIF），前端一樣由 `js/svg-kit.js` 尾段換成 `<img>`：
+
+| | 邊 45 張 | 制服 9 張（`uniform-*`） |
+| --- | --- | --- |
+| 圖解內容 | 儀式／遊戲／技能／營火／追蹤／指南針／背囊 | chest、zoom、sleeve、body、scarf、ties、kilwell、cap、branch |
+| 底稿 | app 自己嘅**手繪 SVG**（`js/diagrams.js`／`js/svg-kit.js`，`DIAGRAMS.*`） | **乾淨服裝底圖（AI 生成，中性衣物、零徽章零文字）＋ 程式疊位** |
+| 後備 | SVG 存落 `IMG.svg`，AVIF load 唔到就 `IMG.fallback()` 換返手繪版（**所以要留底稿**） | 冇 SVG 底稿；後備＝`alt` 文字＋`figcaption` |
+| 測試 | `tests/smoke.mjs` 驗底稿尺寸線比例（0.05 px/mm）／角度／文字唔出框 | 驗 9 個 key 有 AVIF、冇 SVG 底稿、alt 有齊實際距離（3cm／2cm／1cm／3.5cm） |
+
+### 制服 9 張點解要另做一條線（v36）
+
+用戶 2026-09-16：「制服內的 SVG 很醜，徽章佩戴也要有圖」。
+
+- 制服唔可以由 AI 直接畫（**HANDOVER v21 禁令**：AI 一定畫錯帽章／巾圈／袋蓋／布章位置），
+  亦唔可以靠手繪 SVG（就係「醜」嘅來源，而且人眼對位易錯）。
+- 所以分兩層做：**底圖＝乾淨衣物（AI 生成，只有衫褲帽，冇任何徽章、冇任何文字、冇位置線）；
+  位置＝程式畫**。位置一律由 `/tmp/build/fig_uniform.py` 用 PIL 按 `js/uniform.js` 嘅
+  `UNIFORM.placement`／`UNIFORM.cap` 逐項疊上去（袋蓋線、3cm／2cm 尺寸線、①–⑨ 編號、皮帶線、
+  領巾規格線），所以「章喺邊」永遠由條文決定，唔會由 AI 決定。
+- 比例一律由實際量度底圖得出（shirt 12px/cm、figure 4.36、tie_shirt 17 等），
+  尺寸標籤寫嘅 cm 同圖上嘅距離係同一套換算。
 
 ## 檔案清單（54）
 
 | 前綴 | 張數 | 內容 |
 | --- | --- | --- |
 | `cer-` | 13 | 儀式／步操：集隊、睇齊、立正、稍息、敬禮、三指手形、升旗禮、宣誓站位、集會開始／結束、團呼馬蹄鐵 |
-| `uniform-` | 9 | 制服：胸袋／全身徽章位置、局部放大、陸海空顏色配搭、領帶四色、旅巾、木章 |
+| `uniform-` | 9 | 制服：chest 胸袋上下層、zoom 左胸袋＋右袖放大、sleeve 右袖由上至下、body 全身衫袖肩帶、scarf 旅巾佩戴＋規格、ties 領帶四色、kilwell 木章皮繩、cap 制服帽帽章、branch 陸／海／空顏色配搭對照 |
 | `skill-` | 9 | 技能：收繩、地圖圖例、帳篷、爐具、小刀、RICE、SOS、迷路、復原臥式 |
 | `fire-` | 3 | 營火：火圈座位、流程、營火袍 |
 | `dgm-` | 2 | 指南針八方位、背囊分層 |
@@ -22,12 +38,26 @@
 
 ## 製作方法
 
+### 手繪 45 張
+
 1. 底稿 SVG（340 單位闊，除遊戲圖）→ `resvg-js` raster：
-   - `cer`／`uniform`／`game`／`skillx`／`fire`：放大 3 倍
+   - `cer`／`game`／`skillx`／`fire`：放大 3 倍
    - 指南針／背囊：放大 4 倍　·　追蹤符號：放大 5 倍
    - 字體：`Noto Sans CJK SC`（Regular ＋ Bold），`loadSystemFonts: false`（避免揀錯字）
+   - ⚠️ `@resvg/resvg-js` 出唔到 `<text>`（`defaultFontFamily`／`fontFiles` 都無效）→ 呢條線唔可以出文字圖
 2. `convert` 轉 AVIF：大圖 `-resize 720x -strip -quality 50`；追蹤符號 `-resize 240x`。
 3. 尺寸寫入 `js/dia.js`（`IMG.map`）嘅 `w`／`h`，同 `alt` 文字一齊——前端出圖時一定要有 `width`／`height`，避免跳位。
+
+### 制服 9 張（v36）
+
+1. 底圖 = `/tmp/art/` 嘅 AI 生成中性衣物（`shirt.png`／`figure_cap.png`／`ties.png`／`jacket.png`／
+   `neck.png`／`fold.png`／`cap.png`／`tie_shirt.png`／`figure.png`），量度出每張圖嘅 px/cm。
+2. `python /tmp/build/fig_uniform.py`：PIL 開底圖 → 按 `UNIFORM.placement` 疊位置線／尺寸線／編號 →
+   加標題、圖表、出處（CJK 字型一律 `/tmp/fonts/DroidSansFallback.ttf`；偽粗體＝`stroke_width=2`）→
+   1600px 闊 PNG（`figlib.Plate` 自動對放大過嘅底圖做 UnsharpMask）。
+3. `convert out/<key>.png -resize '1200x>' -strip -quality 46 -define avif:pixel-format=yuv420p img/dia/uniform-<key>.avif`
+4. 尺寸／alt 寫入 `js/dia.js`；key 加落 `sw.js` `ASSETS`；`js/svg-kit.js` 嘅 `D.uniform` 直接登記
+   `IMG.html('uniform.<key>')`（唔再放 SVG 字串）。
 
 ## 質量檢查
 
@@ -37,20 +67,32 @@
   睇齊「一手位」改量 375mm、營火圈標籤搬位等）。目標：0 個壓圖問題。
 - `node /home/user/svgrender/qa-render.mjs`：跑 app 所有頁面，確認冇任何頁面再出 `<svg>`。
 - `npm test`：`tests/smoke.mjs` 驗 `IMG.map` 每張圖（路徑／尺寸／alt／入 sw.js／檔案存在）、
-  驗底稿嘅尺寸線比例（0.05 px/mm）、角度（立正 30°、睇齊 90°）、文字唔出框。
+  驗底稿嘅尺寸線比例（0.05 px/mm）、角度（立正 30°、睇齊 90°）、文字唔出框；
+  v36 另加制服 9 張嘅存在／冇 SVG 底稿／alt 有實際距離嘅斷言。
+- **制服圖嘅位置要人手對條文**：出完圖一定要放大睇（例：`/tmp/qa/branch_zoom.png` 睇陸／海／空膚色有冇被換色整污糟），
+  唔可以只信程式檢查——換色／疊位程式曾經染到膚色同手腳。
 
 ## 重製方法
 
 ```bash
+# 手繪 45 張
 node /home/user/svgrender/render-dia.js    # 底稿 → /tmp/diapng → img/dia/*.avif（約 25 秒）
 node /home/user/svgrender/gen-dia-js.js    # 按渲染結果更新 js/dia.js（含 alt 文字表）
 node /home/user/svgrender/qa-textink.js    # 檢查文字壓圖
+
+# 制服 9 張（v36）
+python /tmp/build/fig_uniform.py           # 底圖＋位置線 → /tmp/build/out/*.png
+convert /tmp/build/out/chest.png -resize '1200x>' -strip -quality 46 -define avif:pixel-format=yuv420p img/dia/uniform-chest.avif
 ```
 
 改咗底稿（`js/diagrams.js`／`js/svg-kit.js`）之後一定要重跑上面三步，否則 app 出嘅 AVIF 會同底稿唔一致。
+改咗 `js/uniform.js` 嘅 `placement`／`cap` 之後要重跑制服管線，否則圖上嘅位置會同條文脫節。
 
 ## 注意
 
-- 圖入面嘅比例係 **0.05 px = 1 mm**（`fS`）；尺寸線一律用 `fDIM()` 出，測試會逐條核對。
-- 圖解只畫**中性練習衫**嘅人形，唔會畫制服；制服一律用官方圖（見 `../uni/SOURCES.md`）。
-- 繩結照產品規則**不設圖**。
+- 手繪 45 張嘅比例係 **0.05 px = 1 mm**（`fS`）；尺寸線一律用 `fDIM()` 出，測試會逐條核對。
+- 制服 9 張嘅比例係**逐張底圖量度**得出嘅 px/cm（唔可以假設），尺寸標籤同圖上距離用同一套換算。
+- 【v21 禁令】AI **唔可以**畫制服實物／徽章位置：底圖只可以是**中性衣物**，位置一律由程式疊。
+  AI 插畫（`img/fig/`）亦只畫中性練習衫（灰 T＋深灰短褲、冇帽冇領巾冇章）。
+- 制服標準服式圖仍然一律用官方圖（見 `../uni/SOURCES.md`），呢批圖係「位置示意」唔係「服式對照」。
+- 繩結照產品規則**不設圖**；營火袍布章唔出插畫。

@@ -136,7 +136,9 @@ createContext(ctx);
    凡係「圖入面畫咗／寫咗咩」嘅斷言（尺寸線、角度、文字出框、顏色）一律驗 IMG.svg 內嘅原底稿——
    因為 AVIF 就係由同一張底稿 raster 出嚟，驗到底稿即係驗到圖。 */
 function srcView(g){ const o={}; for (const k in ctx.IMG.svg) if (k.indexOf(g+'.')===0) o[k.slice(g.length+1)] = ctx.IMG.svg[k]; return o; }
-function srcOf(key){ return ctx.IMG.svg[key] || ''; }
+/* 圖上寫咗乜：v35 之前係手繪 SVG 底稿（IMG.svg）；v36 起制服 9 張冇底稿，
+   內容直接燒喺 AVIF 度，所以改用 IMG.map 嘅 alt（同時 app.js 嘅 figcaption 都要講同樣數字）。 */
+function srcOf(key){ return ctx.IMG.svg[key] || (ctx.IMG.map[key] ? ctx.IMG.map[key].alt : '') || ''; }
 console.log('✅ JS 執行：', Object.keys(ctx.App.pages).join(','));
 console.log('✅ 儀式卡',ctx.CEREMONY.cards.length,'制服類型',ctx.UNIFORM.types.length,'制服分支',ctx.UNIFORM.branches.length);
 const codes=['C01','C02','C03','C04','C05','C06','C07','C08','C09','C10','C11','C12','C13','C14','C15','C16','C17','C18','C19','C20','C21','C22','C23','C24'];
@@ -490,7 +492,15 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
 {
   const est = (t)=>{ let w=0; for (const ch of t) { const c = ch.codePointAt(0); w += (c>0x2e80?1.0:(ch===' '?0.34:0.58)); } return w; };
   const dkeys = Object.keys(ctx.IMG.svg);
-  if (dkeys.length < 50) { console.error('❌ IMG.svg 底稿唔齊（'+dkeys.length+'）— 換圖時冇存低原 SVG？'); process.exit(1); }
+  /* v36：制服 9 張（uniform.*）已經唔再由手繪 SVG raster 出嚟，而係「乾淨底圖＋程式疊位」
+     直接畫成 AVIF，所以冇 SVG 底稿。其餘 45 張（儀式 13＋遊戲 12＋技能 9＋營火 3＋
+     指南針／背囊 2＋追蹤 6）照舊要留低底稿做後備。 */
+  if (dkeys.length < 45) { console.error('❌ IMG.svg 底稿唔齊（'+dkeys.length+'／45）— 換圖時冇存低原 SVG？'); process.exit(1); }
+  ['chest','zoom','sleeve','body','scarf','ties','kilwell','cap','branch'].forEach(k=>{
+    if (ctx.IMG.svg['uniform.'+k]) { console.error('❌ uniform.'+k+' 仲留住 SVG 底稿（v36 應直接出 AVIF）'); process.exit(1); }
+    const u = ctx.IMG.map['uniform.'+k];
+    if (!u || !existsSync(root+u.f)) { console.error('❌ uniform.'+k+' 冇對應 AVIF 圖檔'); process.exit(1); }
+  });
   let n=0, bad=[];
   for (const key of dkeys) {
     const grp = key, k = '';
@@ -797,10 +807,20 @@ console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間�
   if (!ctx.DIAGRAMS.uniform.zoom || !/^<img src="img\/dia\/uniform-zoom\.avif"/.test(ctx.DIAGRAMS.uniform.zoom)) { console.error('❌ 冇徽章局部放大圖（AVIF）'); process.exit(1); }
   if (srcOf('uniform.zoom').indexOf('3cm') < 0 || srcOf('uniform.zoom').indexOf('1cm') < 0) { console.error('❌ 放大圖冇標實際距離'); process.exit(1); }
   if (!ctx.DIAGRAMS.uniform.scarf || srcOf('uniform.scarf').indexOf('3.5cm') < 0) { console.error('❌ 冇旅巾綁法圖'); process.exit(1); }
-  for (const b of ['land','sea','air']) {
-    if (!ctx.DIAGRAMS.uniform[b] || ctx.DIAGRAMS.uniform[b].indexOf('undefined') >= 0) { console.error('❌ 制服本地顏色圖缺：'+b); process.exit(1); }
+  /* v36：陸／海／空三張手繪顏色圖合併成一張陸海空對照圖（uniform.branch），三個分支卡共用 */
+  if (!ctx.DIAGRAMS.uniform.branch || !/^<img src="img\/dia\/uniform-branch\.avif"/.test(ctx.DIAGRAMS.uniform.branch)) {
+    console.error('❌ 制服陸／海／空顏色配搭圖缺（uniform.branch）'); process.exit(1);
   }
+  if (srcOf('uniform.branch').indexOf('海童軍') < 0 || srcOf('uniform.branch').indexOf('空童軍') < 0) {
+    console.error('❌ 顏色配搭圖 alt 冇講齊陸／海／空'); process.exit(1);
+  }
+  if (appSrc.indexOf('bu.branch') < 0) { console.error('❌ 制服分支卡冇用顏色配搭圖'); process.exit(1); }
   if (appSrc.indexOf("DIAGRAMS.uniform.zoom") < 0) { console.error('❌ 徽章頁冇用局部放大圖'); process.exit(1); }
+  /* v36：徽章頁要右袖放大圖、配件頁要制服帽圖 */
+  if (appSrc.indexOf("DIAGRAMS.uniform.sleeve") < 0) { console.error('❌ 徽章頁冇用右袖放大圖'); process.exit(1); }
+  if (appSrc.indexOf("bd.cap") < 0 || appSrc.indexOf("bd.scarf") < 0 || appSrc.indexOf("bd.ties") < 0 || appSrc.indexOf("bd.kilwell") < 0) { console.error('❌ 配件頁冇用齊制服帽／旅巾／領帶／木章圖'); process.exit(1); }
+  if (appSrc.indexOf("UNIFORM.cap") < 0 || !ctx.UNIFORM.cap || ctx.UNIFORM.cap.points.length < 5) { console.error('❌ 制服帽（3.3）內容／圖缺'); process.exit(1); }
+  if (srcOf('uniform.cap').indexOf('2cm') < 0) { console.error('❌ 制服帽圖冇標 2cm'); process.exit(1); }
   /* 7) 補圖：先鋒工程都要有圖 */
   if (appSrc.indexOf("figFor('pioneer'") < 0) { console.error('❌ 先鋒工程冇圖'); process.exit(1); }
   /* 8) 遊戲庫每個遊戲都有圖（插畫或俯視擺位圖） */

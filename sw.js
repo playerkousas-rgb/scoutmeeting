@@ -1,4 +1,4 @@
-var CACHE = "scout-v35-c24-20260916";
+var CACHE = "scout-v36-c24-20260916";
 var ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./css/app.css",
   "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/dia.js", "./js/diagrams.js", "./js/svg-kit.js", "./js/songs.js",
@@ -61,13 +61,13 @@ var ASSETS = [
   "./img/dia/track-msg.avif",
   "./img/dia/track-turn.avif",
   "./img/dia/track-water.avif",
-  "./img/dia/uniform-air.avif",
   "./img/dia/uniform-body.avif",
+  "./img/dia/uniform-branch.avif",
+  "./img/dia/uniform-cap.avif",
   "./img/dia/uniform-chest.avif",
   "./img/dia/uniform-kilwell.avif",
-  "./img/dia/uniform-land.avif",
   "./img/dia/uniform-scarf.avif",
-  "./img/dia/uniform-sea.avif",
+  "./img/dia/uniform-sleeve.avif",
   "./img/dia/uniform-ties.avif",
   "./img/dia/uniform-zoom.avif",
   "./img/badge/angler.avif",

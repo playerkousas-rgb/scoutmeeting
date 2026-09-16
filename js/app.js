@@ -914,8 +914,8 @@ App.pages.uniform = function(sub){
         + '<figcaption>'+t.name+'官方服式圖（'+uni.branch+'男／女團員）｜實物以<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">童軍物品供應社</a>及《儀容與制服手冊》為準</figcaption></figure>';
     }
     var bu = (typeof DIAGRAMS!=='undefined' && DIAGRAMS.uniform) ? DIAGRAMS.uniform : {};
-    var bfig = bu[br] ? '<div class="svg-steps"><figure>'+bu[br]+
-      '<figcaption>顏色配搭示意（離線都睇得到）：'+t.name+' 各件顏色同配搭位置</figcaption></figure></div>' : '';
+    var bfig = bu.branch ? '<div class="svg-steps"><figure>'+bu.branch+
+      '<figcaption>顏色配搭對照圖（離線都睇得到）：陸／海／空三種制服嘅帽、恤衫、短褲／裙褲同長襪顏色，逐項並排比較（'+t.name+'睇自己一支）</figcaption></figure></div>' : '';
     return '<div class="card uniform-card"><h3>'+t.name+'</h3>'+figHtml+bfig+
       '<div class="uniform-split">'+
         '<div class="uniform-visual no-print"><a href="'+t.img+'" target="_blank" rel="noopener">🖼️ 開總會官網原圖（對最新式樣）</a>'+
@@ -949,6 +949,8 @@ App.pages.uniform = function(sub){
     wrap.appendChild(App.block('🎖️ 全身位置：衫袖・肩帶（圖上 ⑦–⑨）',
       '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.body+
       '<figcaption>正面位置：右袖由上至下（小隊章 3cm 起）・左袖（AYP／拯溺）・專章帶由左肩斜落右腰；旅巾着喺肩帶外面</figcaption></figure></div>'
+      +'<div class="svg-steps"><figure>'+DIAGRAMS.uniform.sleeve+
+      '<figcaption>右袖放大（圖上 ①–⑤）：① 旅章／香港肩章＝肩膊位下方 2cm；② 總部／地域／區章＝再落 2cm，地域前區後相距 1cm；③ 環境／社區參與／維護自然世界章；④ 優異旅團章（佩戴一年）；⑤ 童軍小隊章＝袖口縫線上方 3cm。左袖鏡像相同（AYP 上、拯溺下）</figcaption></figure></div>'
       + pTable(P.body), {id:'uni-body'}));
     wrap.appendChild(App.h('div','callout','📚 出處：'+P.source+'。本 app 服務童軍支部（11–15 歲）：深資／樂行先有嘅章（急救章、深資／樂行肩章、ATAS 標誌）只作對照，未夠資格唔使理。<br>原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>｜<a href="'+UNIFORM.source.badgeGuide+'" target="_blank" rel="noopener">支部成員徽章佩戴指引（2023 年第 13 號通告）PDF</a>'));
     wrap.appendChild(App.h('p','tip','💡 集會前逐個章對位檢查。'));
@@ -982,8 +984,17 @@ App.pages.uniform = function(sub){
       +'<ul class="bullet">'+KW.wear.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
     wrap.appendChild(App.block('👖 皮帶・皮鞋・襪',
       '<div class="card"><ul class="bullet">'+BS.items.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    var CP = UNIFORM.cap;
+    wrap.appendChild(App.block('🧢 制服帽佩戴（帽章・帽邊・髮式）',
+      '<div class="svg-steps"><figure>'+(bd.cap||'')+
+      '<figcaption>帽章＝軟帽左眼處上方 2cm；帽邊＝眼眉上方約 2cm（約一隻手指闊）；帽帶尾套入帽後端黑色膠邊內</figcaption></figure></div>'
+      +'<div class="card"><ul class="bullet">'+CP.points.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'
+      +'<p class="mut">'+CP.hard+'</p>'
+      +'<p class="mut">'+CP.sea+'</p></div>'
+      +'<div class="card"><h4>髮式（戴帽期間）</h4><ul class="bullet">'
+      +CP.hair.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
     wrap.appendChild(App.h('div','callout','🛒 <b>'+UNIFORM.shop.name+'</b>：'+UNIFORM.shop.addr+'｜電話 '+UNIFORM.shop.tel+'｜<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">hkscoutshop.org.hk</a><br>'+UNIFORM.shop.rule+'<br>'+UNIFORM.shop.rest));
-    wrap.appendChild(App.h('div','callout','📚 出處：'+NW.source+'；'+BS.source+'。原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>'));
+    wrap.appendChild(App.h('div','callout','📚 出處：'+NW.source+'；'+BS.source+'；'+UNIFORM.cap.source+'。原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>'));
     return wrap;
   }
   if(cur==='check'){
