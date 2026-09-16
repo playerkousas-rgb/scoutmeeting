@@ -7,6 +7,7 @@ UNIFORM.source = {
   url: 'https://uniform.scouting.org.hk/',
   memberUrl: 'https://www.scout.org.hk/tc/youth-members/scouts/index.html?sid=2',
   badgeGuide: 'https://www.scout.org.hk/uploads/tc/circulars/11057/p013-23.pdf',
+  shopUrl: 'https://www.hkscoutshop.org.hk/',
   note: '制服圖片為香港童軍總會官方網頁圖片，僅供本APP內離線參考對照；如有版權要求將另行處理。最新式樣以《儀容與制服手冊》及總會最新通告為準。'
 };
 
@@ -134,6 +135,17 @@ UNIFORM.badgePositions = UNIFORM.placement.chest.map(function(p){
   return { n:p.n, pos:p.side, items:p.items, note:p.note||'' };
 });
 
+
+// 童軍物品供應社（制服配件嘅標準來源；手冊 3.1 第 6 點）
+UNIFORM.shop = {
+  name: '童軍物品供應社（The Scout Shop of Hong Kong）',
+  url: 'https://www.hkscoutshop.org.hk/',
+  addr: '九龍柯士甸道童軍徑香港童軍中心 11 樓（佐敦港鐵站 C2 出口）',
+  tel: '2957 6444',
+  email: 'scoutshop@scout.org.hk',
+  rule: '按《儀容與制服手冊》3.1：制服配件（部份鞋襪及附加配件除外）以童軍物品供應社所供應者為標準。',
+  rest: '手冊 3.7「制服毛衣」、3.8「附加配件」本 app 唔詳列——用品款式、尺碼、價錢同供應情況會變，有需要請到童軍物品供應社查詢／購買。'
+};
 
 // 領巾、巾圈、領帶（《儀容與制服手冊》3.4；第三章 2026.01.01 修訂）
 UNIFORM.neckwear = {

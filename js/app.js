@@ -918,6 +918,7 @@ App.pages.uniform = function(sub){
       +'<ul class="bullet">'+KW.wear.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
     wrap.appendChild(App.block('👖 皮帶・皮鞋・襪',
       '<div class="card"><ul class="bullet">'+BS.items.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.h('div','callout','🛒 <b>'+UNIFORM.shop.name+'</b>：'+UNIFORM.shop.addr+'｜電話 '+UNIFORM.shop.tel+'｜<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">hkscoutshop.org.hk</a><br>'+UNIFORM.shop.rule+'<br>'+UNIFORM.shop.rest));
     wrap.appendChild(App.h('div','callout','📚 出處：'+NW.source+'；'+BS.source+'。原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>'));
     return wrap;
   }
@@ -925,7 +926,8 @@ App.pages.uniform = function(sub){
     var cl = '<ul class="bullet">'+UNIFORM.checklist.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
       '<p><i>'+UNIFORM.winter.note+'</i></p>'+
       '<p class="source-note">🖼️ '+UNIFORM.source.note+'</p>'+
-      '<div class="callout">📚 <a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">儀容與制服手冊（官方網站）</a></div>';
+      '<div class="callout">📚 <a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">儀容與制服手冊（官方網站）</a>｜🛒 <a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">'+UNIFORM.shop.name+'</a>（'+UNIFORM.shop.tel+'）</div>'+
+      '<p class="mut">'+UNIFORM.shop.rest+'</p>';
     wrap.appendChild(App.block('🧣 旅巾點綁（巾圈・巾尾長度）',
       '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.scarf+
       '<figcaption>捲巾直徑約 3.5cm、底至尖 12–15cm；巾圈收喺衣領尖，巾尾喺肚臍附近、唔可以超越皮帶扣</figcaption></figure></div>'));
@@ -935,7 +937,7 @@ App.pages.uniform = function(sub){
   var br = UNIFORM.branches.find(function(b){return b.k===cur;}) || UNIFORM.branches[0];
   wrap.appendChild(App.h('div','callout','<b>'+br.ic+' '+br.n+'制服要點：</b>'+br.note));
   br.types.forEach(function(tk){ wrap.appendChild(App.h('div','', typeCard(byKey[tk]))); });
-  wrap.appendChild(App.h('div','callout','🧣 三組共通：旅巾＋巾圈、徽章佩戴位置、領巾領帶規格、集會前自查清單。'));
+  wrap.appendChild(App.h('div','callout','🧣 三組共通：旅巾＋巾圈、徽章佩戴位置、領巾領帶規格、集會前自查清單。<br>🛒 制服同配件一律以 <a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">'+UNIFORM.shop.name+'</a> 供應者為標準（手冊 3.1）；3.7 制服毛衣同 3.8 附加配件唔喺 app 詳列，有需要到供應社查詢。'));
   return wrap;
 };
 

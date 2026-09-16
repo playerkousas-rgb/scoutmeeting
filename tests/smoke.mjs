@@ -779,7 +779,14 @@ function plotCheck(svgStr, name){
   plotCheck(ctx.DIAGRAMS.uniform.ties, '領帶圖');
   try { const node = ctx.App.pages.uniform('acc'); if (!node) throw new Error('冇回傳'); }
   catch(e) { console.error('❌ 制服「領巾領帶」分頁 render 失敗：', e.message); process.exit(1); }
+  /* 制服毛衣／附加配件：只指向童軍物品供應社，唔自創內容 */
+  const SH = ctx.UNIFORM.shop;
+  if (!SH || SH.url.indexOf('hkscoutshop.org.hk') < 0) { console.error('❌ 冇童軍物品供應社資料'); process.exit(1); }
+  if (SH.rest.indexOf('3.7') < 0 || SH.rest.indexOf('3.8') < 0) { console.error('❌ 供應社說明冇交代 3.7／3.8 唔詳列'); process.exit(1); }
+  if (SH.rule.indexOf('3.1') < 0) { console.error('❌ 供應社說明冇引手冊 3.1（以供應社為標準）'); process.exit(1); }
+  if (!/tel|2957/.test(SH.tel)) { console.error('❌ 供應社冇電話'); process.exit(1); }
   const appSrcV33 = readFileSync(root+'js/app.js','utf8');
+  if (appSrcV33.indexOf('UNIFORM.shop.url') < 0) { console.error('❌ 制服頁冇出供應社連結'); process.exit(1); }
   if (appSrcV33.indexOf("k:'acc'") < 0) { console.error('❌ 制服 subnav 冇「領巾領帶」分頁'); process.exit(1); }
   /* 自查清單要包含配件規格 */
   const cl = ctx.UNIFORM.checklist.join(' ');
