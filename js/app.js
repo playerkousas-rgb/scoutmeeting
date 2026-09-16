@@ -22,7 +22,7 @@ App.netState = function(){
 
 App.route = function(){
   var raw = location.hash.replace('#','') || 'plan';
-  // 舊連結兼容：小隊 tab 已改為營火歌；小隊制度/工具放入手冊
+  // 舊連結兼容：小隊 tab 已改為營火會；小隊制度/工具放入手冊
   if(raw==='patrol' || raw.indexOf('patrol/')===0){
     location.replace('#book/patrol');
     return;
@@ -50,8 +50,20 @@ App.route = function(){
   }
   if(el) view.appendChild(el);
   if(tab==='search'){ try{ App.searchGo(); }catch(e){} }
+  App.projFab();
   window.scrollTo(0,0);
 };
+
+/* 浮動「🖥️ 投屏」掣：淨係有區塊嘅頁先出 */
+App.projFab = function(){
+  var b = document.getElementById('projfab');
+  if (!b) return;
+  var has = document.querySelectorAll('#view section.sec').length > 0;
+  if (b.classList) b.classList.toggle('hidden', !has);
+  else b.style.display = has ? '' : 'none';
+};
+
+/* 全站搜尋 */
 
 App.renderFlow = function(){
   var fb = document.getElementById('flowbar');
@@ -68,36 +80,140 @@ App.h = function(tag, cls, html){
 
 App.searchOpen = function(){ location.hash = '#search'; };
 
-/* ── 分頁 chip 導航（tab 內小分頁）── */
+/* ── 分頁 chip 導航（tab 內小分頁；每版最多 8 格，唔會擠成一條長龍）── */
+App.SUBN_PER = 8;
 App.subnav = function(tab, items, cur){
+  cur = cur || (items[0] && items[0].k) || '';
+  App._subnavItems = App._subnavItems || {};
+  App._subnavItems[tab] = items;   /* 版本切換要用 */
+  var per = App.SUBN_PER;
+  var pages = Math.max(1, Math.ceil(items.length / per));
+  var pi = 0, ci = 0;
+  for (var i = 0; i < items.length; i++) { if ((items[i].k || '') === cur) { ci = i; pi = Math.floor(i / per); } }
+  if (pi > pages - 1) pi = pages - 1;
+  var from = pi * per, to = Math.min(items.length, from + per);
+
   var nav = App.h('nav','subnav');
   nav.setAttribute('aria-label','分頁導航');
-  items.forEach(function(it){
-    var on = (it.k || '') === (cur || items[0].k || '');
+
+  if (pages > 1) {
+    var head = App.h('div','pg-row');
+    head.innerHTML =
+      '<button class="pg-btn" '+(pi===0?'disabled':'')+' onclick="App.subnavShift(\''+tab+'\','+(from-1)+')" aria-label="前一批分頁">‹ 前一批</button>'+
+      '<span class="pg-of">第 '+(pi+1)+'／'+pages+' 批（共 '+items.length+' 頁）</span>'+
+      '<button class="pg-btn" '+(pi>=pages-1?'disabled':'')+' onclick="App.subnavShift(\''+tab+'\','+to+')" aria-label="後一批分頁">後 '+Math.max(0,items.length-to)+' 個 ›</button>';
+    nav.appendChild(head);
+  }
+
+  var row = App.h('div','subrow');
+  items.slice(from, to).forEach(function(it){
+    var on = (it.k || '') === cur;
     var a = App.h('a','subtab'+(on?' on':''),'<i>'+(it.ic||'📄')+'</i><b>'+it.n+'</b>');
     a.href = it.k ? '#'+tab+'/'+it.k : '#'+tab;
-    nav.appendChild(a);
+    row.appendChild(a);
   });
+  nav.appendChild(row);
   return nav;
+};
+/* 版本切換＝跳去嗰版第一／最後一格（唔會出現「撳唔返」） */
+App.subnavItems = function(tab){ return (App._subnavItems || {})[tab] || null; };
+App.subnavShift = function(tab, idx){
+  var items = App.subnavItems ? App.subnavItems(tab) : null;
+  if (!items || !items.length) return;
+  idx = Math.max(0, Math.min(idx, items.length - 1));
+  var k = items[idx].k;
+  location.hash = k ? '#'+tab+'/'+k : '#'+tab;
 };
 
-/* 純錨點 chip 行（長頁跳位，唔轉頁） */
-App.chiprow = function(items){
-  var nav = App.h('div','subnav chiprow');
+/* 集會目錄投屏：將目錄表 + 特別集會變成幾版大字 */
+App.projPlan = function(title){
+  if (typeof Projector === 'undefined') return;
+  var slides = [];
+  var tbl = document.querySelector('#view table.plan-table');
+  if (tbl) slides.push({ h:'📅 全年集會', body: App.projBody(tbl) });
+  var special = document.querySelector('#view ul.bullet');
+  if (special) slides.push({ h:'🌟 特別集會／活動', body: App.projBody(special) });
+  if (!slides.length) { App.toast('呢頁冇嘢可以投影'); return; }
+  Projector.deck('🧭 '+(title||'集會目錄'), slides, 0);
+};
+
+
+
+/* 即時篩選 chip 行（同 🎮 活動 tab 嘅分類掣一樣：撳完即刻轉內容，唔跳頁唔轉版本） */
+App.filterbar = function(items, cur, pick, root){
+  var bar = App.h('div','filters fbar');
+  bar.setAttribute('role','tablist');
   items.forEach(function(it){
-    var a = App.h('a','subtab','<i>'+it.ic+'</i><b>'+it.n+'</b>');
-    a.onclick = function(ev){ if(ev&&ev.preventDefault) ev.preventDefault(); App.jump(it.id); };
-    nav.appendChild(a);
+    var b = App.h('button','filter-btn'+((it.k===cur)?' active':''), (it.ic?it.ic+' ':'')+it.n);
+    b.setAttribute('data-k', it.k);
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-selected', (it.k===cur)?'true':'false');
+    b.onclick = function(){
+      Array.prototype.forEach.call(bar.querySelectorAll('.filter-btn'), function(x){
+        var on = (x===b);
+        if (x.classList) x.classList.toggle('active', on);
+        x.setAttribute('aria-selected', on?'true':'false');
+      });
+      if (root) App.showPane(root, it.k);
+      pick(it.k);
+    };
+    bar.appendChild(b);
   });
-  return nav;
+  return bar;
 };
-App.jump = function(id){
-  var el = document.getElementById(id);
-  if(!el) return;
-  if(el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'});
-  el.classList.add('flash');
-  setTimeout(function(){ el.classList.remove('flash'); }, 1400);
+
+/* 一頁幾版：撳掣換內容（唔係跳位） */
+App.showPane = function(root, key){
+  if (!root || !root.querySelectorAll) return;
+  Array.prototype.forEach.call(root.querySelectorAll('.tabpane'), function(p){
+    var on = p.getAttribute('data-pane') === key;
+    p.setAttribute('role','tabpanel');
+    p.setAttribute('aria-hidden', on?'false':'true');
+    if (p.classList) p.classList.toggle('hidden', !on); else p.style.display = on ? '' : 'none';
+  });
 };
+/* 版面分頁條：items＝[{k,ic,n}]；panes 容器內每個 .tabpane[data-pane=k] */
+App.tabs = function(items, cur, root){
+  return App.filterbar(items, cur, function(){}, root);
+};
+
+/* ══════════ 🖥️ 投屏（Projector，見 js/projector.js）══════════ */
+/* 攞一段內容出嚟投影：抽走掣、輸入格、導航，只留睇得明嘅嘢 */
+App.projBody = function(el){
+  if (!el || !el.cloneNode) return '';
+  var c = el.cloneNode(true);
+  Array.prototype.forEach.call(c.querySelectorAll('.print-btn,.proj-btn,.no-print,button,input,textarea,.subnav,.chiprow,.filters,.cer-nav,.back-link'), function(n){
+    if (n.parentNode) n.parentNode.removeChild(n);
+  });
+  Array.prototype.forEach.call(c.querySelectorAll('details'), function(d){ d.open = true; });
+  return c.innerHTML;
+};
+App.projSec = function(secEl){
+  if (typeof Projector === 'undefined' || !secEl) return;
+  var body = secEl.querySelector('.sec-body') || secEl;
+  var title = secEl.getAttribute('data-title') || (document.querySelector('#view h1') ? document.querySelector('#view h1').textContent : '投影');
+  Projector.html(title, App.projBody(body));
+};
+/* 成頁投影：每個區塊變一版，撳「下一版」教下一步 */
+App.projPage = function(title){
+  if (typeof Projector === 'undefined') return;
+  var slides = [];
+  Array.prototype.forEach.call(document.querySelectorAll('#view section.sec'), function(s){
+    var h = s.querySelector('.sec-head h2');
+    var b = s.querySelector('.sec-body');
+    if (!b) return;
+    var body = App.projBody(b);
+    if (!body.replace(/[\s\u200b]/g,'')) return;
+    slides.push({ h: h ? h.innerHTML.replace(/<[^>]*>/g,'').replace(/🖨️.*/,'').trim() : '', body: body });
+  });
+  if (!slides.length) { App.toast('呢頁冇嘢可以投影'); return; }
+  if (!title) {
+    var h1 = document.querySelector('#view h1');
+    title = h1 ? h1.textContent.trim() : '童軍團集會助手';
+  }
+  Projector.deck('🧭 '+title, slides, 0);
+};
+App.projOpen = function(){ return typeof Projector !== 'undefined' && Projector.on; };
 
 /* ── 區塊：每節獨立「指邊印邊」── */
 App.sec = function(title, opts){
@@ -113,6 +229,11 @@ App.sec = function(title, opts){
     var b = App.h('button','print-btn','🖨️ 只印本節');
     b.onclick = function(){ App.printSec(s); };
     head.appendChild(b);
+  }
+  if(opts.proj !== false){
+    var p = App.h('button','proj-btn','🖥️ 投屏');
+    p.onclick = function(){ App.projSec(s); };
+    head.appendChild(p);
   }
   s.appendChild(head);
   s.appendChild(body);
@@ -153,7 +274,7 @@ App.cerFig = function(c){
 App.cerDgm = function(k, cap){
   var dk = (k && typeof DIAGRAMS!=='undefined' && DIAGRAMS.cer) ? DIAGRAMS.cer[k] : '';
   if(!dk) return '';
-  return '<details class="dgm-fold"><summary>📐 分部動作圖解（'+(cap||k)+'）— 撳開睇，列印會自動展開</summary>'
+  return '<details class="dgm-fold"><summary>📐 分部動作圖解（'+(cap||k)+'）</summary>'
     + '<figure class="dgm-fig"><div class="dgm-wrap">'+dk+'</div><figcaption>📐 '+(cap||'分部動作圖解')
     + '・角度／距離已照手冊標示，可對住示範</figcaption></figure></details>';
 };
@@ -216,14 +337,14 @@ App.buildSearchIndex = function(){
   });
   var skills = [
     {t:'繩結（10 個・文字口訣）', k:'繩結 平結 八字結 雙套結 半結 反手結 稱人結 接繩結 繫木結 縮繩結 曳木結 bowline 打結 c13 c14', l:'#skills/rope'},
-    {t:'收繩與繩索保養', k:'收繩 保養 繩索 圈繞 陰乾 報廢', l:'#skills/care'},
-    {t:'地圖與指南針', k:'地圖 指南針 比例尺 圖例 方位 compass 定向 紅針 北 等高線', l:'#skills/map'},
-    {t:'背囊收拾', k:'背囊 執包 行山袋 防水 分層', l:'#skills/pack'},
-    {t:'營藝（帳篷・爐具・小刀安全圈）', k:'營藝 紮營 帳篷 氣爐 小刀 斧頭 手鋸 安全圈 3米', l:'#skills/camp'},
-    {t:'先鋒工程入門', k:'先鋒工程 紮作 十字紮 剪立紮 平行紮', l:'#skills/pioneer'},
-    {t:'追蹤符號', k:'追蹤符號 追蹤 箭嘴 記號 tracking 符號', l:'#skills/track'},
-    {t:'郊野守則＋求助信號', k:'郊野守則 Leave No Trace 山火 天氣 撤退 哨子 SOS 迷路 環保 999 三短三長', l:'#skills/field'},
-    {t:'急救 7 種＋RICE', k:'急救 流鼻血 抽筋 燙傷 扭傷 割傷 刺傷 復原臥式 RICE 包紮 first aid 沖脫泡蓋送', l:'#skills/aid'}
+    {t:'收繩與繩索保養（附圖）', k:'收繩 保養 繩索 圈繞 陰乾 報廢 圖', l:'#skills/care'},
+    {t:'地圖與指南針（附圖）', k:'地圖 指南針 比例尺 圖例 方位 compass 定向 紅針 北 等高線 圖', l:'#skills/map'},
+    {t:'執背囊（附圖）', k:'背囊 執包 行山袋 防水 分層 圖', l:'#skills/pack'},
+    {t:'營藝：帳篷／爐具／刀具（附圖）', k:'營藝 紮營 帳篷 氣爐 小刀 斧頭 手鋸 安全圈 3米 圖', l:'#skills/camp'},
+    {t:'先鋒工程入門（附圖）', k:'先鋒工程 紮作 十字紮 剪立紮 平行紮 天幕 三腳架 圖', l:'#skills/pioneer'},
+    {t:'追蹤符號（附圖）', k:'追蹤符號 追蹤 箭嘴 記號 tracking 符號 圖', l:'#skills/track'},
+    {t:'郊野守則＋求助信號（附圖）', k:'郊野守則 Leave No Trace 山火 天氣 撤退 哨子 SOS 迷路 環保 999 三短三長 圖', l:'#skills/field'},
+    {t:'急救 8 種（每種有圖）', k:'急救 流鼻血 抽筋 燒傷 燙傷 扭傷 割傷 刺傷 復原臥式 RICE first aid 沖脫泡蓋送 急救卡 圖', l:'#skills/aid'}
   ];
   skills.forEach(function(sk){
     idx.push({type:'技能', title:sk.t, link:sk.l, desc:'技能卡（附圖解）', text:(sk.t+' '+sk.k).toLowerCase()});
@@ -233,17 +354,19 @@ App.buildSearchIndex = function(){
       text:('儀式 '+c.n+' 升旗 宣誓 步操 敬禮 隊列 點名 降旗 團呼 開始 結束 '+ (c.steps||[]).map(function(s){return s.h+' '+s.d;}).join(' ')).toLowerCase()});
   });
   idx.push({type:'制服', title:'制服佩戴（陸／海／空小分頁）＋自查清單', link:'#uniform', desc:'', text:'制服 領巾 徽章 佩戴 恤衫 褲 帽 皮帶 襪 鞋 儀容 海童軍 空童軍 陸童軍'});
+  idx.push({type:'制服', title:'🧣 領巾・巾圈・領帶（4 色）・皮帶皮鞋襪', link:'#uniform/acc', desc:'按手冊 3.4–3.6', text:'領巾 巾圈 領帶 顏色巾圈 童軍巾圈 小隊活動巾圈 基維爾巾圈 基維爾領巾 木章 皮帶 皮鞋 長襪 襪帶 捲巾 3.5cm 12至15cm windsor 棗紅 深綠 黑 深藍 配件 對照'});
+  idx.push({type:'制服', title:'🎖️ 徽章佩戴位置圖（胸袋上下層＋衫袖＋專章帶）', link:'#uniform/badge', desc:'附位置圖', text:'徽章 佩戴 位置 圖 胸袋 袋蓋 3cm 肩帶 專章帶 小隊章 旅章 區章 地域章 香港章 服務年星 進度性獎章 會員章 圖解'});
   idx.push({type:'手冊', title:'誓詞規律銘言＋小隊制度＋報班', link:'#book', desc:'', text:'誓詞 規律 銘言 準備 報章 報班 訓練班 考章'});
   idx.push({type:'手冊', title:'小隊制度＋小隊長職責＋會議記錄表', link:'#book/patrol', desc:'已併入手冊', text:'小隊 小隊長 制度 會議記錄 團隊長 副小隊長'});
-  idx.push({type:'手冊', title:'集會工具（計分板・抽籤・倒數・分組）', link:'#book/tools', desc:'已併入手冊', text:'計分板 抽籤 倒數 分組 工具'});
-  idx.push({type:'素材', title:'工作紙（24 場直接印）＋急救卡', link:'#print', desc:'', text:'工作紙 列印 素材 急救卡 家長通知'});
-  idx.push({type:'營火歌', title:'🇨🇳 國歌《義勇軍進行曲》＋升旗禮儀', link:'#print', desc:'素材庫', text:'國歌 義勇軍進行曲 升旗 禮儀 唱國歌'});
+  idx.push({type:'手冊', title:'集會工具（計分板・抽籤・倒數・分組・投屏）', link:'#book/tools', desc:'可投屏', text:'計分板 抽籤 倒數 分組 工具 投屏 小隊數 投影 大電視'});
+  idx.push({type:'素材', title:'工作紙（24 場直接印）＋急救卡（8 張連圖）＋營火會歌紙', link:'#print', desc:'可印可投屏', text:'工作紙 列印 素材 急救卡 家長通知 歌紙 誓詞卡 投屏'});
+  idx.push({type:'營火會', title:'🇨🇳 國歌《義勇軍進行曲》＋升旗禮儀', link:'#print', desc:'素材庫', text:'國歌 義勇軍進行曲 升旗 禮儀 唱國歌'});
   (typeof SONGS!=='undefined' ? SONGS.sheets : []).forEach(function(s){
-    idx.push({type:'營火歌', title:'🔥 '+s.zh+'（'+s.en+'）', link:'#songs/'+s.k, desc:s.cat,
-      text:(s.zh+' '+s.en+' 營火歌 唱歌 歌紙 歌詞 和弦 '+s.cat).toLowerCase()});
+    idx.push({type:'營火會', title:'🔥 '+s.zh+(s.en?'（'+s.en+'）':''), link:'#songs/'+s.k, desc:s.cat,
+      text:(s.zh+' '+(s.en||'')+' 營火會 營火歌 唱歌 歌紙 歌詞 香港 '+s.cat+' '+(s.lines||[]).map(function(l){return l[1];}).join(' ')).toLowerCase()});
   });
   if(typeof SONGS!=='undefined'){
-    idx.push({type:'營火歌', title:'營火章必識十首歌（熊熊烈火等）', link:'#songs', desc:'歌單', text:'營火 熊熊烈火 campfire burning kookaburra 友誼之光 童軍歌 必識 領唱 團呼 歡呼'});
+    idx.push({type:'營火會', title:'營火會時間表＋歡呼吶喊＋營火章要識嘅歌', link:'#songs', desc:'歌單', text:'營火會 營火 頌詞 點火 時間表 歡呼 吶喊 bravo 熊熊烈火 campfire burning kookaburra 友誼之光 童軍歌 必識 領唱 香港 兩隻老虎 猜拳歌 打開蚊帳 臨歧頌 謝飯歌'});
   }
   App.searchIndex = idx;
   return idx;
@@ -253,7 +376,7 @@ App.searchGo = function(){
   var out = document.getElementById('q-out');
   if(!input||!out) return;
   var q = (input.value||'').trim().toLowerCase();
-  if(!q){ out.innerHTML = '<p class="mut">輸入關鍵字即時搵，全站 24 場集會＋遊戲＋興趣章＋技能＋儀式＋營火歌都搵到。</p>'; return; }
+  if(!q){ out.innerHTML = '<p class="mut">輸入關鍵字即時搵：24 場集會＋遊戲＋興趣章＋技能＋儀式＋營火會。</p>'; return; }
   var keys = q.split(/\s+/);
   var res = App.buildSearchIndex().filter(function(e){
     return keys.every(function(k){ return e.text.indexOf(k)>=0; });
@@ -264,11 +387,17 @@ App.searchGo = function(){
   }).join('')+'</ul>';
 };
 
-/* ══════════ 教案詳情（上方 🅰️：冇 IDEA 跟住做） ══════════ */
+/* ══════════ 教案詳情（跟住做就帶到） ══════════ */
 App.renderMeeting = function(tid){
   var m = DATA.meetings.find(function(x){return x.tid===tid;});
   if(!m) return App.pages.plan();
   var wrap = App.h('div','page meeting-page');
+  var secList = [];                 /* 每節 section 嘅次序（分頁用） */
+  var _add = wrap.appendChild;
+  wrap.appendChild = function(node){
+    if (node && node.tagName && String(node.tagName).toLowerCase() === 'section') secList.push(node);
+    return _add.call(wrap, node);
+  };
   var back = App.h('a','back-link','← 返回集會目錄');
   back.href = '#plan';
   wrap.appendChild(back);
@@ -282,7 +411,6 @@ App.renderMeeting = function(tid){
     (m.full ? '<span class="tag ok">✓ 完整教案</span>' : '<span class="tag wip">內容陸續補上</span>');
   wrap.appendChild(meta);
   wrap.appendChild(App.h('p','lede','📍 場地：'+m.venue+'<br>🎯 目標：'+m.goal+(m.evidence?'<br>👀 觀察：'+m.evidence:'')+(m.gap?'<br>⚠️ 注意：'+m.gap:'')));
-  wrap.appendChild(App.h('p','print-hint','💡 想印邊節就撳該節右邊「🖨️ 只印本節」，淨係印嗰節；要成場印晒先撳上面「整場教案全部列印」。'));
 
   if(m.data){
     var d = m.data;
@@ -325,7 +453,8 @@ App.renderMeeting = function(tid){
     if(d.scenarios) anchors.push({id:tid+'-sc',ic:'🃏',n:'情境卡'});
     if(d.trivia) anchors.push({id:tid+'-tr',ic:'💡',n:'小知識'});
     anchors.push({id:tid+'-safety',ic:'⚠️',n:'安全'});
-    wrap.appendChild(App.chiprow(anchors));
+    var tabHost = App.h('div','tabhost');   /* 分頁條：撳掣即換版 */
+    wrap.appendChild(tabHost);
 
     // 領袖預備
     if(d.leaderPrep){
@@ -547,6 +676,27 @@ App.renderMeeting = function(tid){
     sSf.add(sf);
     wrap.appendChild(sSf);
 
+    /* ── 分頁：每一節一個掣，撳掣即換版（唔再係跳位）── */
+    (function(){
+      var secs = secList;
+      if (secs.length < 2) { if (tabHost.parentNode) tabHost.parentNode.removeChild(tabHost); return; }
+      var items = [];
+      secs.forEach(function(sec, i){
+        var k = sec.id || ('sec'+i);
+        var a = null;
+        anchors.forEach(function(x){ if (x.id === k) a = x; });
+        items.push({ k:k, ic:(a && a.ic) || '📄', n:(a && a.n) || sec.getAttribute('data-title') || ('第 '+(i+1)+' 節') });
+      });
+      secs.forEach(function(sec, i){
+        var pane = App.h('div','tabpane'+(i===0?'':' hidden'));
+        pane.setAttribute('data-pane', items[i].k);
+        if (sec.parentNode && sec.parentNode.removeChild) sec.parentNode.removeChild(sec);
+        pane.appendChild(sec);
+        wrap.appendChild(pane);
+      });
+      tabHost.appendChild(App.filterbar(items, items[0].k, function(){}, wrap));
+    })();
+
     return wrap;
   }
 
@@ -555,7 +705,7 @@ App.renderMeeting = function(tid){
   return wrap;
 };
 
-/* 工作紙 HTML（上方教案＋下方素材庫共用同一份內容） */
+/* 工作紙 HTML（教案頁同素材庫共用同一份內容） */
 App.worksheetHtml = function(w){
   var html = '<div class="card worksheet"><h3>'+w.title+'</h3>';
   if(w.fields){
@@ -579,13 +729,12 @@ App.pages = {};
 App.pages.search = function(sub){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'🔍 全站搜尋'));
-  wrap.appendChild(App.h('p','lede','一次過搵集會、遊戲、興趣章、技能、儀式、營火歌、制服、手冊。'));
   var q0 = '';
   try{ q0 = sub?decodeURIComponent(sub):''; }catch(e){ q0 = sub||''; }
   var box = App.h('div','card');
-  box.innerHTML = '<p><input id="q-input" style="width:70%;font-size:1.1em;padding:6px;" placeholder="例：儀式 / 急救 / 背囊 / 營火歌…" value="'+q0.replace(/"/g,'&quot;')+'" oninput="App.searchGo()"> '+
+  box.innerHTML = '<p><input id="q-input" style="width:70%;font-size:1.1em;padding:6px;" placeholder="例：儀式 / 急救 / 背囊 / 營火會…" value="'+q0.replace(/"/g,'&quot;')+'" oninput="App.searchGo()"> '+
     '<button onclick="App.searchGo()">搵！</button></p>'+
-    '<p>熱門：<a href="#search/儀式">儀式</a> · <a href="#search/急救">急救</a> · <a href="#search/背囊">背囊</a> · <a href="#search/地圖">地圖</a> · <a href="#search/營火歌">營火歌</a> · <a href="#search/小隊">小隊</a></p>'+
+    '<p>熱門：<a href="#search/儀式">儀式</a> · <a href="#search/急救">急救</a> · <a href="#search/背囊">背囊</a> · <a href="#search/地圖">地圖</a> · <a href="#search/營火會">營火會</a> · <a href="#search/小隊">小隊</a></p>'+
     '<div id="q-out"><p class="mut">輸入關鍵字即時搵，全站 24 場集會＋遊戲＋興趣章＋技能＋儀式＋歌都搵到。</p></div>';
   wrap.appendChild(box);
   return wrap;
@@ -595,7 +744,9 @@ App.pages.search = function(sub){
 App.pages.plan = function(){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'📅 集會目錄'));
-  wrap.appendChild(App.h('p','lede','跟住呢個目錄揀今日集會。<b>撳一行任何位置</b>（唔使淨係撳題目）就入到逐步帶領流程、物資清單、工作紙、家長通知。'));
+  wrap.appendChild(App.h('p','lede','24 場集會：會員章 6 場、探索 12 場、標準／總結 6 場。每場有序號、目標、時間、場地同對應獎章。'));
+  var planProj = App.h('p','','');
+  planProj.innerHTML = '<button class="proj-big" onclick="App.projPlan(\'年度集會目錄\')">🖥️ 投屏（睇年度計劃／同家長講）</button>';
   var table = App.h('table','meeting-table plan-table');
   table.innerHTML = '<thead><tr><th>場次</th><th>月份</th><th>主題</th><th>對應獎章</th><th>形式</th><th>狀態</th><th></th></tr></thead><tbody>' +
     DATA.meetings.map(function(m){
@@ -610,6 +761,7 @@ App.pages.plan = function(){
     });
   }
   wrap.appendChild(table);
+  wrap.appendChild(planProj);
   wrap.appendChild(App.h('h2',null,'🌟 特別集會／活動'));
   var ul = App.h('ul','bullet');
   ul.innerHTML = DATA.specialEvents.map(function(e){
@@ -623,7 +775,7 @@ App.pages.plan = function(){
 App.pages.ceremony = function(sub){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'🎪 集會儀式'));
-  var subs = [{k:'all',ic:'📚',n:'总覽'}].concat(CEREMONY.cards.map(function(c){return {k:c.k,ic:c.icon,n:c.n.replace(/（.*?）/g,'')};}));
+  var subs = [{k:'all',ic:'📚',n:'總覽'}].concat(CEREMONY.cards.map(function(c){return {k:c.k,ic:c.icon,n:c.n.replace(/（.*?）/g,'')};}));
   wrap.appendChild(App.subnav('ceremony',subs, (sub && sub!=='all')?sub:'all'));
 
   if(sub && sub!=='all'){
@@ -632,7 +784,7 @@ App.pages.ceremony = function(sub){
       var idx = CEREMONY.cards.indexOf(c0);
       var bar = App.h('div','cer-nav');
       var prev = CEREMONY.cards[idx-1], next = CEREMONY.cards[idx+1];
-      bar.innerHTML = '<a class="back-link" href="#ceremony">← 儀式总覽</a>'+
+      bar.innerHTML = '<a class="back-link" href="#ceremony">← 儀式總覽</a>'+
         (prev?'<a class="cer-prev" href="#ceremony/'+prev.k+'">← '+prev.icon+' '+prev.n.replace(/（.*?）/g,'')+'</a>':'')+
         (next?'<a class="cer-next" href="#ceremony/'+next.k+'">'+next.icon+' '+next.n.replace(/（.*?）/g,'')+' →</a>':'');
       wrap.appendChild(bar);
@@ -641,7 +793,7 @@ App.pages.ceremony = function(sub){
     }
   }
 
-  wrap.appendChild(App.h('p','lede','呢度淨係<strong>會員章＋日常集會</strong>用得到嘅儀式：開禮・禮成・集合／解散・立正／稍息（童軍動作）・敬禮・升旗・宣誓・團呼・基本整隊。<b>深嘅步操唔喺呢度教</b> —— 原地四轉、行進間轉向／換步、口令與動令時間表、旗手十二式、會操檢閱程序全部屬訓練班範圍：請上職前／進階訓練班，並人手一份《步操手冊》（香港童軍總會 2003 年 7 月第二版）照住做。新領袖第一次帶儀式：先撳入分頁睇圖，再對住圖示範；實際動作必須由熟悉程序之領袖現場示範。'));
+  wrap.appendChild(App.h('p','lede','呢度淨係<strong>會員章＋日常集會</strong>用得到嘅儀式：開禮・禮成・集合／解散・立正／稍息（童軍動作）・敬禮・升旗・宣誓・團呼・基本整隊。<b>深嘅步操唔喺呢度教</b> —— 原地四轉、行進間轉向／換步、口令與動令時間表、旗手十二式、會操檢閱程序全部屬訓練班範圍：請上職前／進階訓練班，並人手一份《步操手冊》（香港童軍總會 2003 年 7 月第二版）照住做。實際動作必須由熟悉程序之領袖現場示範。'));
   var ref = App.h('div','callout');
   ref.innerHTML = '📚 <b>參考文件：</b>（要教進階步操／帶會操，請用呢啲檔＋上訓練班，唔好靠記憶）<ul class="bullet" style="margin:6px 0 0 18px;">' +
     CEREMONY.refs.map(function(r){return '<li><a href="'+r.url+'" target="_blank" rel="noopener">'+r.n+'</a></li>';}).join('') +
@@ -686,17 +838,21 @@ App.pages.uniform = function(sub){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'👕 制服'));
   var subs = UNIFORM.branches.map(function(b){return {k:b.k,ic:b.ic,n:b.n};})
-    .concat([{k:'badge',ic:'🎖️',n:'徽章佩戴'},{k:'check',ic:'✅',n:'自查清單'}]);
+    .concat([{k:'badge',ic:'🎖️',n:'徽章佩戴'},{k:'acc',ic:'🧣',n:'領巾領帶'},{k:'check',ic:'✅',n:'自查清單'}]);
   var cur = 'land';
   subs.forEach(function(x){ if(x.k===sub) cur = sub; });
   wrap.appendChild(App.subnav('uniform',subs,cur));
-  wrap.appendChild(App.h('p','lede','童軍支部（陸）、海童軍、空童軍男／女團員制服標準，按自己團屬撳分頁。圖片為 <b>香港童軍總會官網</b>官方圖片，內容以《儀容與制服手冊》為準。'));
+  wrap.appendChild(App.h('p','lede','童軍支部（陸）、海童軍、空童軍男／女團員制服標準。圖片：<b>香港童軍總會官網</b>；內容以《儀容與制服手冊》為準。'));
 
   var byKey = {};
   UNIFORM.types.forEach(function(t){ byKey[t.k]=t; });
   function typeCard(t){
     var rows = t.items.map(function(i){return '<tr><th>'+i[0]+'</th><td>'+i[1]+'</td></tr>';}).join('');
-    return '<div class="card uniform-card"><h3>'+t.name+'</h3>'+
+    var bmap = {scout_b:'land',scout_g:'land',sea_b:'sea',sea_g:'sea',air_b:'air',air_g:'air'};
+    var bu = (typeof DIAGRAMS!=='undefined' && DIAGRAMS.uniform) ? DIAGRAMS.uniform : {};
+    var bfig = bu[bmap[t.k]] ? '<div class="svg-steps"><figure>'+bu[bmap[t.k]]+
+      '<figcaption>本地顏色示意（離線都睇得到）：'+t.name+' 各件顏色配搭；實際樣式以官網圖同手冊為準</figcaption></figure></div>' : '';
+    return '<div class="card uniform-card"><h3>'+t.name+'</h3>'+bfig+
       '<div class="uniform-split">'+
         '<a href="'+t.img+'" target="_blank" rel="noopener"><img src="'+t.img+'" alt="'+t.name+' 官方圖" loading="lazy" class="uniform-img" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"></a>'+
         '<div class="uniform-img-fallback" style="display:none">⚠️ （圖片需上網載入；網址：'+t.img+'）</div>'+
@@ -705,24 +861,83 @@ App.pages.uniform = function(sub){
   }
 
   if(cur==='badge'){
-    wrap.appendChild(App.block('🎖️ 徽章佩戴位置（按 2023 年第 13 號通告）',
-      '<table class="meeting-table"><thead><tr><th>位置</th><th>徽章</th></tr></thead><tbody>' +
-      UNIFORM.badgePositions.map(function(p){ return '<tr><td>'+p.pos+'</td><td>'+p.items.join('、')+'</td></tr>'; }).join('') +
-      '</tbody></table><div class="callout">📚 <a href="'+UNIFORM.source.badgeGuide+'" target="_blank" rel="noopener">支部成員徽章佩戴指引（2023年第13號通告）原文 PDF</a></div>'));
+    var P = UNIFORM.placement;
+    wrap.appendChild(App.h('p','lede','徽章位置表：按《儀容與制服手冊》4.6／4.7。圖上 ①–⑨ 對返下面各行；同一位置上下可以疊幾層。手冊本身有局部放大插圖，下面兩張放大圖就係照住嗰啲位置畫，方便對位同列印。'));
+    var CIR = ['','①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
+    function pTable(rows){
+      return '<table class="meeting-table"><thead><tr><th width="46">圖上</th><th>位置</th><th>擺咩章</th></tr></thead><tbody>'+
+        rows.map(function(r){
+          return '<tr><td class="pt-num">'+(CIR[r.n]||r.n)+'</td><td><b>'+r.side+'</b>'+(r.note?'<br><small class="mut">'+r.note+'</small>':'')+
+            '</td><td>'+r.items.map(function(x){return '・'+x;}).join('<br>')+'</td></tr>';
+        }).join('')+'</tbody></table>';
+    }
+    wrap.appendChild(App.block('🎖️ 胸袋上下層點排（圖上 ①–⑥）',
+      '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.chest+
+      '<figcaption>恤衫正面：袋蓋上方 3cm＝上層、袋蓋上方＝下層、袋中央＝進度性獎章（圖只示位置，唔畫徽章樣式）</figcaption></figure></div>'
+      + pTable(P.chest), {id:'uni-chest'}));
+    wrap.appendChild(App.block('🔍 局部放大：最易擺錯嘅兩處（左胸袋・右袖肩膊）',
+      '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.zoom+
+      '<figcaption>左：左胸袋——袋蓋上方 3cm 同袋中央係兩個唔同高度；右：右袖——旅章喺肩膊位下方 2cm，地域章（前）→ 區章（後）相距 1cm</figcaption></figure></div>'
+      +'<div class="callout">📖 對唔到就照《儀容與制服手冊》本身嘅放大插圖：'
+      +'<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">第三章「制服配件」</a>、'
+      +'<a href="'+UNIFORM.source.badgeGuide+'" target="_blank" rel="noopener">支部成員徽章佩戴指引 PDF</a>（官方圖最準）。</div>', {id:'uni-zoom'}));
+
+    wrap.appendChild(App.block('🎖️ 全身位置：衫袖・肩帶（圖上 ⑦–⑨）',
+      '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.body+
+      '<figcaption>正面位置：右袖由上至下（小隊章 3cm 起）・左袖（AYP／拯溺）・專章帶由左肩斜落右腰；旅巾着喺肩帶外面</figcaption></figure></div>'
+      + pTable(P.body), {id:'uni-body'}));
+    wrap.appendChild(App.h('div','callout','📚 出處：'+P.source+'。本 app 服務童軍支部（11–15 歲）：深資／樂行先有嘅章（急救章、深資／樂行肩章、ATAS 標誌）只作對照，未夠資格唔使理。<br>原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>｜<a href="'+UNIFORM.source.badgeGuide+'" target="_blank" rel="noopener">支部成員徽章佩戴指引（2023 年第 13 號通告）PDF</a>'));
+    wrap.appendChild(App.h('p','tip','💡 集會前逐個章對位檢查。'));
+    return wrap;
+  }
+  if(cur==='acc'){
+    var NW = UNIFORM.neckwear, KW = UNIFORM.kilwell, BS = UNIFORM.beltSocks;
+    var bd = (typeof DIAGRAMS!=='undefined' && DIAGRAMS.uniform) ? DIAGRAMS.uniform : {};
+    wrap.appendChild(App.h('p','lede','領巾・巾圈・領帶：按《儀容與制服手冊》3.4–3.6。宣誓後才可佩戴；童軍支部一般戴領巾，領帶部分屬深資／樂行／成年成員，列出嚟方便對照。'));
+    wrap.appendChild(App.block('🔑 四條通則',
+      '<div class="card"><ul class="bullet">'+NW.rules.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.block('🧣 領巾 4 種（邊個戴）',
+      '<div class="card"><ul class="bullet">'+NW.scarves.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.block('🔘 巾圈 4 種',
+      '<div class="card"><ul class="bullet">'+NW.rings.map(function(x){return '<li><b>'+x.n+'</b>：'+x.who+'</li>';}).join('')+'</ul>'
+      +'<p class="mut">'+NW.ringsOther+'</p></div>'));
+    wrap.appendChild(App.block('🧣 領巾點戴（捲巾 8 步＋規格）',
+      '<div class="svg-steps"><figure>'+(bd.scarf||'')+
+      '<figcaption>捲巾直徑約 3.5cm、底至尖 12–15cm；巾圈套喺衣領尖，巾尾唔可超越皮帶扣</figcaption></figure></div>'
+      +'<div class="card"><ol class="steps">'+NW.wear.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ol></div>'));
+    wrap.appendChild(App.block('👔 領帶 4 色＋佩戴',
+      '<div class="svg-steps"><figure>'+(bd.ties||'')+
+      '<figcaption>棗紅（深資）・深綠（樂行＋成年）・黑（海童軍）・深藍（空童軍）</figcaption></figure></div>'
+      +'<div class="card"><ul class="bullet">'+NW.ties.map(function(x){return '<li><b>'+x.n+'</b>：'+x.who+'</li>';}).join('')+'</ul>'
+      +'<ol class="steps">'+NW.tieWear.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ol></div>'));
+    wrap.appendChild(App.block('🪵 基維爾巾圈・基維爾領巾・木章（成年成員對照）',
+      '<div class="svg-steps"><figure>'+(bd.kilwell||'')+
+      '<figcaption>木章皮繩位置：領巾／領帶制服掛喺前面，禮服藏翻領內只露木珠</figcaption></figure></div>'
+      +'<div class="card"><ul class="bullet">'+KW.points.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'
+      +'<p class="mut">'+KW.note+'</p>'
+      +'<ul class="bullet">'+KW.wear.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.block('👖 皮帶・皮鞋・襪',
+      '<div class="card"><ul class="bullet">'+BS.items.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.h('div','callout','🛒 <b>'+UNIFORM.shop.name+'</b>：'+UNIFORM.shop.addr+'｜電話 '+UNIFORM.shop.tel+'｜<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">hkscoutshop.org.hk</a><br>'+UNIFORM.shop.rule+'<br>'+UNIFORM.shop.rest));
+    wrap.appendChild(App.h('div','callout','📚 出處：'+NW.source+'；'+BS.source+'。原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>'));
     return wrap;
   }
   if(cur==='check'){
     var cl = '<ul class="bullet">'+UNIFORM.checklist.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
       '<p><i>'+UNIFORM.winter.note+'</i></p>'+
       '<p class="source-note">🖼️ '+UNIFORM.source.note+'</p>'+
-      '<div class="callout">📚 <a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">儀容與制服手冊（官方網站）</a></div>';
+      '<div class="callout">📚 <a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">儀容與制服手冊（官方網站）</a>｜🛒 <a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">'+UNIFORM.shop.name+'</a>（'+UNIFORM.shop.tel+'）</div>'+
+      '<p class="mut">'+UNIFORM.shop.rest+'</p>';
+    wrap.appendChild(App.block('🧣 旅巾點綁（巾圈・巾尾長度）',
+      '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.scarf+
+      '<figcaption>捲巾直徑約 3.5cm、底至尖 12–15cm；巾圈收喺衣領尖，巾尾喺肚臍附近、唔可以超越皮帶扣</figcaption></figure></div>'));
     wrap.appendChild(App.block('✅ 制服自查清單（每次集會前）', cl));
     return wrap;
   }
   var br = UNIFORM.branches.find(function(b){return b.k===cur;}) || UNIFORM.branches[0];
   wrap.appendChild(App.h('div','callout','<b>'+br.ic+' '+br.n+'制服要點：</b>'+br.note));
   br.types.forEach(function(tk){ wrap.appendChild(App.h('div','', typeCard(byKey[tk]))); });
-  wrap.appendChild(App.h('div','callout','🧣 三組共通：旅巾＋巾圈、徽章佩戴位置、自查清單——撳上面分頁 👆'));
+  wrap.appendChild(App.h('div','callout','🧣 三組共通：旅巾＋巾圈、徽章佩戴位置、領巾領帶規格、集會前自查清單。<br>🛒 制服同配件一律以 <a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">'+UNIFORM.shop.name+'</a> 供應者為標準（手冊 3.1）；3.7 制服毛衣同 3.8 附加配件唔喺 app 詳列，有需要到供應社查詢。'));
   return wrap;
 };
 
@@ -757,8 +972,7 @@ App.pages.book = function(sub){
   }
 
   if(cur==='patrol'){
-    wrap.appendChild(App.h('p','tip','📦 由「小隊」tab 併入手冊：小隊制度、小隊長職責、會議記錄表——呢度係領袖預備時睇嘅制度資料；現場即開即用工具撳上面「集會工具」分頁。'));
-    wrap.appendChild(App.block('📋 小隊制度說明',
+      wrap.appendChild(App.block('📋 小隊制度說明',
       '<p>'+DATA.facts.patrol+'</p>'+
       '<ul class="bullet"><li><b>小隊長</b>：管一隊，帶人帶會帶頭（c19）。</li>'+
       '<li><b>副小隊長</b>：小隊長唔喺度就頂上；平時管記錄/物資/新隊員。</li>'+
@@ -776,7 +990,7 @@ App.pages.book = function(sub){
       '<tr><th>分工</th><td colspan="3">邊個：__________ 做咩：__________ 幾時完成：__________</td></tr>'+
       '<tr><th>下次開會</th><td colspan="3">______年____月____日</td></tr>'+
       '</tbody></table>'));
-    wrap.appendChild(App.h('p','tip','📣 小隊歡呼庫已搬去 <a href="#songs">🔥 營火歌</a>（開場／收尾都用得上）。'));
+    wrap.appendChild(App.h('p','tip','📣 歡呼庫：<a href="#songs">🔥 營火會</a>。'));
     return wrap;
   }
 
@@ -815,126 +1029,165 @@ App.pages.book = function(sub){
   return wrap;
 };
 
-/* 集會現場小工具（計分板／抽籤／倒數／分組） */
-App.toolsSecs = function(){
-  var frag = App.h('div','');
-  frag.appendChild(App.h('p','lede','🧰 集會現場即開即用：計分、抽人、倒數、分組。制度同會議記錄表喺「小隊制度」分頁。'));
-  var c5 = App.h('div','card');
-  var rows = '';
-  for(var i=0;i<4;i++){
-    rows += '<tr><td><input id="pt-name-'+i+'" value="'+App.patrolNames[i]+'" onchange="App.patrolName('+i+',this.value)" style="width:110px;"></td>'+
-      '<td style="text-align:center;"><b id="pt-score-'+i+'" style="font-size:1.5em;">'+App.patrolScores[i]+'</b></td>'+
-      '<td style="white-space:nowrap;"><button onclick="App.patrolScore('+i+',1)">＋1</button> '+
-      '<button onclick="App.patrolScore('+i+',5)">＋5</button> '+
-      '<button onclick="App.patrolScore('+i+',-1)">－1</button></td></tr>';
-  }
-  c5.innerHTML = '<h3>🏆 小隊計分板</h3><table class="meeting-table"><thead><tr><th>小隊</th><th>分數</th><th>加減</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<p><button onclick="App.patrolScoreReset()">🔄 全部清零</button> <small>（分數暫存，轉頁唔會唔見，閂 App 先會 reset）</small></p>';
-  frag.appendChild(c5);
-  var c6 = App.h('div','card');
-  c6.innerHTML = '<h3>🎲 抽籤</h3><p>名單（一行一個）：</p><textarea id="pt-lots-names" rows="4" style="width:100%;" placeholder="陳大文&#10;李小明&#10;…"></textarea>'+
-    '<p>抽幾個？<input id="pt-lots-n" type="number" value="1" min="1" style="width:60px;"> <button onclick="App.drawLots()">抽籤！</button></p><div id="pt-lots-out"></div>';
-  frag.appendChild(c6);
-  var c7 = App.h('div','card');
-  c7.innerHTML = '<h3>⏱️ 倒數計時</h3><p><input id="pt-cd-m" type="number" value="5" min="0" style="width:60px;"> 分 <input id="pt-cd-s" type="number" value="0" min="0" max="59" style="width:60px;"> 秒 '+
-    '<button onclick="App.countdownStart()">▶ 開始</button> <button onclick="App.countdownStop()">⏹ 停</button></p><div id="pt-cd-out"></div>';
-  frag.appendChild(c7);
-  var c8 = App.h('div','card');
-  c8.innerHTML = '<h3>👥 隨機分組</h3><p>名單（一行一個）：</p><textarea id="pt-grp-names" rows="4" style="width:100%;" placeholder="陳大文&#10;李小明&#10;…"></textarea>'+
-    '<p>分幾多組？<input id="pt-grp-n" type="number" value="2" min="2" style="width:60px;"> <button onclick="App.groupRandom()">隨機分組！</button></p><div id="pt-grp-out"></div>';
-  frag.appendChild(c8);
-  return frag;
-};
-
-/* ✂️ 素材庫（下方 🅱️：有明確想法→直接揀直接印） */
+/* ✂️ 素材庫：即搵即印／即投屏 */
+App.printCat = '';
+App.printCats = [
+  {k:'ws',   ic:'📝', n:'工作紙（24 場）'},
+  {k:'aid',  ic:'🩹', n:'急救卡（8 張）'},
+  {k:'text', ic:'⚜️', n:'誓詞規律銘言'},
+  {k:'rope', ic:'🧵', n:'收繩保養'},
+  {k:'flag', ic:'🇨🇳', n:'國歌升旗'},
+  {k:'song', ic:'🔥', n:'營火會歌紙'}
+];
 App.pages.print = function(){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'✂️ 素材庫'));
-  wrap.appendChild(App.h('p','lede','<b>呢度俾有明確想法嘅領袖「即搵即印」</b>：想印邊張就撳嗰張嘅 🖨️，淨係印嗰張，唔會連其他嘢一齊印。冇 IDEA 想跟住做？去上面 🅰️ 集會目錄逐場跟。'));
-  wrap.appendChild(App.chiprow([
-    {id:'pr-ws',ic:'📝',n:'工作紙 24 場'},
-    {id:'pr-text',ic:'⚜️',n:'誓詞規律銘言卡'},
-    {id:'pr-aid',ic:'🩹',n:'急救卡'},
-    {id:'pr-rope',ic:'🧵',n:'收繩保養卡'},
-    {id:'pr-flag',ic:'🇨🇳',n:'國歌・升旗禮儀'}
-  ]));
-
-  /* 工作紙：直接列喺素材庫，逐張直接印 */
-  var sWs = App.sec('📝 工作紙（c01–c24，逐張直接印）', {id:'pr-ws'});
-  var wsHtml = '<p class="mut">上面 🅰️ 每場教案入面都有同一份工作紙（跟住做時一齊印）；呢度俾「淨係想印某張工作紙」嘅領袖用——撳每張右上嘅 🖨️ 就只印嗰張。</p>';
-  var wsGroups = [
-    {k:'會員章 c01–c06', from:0, to:6},
-    {k:'探索 c07–c12', from:6, to:12},
-    {k:'探索 c13–c18', from:12, to:18},
-    {k:'標準/總結 c19–c24', from:18, to:24}
-  ];
-  wsGroups.forEach(function(g){
-    var list = DATA.meetings.slice(g.from,g.to).filter(function(m){return m.full&&m.data&&m.data.worksheet;});
-    if(!list.length) return;
-    wsHtml += '<h3 class="ws-group">'+g.k+'</h3>';
-    list.forEach(function(m){
-      var aud = m.data.worksheet.audience==='leader' ? '（領袖用）' : '（成員用 A4）';
-      wsHtml += '<div class="ws-item" data-title="'+m.tid+' 工作紙">'
-        + '<div class="ws-head"><b>'+m.tid+aud+'</b><span class="mut"> '+m.n+'</span> '
-        + '<a class="mut ws-goto" href="#plan/'+m.tid+'">睇完整教案 ↗</a>'
-        + '<button class="print-btn" onclick="App.printSec(this.closest(\'div.ws-item\'))">🖨️ 只印呢張</button></div>'
-        + App.worksheetHtml(m.data.worksheet)
-        + '</div>';
-    });
-  });
-  sWs._body.innerHTML = wsHtml;
-  wrap.appendChild(sWs);
-
-  wrap.appendChild(App.block('⚜️ 誓詞・規律・銘言文字卡',
-    '<div class="card"><h3>童軍誓詞</h3><ol class="promise">'+DATA.facts.promise.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ol>'+
-    '<h3>童軍規律</h3><ul class="bullet">'+DATA.facts.law.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul>'+
-    '<h3>童軍銘言：準備</h3><ul class="motto">'+DATA.facts.motto7.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul></div>', {id:'pr-text'}));
-
-  var aidHtml = '';
-  C17.firstaid.forEach(function(f){
-    aidHtml += '<div class="card aid-card"><h3>'+f.n+'</h3><p><b>處理：</b>'+f.how+'</p><p class="safety"><b>⚠️ 注意：</b>'+f.warn+'</p></div>';
-  });
-  aidHtml += '<div class="card"><p><b>復原臥式：</b>不省人事但有呼吸嗰陣用——側臥，防嘔吐物鯁親。教學見 <a href="#plan/c17">c17</a>。</p></div>';
-  wrap.appendChild(App.block('🩹 急救卡（7 種＋復原臥式）', aidHtml, {id:'pr-aid'}));
-
-  wrap.appendChild(App.block('🧵 收繩保養卡',
-    '<div class="card"><p><b>收法：</b>'+C14.ropeCare.coil+'</p><ul class="bullet">'+C14.ropeCare.care.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
-    (DIAGRAMS.skillx&&DIAGRAMS.skillx.ropecare?'<figure class="dgm-fig"><div class="dgm-wrap">'+DIAGRAMS.skillx.ropecare+'</div><figcaption>🖼️ 收繩＋保養示意</figcaption></figure>':'')+'</div>', {id:'pr-rope'}));
-
-  wrap.appendChild(App.block('🇨🇳 國歌《義勇軍進行曲》・升旗禮儀歌紙',
-    '<div class="card"><ul class="bullet"><li><b>場合</b>：升旗禮（c04/c06/c12/c20）、大型典禮——全體肅立，面向國旗。</li>'+
-    '<li><b>禮儀</b>：脫帽（戴帽者）、立正、跟唱；演奏期間唔傾偈唔行開。戴帽行三指舉手禮，無帽行注目禮。</li></ul>'+
-    '<p><b>歌詞</b>：起來！不願做奴隸的人們！把我們的血肉，築成我們新的長城！中華民族到了最危險的時候，每個人被迫着發出最後的吼聲。起來！起來！起來！我們萬眾一心，冒着敵人的炮火，前進！冒着敵人的炮火，前進！前進！前進！進！</p></div>'+
-    '<div class="callout">🔥 營火歌請去 <a href="#songs">🔥 營火歌 tab</a>：10 首傳統童軍營火歌歌紙（公版歌詞＋和弦＋動作玩法）＋領唱技巧。本素材庫只保留升旗禮儀所需國歌紙。</div>', {id:'pr-flag'}));
-
+  var cats = App.printCats;
+  if (!App.printCat || !cats.some(function(c){return c.k===App.printCat;})) App.printCat = cats[0].k;
+  var host = App.h('div','print-host');
+  function draw(){
+    host.innerHTML = '';
+    host.appendChild(App.printPanel(App.printCat));
+  }
+  wrap.appendChild(App.filterbar(cats, App.printCat, function(k){
+    App.printCat = k;
+    wrap.querySelectorAll('.fbar .filter-btn').forEach(function(b,i){ b.classList.toggle('active', cats[i].k===k); });
+    draw();
+  }));
+  draw();
+  wrap.appendChild(host);
   return wrap;
+};
+
+/* 素材庫每一類嘅內容 */
+App.printPanel = function(cat){
+  var box = App.h('div','');
+  if (cat === 'ws') {
+    var wsHtml = '<p class="mut">同集會目錄每場教案用嘅係同一份工作紙。</p>';
+    [{k:'會員章 c01–c06', from:0, to:6},{k:'探索 c07–c12', from:6, to:12},
+     {k:'探索 c13–c18', from:12, to:18},{k:'標準／總結 c19–c24', from:18, to:24}].forEach(function(g){
+      var list = DATA.meetings.slice(g.from,g.to).filter(function(m){return m.full&&m.data&&m.data.worksheet;});
+      if (!list.length) return;
+      wsHtml += '<h3 class="ws-group">'+g.k+'</h3>';
+      list.forEach(function(m){
+        var aud = m.data.worksheet.audience==='leader' ? '（領袖用）' : '（成員用 A4）';
+        wsHtml += '<div class="ws-item" data-title="'+m.tid+' 工作紙">'
+          + '<div class="ws-head"><b>'+m.tid+aud+'</b><span class="mut"> '+m.n+'</span> '
+          + '<a class="mut ws-goto" href="#plan/'+m.tid+'">睇完整教案 ↗</a>'
+          + '<button class="print-btn" onclick="App.printSec(this.closest(\'div.ws-item\'))">🖨️ 只印呢張</button>'
+          + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.ws-item\'))">🖥️ 投屏</button></div>'
+          + App.worksheetHtml(m.data.worksheet)
+          + '</div>';
+      });
+    });
+    box.appendChild(App.block('📝 工作紙（逐張印／逐張投）', wsHtml));
+    return box;
+  }
+
+  if (cat === 'aid') {
+    var html = '<p class="mut">8 張卡：7 種常見受傷＋復原臥式。每張都有圖，可以印出嚟貼喺急救箱／壁報，或者投屏一齊睇。</p>';
+    C17.firstaid.forEach(function(f){
+      html += '<div class="aid-wrap" data-title="急救卡 '+f.n+'">'+App.aidCard(f.n, f.how, f.warn)
+        + '<p class="aid-ops"><button class="print-btn" onclick="App.printSec(this.closest(\'div.aid-wrap\'))">🖨️ 只印呢張</button>'
+        + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.aid-wrap\'))">🖥️ 投屏</button></p></div>';
+    });
+    var faint = App.aidCard('復原臥式','唔醒但有呼吸：側臥，頭微向下、上膝屈前、上手放前面，防嘔吐物鯁親；轉身前後都要睇呼吸','呼吸唔正常即打 999；跟有急救證書嘅領袖做');
+    html += '<div class="aid-wrap" data-title="急救卡 復原臥式">'+faint
+      + '<p class="aid-ops"><button class="print-btn" onclick="App.printSec(this.closest(\'div.aid-wrap\'))">🖨️ 只印呢張</button>'
+      + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.aid-wrap\'))">🖥️ 投屏</button></p></div>';
+    box.appendChild(App.block('🩹 急救卡（8 張，連圖）', html));
+    return box;
+  }
+
+  if (cat === 'text') {
+    box.appendChild(App.block('⚜️ 誓詞・規律・銘言卡',
+      '<div class="card"><h3>童軍誓詞</h3><ol class="promise">'+DATA.facts.promise.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ol>'+
+      '<h3>童軍規律</h3><ul class="bullet">'+DATA.facts.law.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul>'+
+      '<h3>童軍銘言：準備</h3><ul class="motto">'+DATA.facts.motto7.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul></div>'+
+      '</div>'));
+    return box;
+  }
+
+  if (cat === 'rope') {
+    box.appendChild(App.block('🧵 收繩保養卡',
+      '<div class="card"><p><b>收法：</b>'+C14.ropeCare.coil+'</p><ul class="bullet">'+C14.ropeCare.care.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
+      (DIAGRAMS.skillx&&DIAGRAMS.skillx.ropecare?'<figure class="dgm-fig"><div class="dgm-wrap">'+DIAGRAMS.skillx.ropecare+'</div><figcaption>收繩＋保養示意（步驟照 c14 文字）</figcaption></figure>':'')+'</div>'));
+    return box;
+  }
+
+  if (cat === 'flag') {
+    box.appendChild(App.block('🇨🇳 國歌《義勇軍進行曲》・升旗禮儀歌紙',
+      '<div class="card"><ul class="bullet"><li><b>場合</b>：升旗禮（c04/c06/c12/c20）、大型典禮——全體肅立，面向國旗。</li>'+
+      '<li><b>禮儀</b>：制服要整齊；隊列中童軍立正致敬，領隊或單獨一人舉手敬禮（制服唔整齊或穿便服 → 只肅立，唔舉手）。</li></ul>'+
+      '<p><b>歌詞</b>：起來！不願做奴隸的人們！把我們的血肉，築成我們新的長城！中華民族到了最危險的時候，每個人被迫着發出最後的吼聲。起來！起來！起來！我們萬眾一心，冒着敵人的炮火，前進！冒着敵人的炮火，前進！前進！前進！進！</p></div>'+
+      '<p class="tip">💡 升旗程序、位置圖解：<a href="#ceremony/flag">🎪 升旗禮儀式卡</a>；升旗口令細節見 <a href="#plan/c04">c04</a>。</p>'));
+    return box;
+  }
+
+  /* 營火會歌紙：直接印某一首／投屏 */
+  var songHtml = '';
+  songHtml += '<table class="meeting-table"><thead><tr><th>歌名</th><th>場合</th><th>第一句</th><th>點用</th></tr></thead><tbody>';
+  SONGS.sheets.forEach(function(sg){
+    songHtml += '<tr><td><b>'+sg.zh+'</b></td><td><span class="tag cat">'+sg.cat+'</span></td>'
+      + '<td class="mut">'+((sg.lines&&sg.lines[0])?sg.lines[0][1]:'').slice(0,18)+'…</td>'
+      + '<td class="nowrap"><button class="print-btn" onclick="App.printSong(\''+sg.k+'\')">🖨️ 印呢首</button>'
+      + '<button class="proj-btn" onclick="App.projSong(\''+sg.k+'\')">🖥️ 投屏</button></td></tr>';
+  });
+  songHtml += '</tbody></table>';
+  box.appendChild(App.block('🔥 營火會歌紙（14 首）', songHtml));
+  return box;
+};
+
+/* 印／投一首歌（唔使跳去 🔥 營火會 tab 都做得到） */
+App.printSong = function(k){
+  var sg = SONGS.sheets.filter(function(x){return x.k===k;})[0];
+  if (!sg) return;
+  App.printSec(App.songSec(sg, true));
+};
+App.projSong = function(k){
+  var sg = SONGS.sheets.filter(function(x){return x.k===k;})[0];
+  if (!sg) return;
+  var html = '<h3>🔥 '+sg.zh+'</h3>' + App.songSheetHtml(sg);
+  if (typeof Projector !== 'undefined') Projector.html('🔥 '+sg.zh, html);
 };
 
 /* 🎮 活動（每個遊戲附場地圖） */
 App.pages.play = function(){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'🎮 活動'));
-  wrap.appendChild(App.h('p','lede','破冰、合作遊戲、課程活動、營火、雨天後備——即開即查即用（共 '+DATA.games.length+' 個）。每個遊戲附場地圖；已補插畫嘅會同時有「實景示意圖＋平面擺位圖」，睇圖就知點擺位（圖只示動作／場地，唔畫制服）。'));
+  wrap.appendChild(App.h('p','lede','共 '+DATA.games.length+' 個遊戲：破冰、合作、課程活動、營火、雨天後備。每個都有場地圖、人數、物資、玩法、安全提示。'));
   var gbn = App.h('div','game-banner');
   gbn.innerHTML = App.ph('game-banner', FIGS&&FIGS['game-banner']?FIGS['game-banner'].cap:'設場要點');
   wrap.appendChild(gbn);
   var cats = [];
   DATA.games.forEach(function(g){ if(cats.indexOf(g.cat)<0) cats.push(g.cat); });
   var filt = App.h('div','filters');
+  filt.setAttribute('role','tablist');
   [{k:'all',n:'全部'}].concat(cats.map(function(c){return {k:c,n:c};})).forEach(function(b,i){
     var btn = App.h('button','filter-btn'+(i===0?' active':''),b.n);
     btn.setAttribute('data-cat',b.k);
+    btn.setAttribute('role','tab');
+    btn.setAttribute('aria-selected', i===0?'true':'false');
     btn.onclick = function(){
-      document.querySelectorAll('#view .filter-btn').forEach(function(x){x.classList.remove('active');});
-      btn.classList.add('active');
+      /* 只喺自己條 bar 切 active（唔會影響頁面其他篩選）＋即時換內容 */
+      Array.prototype.forEach.call(filt.querySelectorAll('.filter-btn'), function(x){
+        if(x.classList) x.classList.remove('active');
+        x.setAttribute('aria-selected','false');
+      });
+      if(btn.classList) btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
       var cat = b.k;
-      document.querySelectorAll('.game-card').forEach(function(card){
-        card.style.display = (cat==='all'||card.getAttribute('data-cat')===cat)?'':'none';
+      Array.prototype.forEach.call(wrap.querySelectorAll('.game-card'), function(card){
+        var on = (cat==='all' || card.getAttribute('data-cat')===cat);
+        if (card.classList) card.classList.toggle('hidden', !on); else card.style.display = on?'':'none';
       });
     };
     filt.appendChild(btn);
   });
   wrap.appendChild(filt);
+  var projAll = App.h('p','no-print');
+  projAll.innerHTML = '<button class="proj-big" onclick="App.projPage(\'🎮 活動（遊戲庫）\')">🖥️ 投屏</button>';
+  wrap.appendChild(projAll);
   DATA.games.forEach(function(g){
     var card = App.h('div','card game-card');
     card.setAttribute('data-cat',g.cat);
@@ -948,7 +1201,8 @@ App.pages.play = function(){
       '<p><b>玩法：</b></p><ol class="steps">'+g.steps.map(function(st){return '<li>'+st+'</li>';}).join('')+'</ol>'+
       '<p class="tip">💡 '+g.tips+'</p>'+
       '<p class="safety"><b>⚠️ 安全：</b>'+g.safety+'</p>'+
-      '<p><button class="print-btn" onclick="App.printSec(this.closest(\'div.game-card\'))">🖨️ 只印呢個遊戲</button></p>';
+      '<p><button class="print-btn" onclick="App.printSec(this.closest(\'div.game-card\'))">🖨️ 只印呢個遊戲</button> '
+      + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.game-card\'))">🖥️ 投屏（講解用）</button></p>';
     wrap.appendChild(card);
   });
   return wrap;
@@ -958,6 +1212,7 @@ App.pages.play = function(){
 App.pages.skills = function(sub){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'🪢 技能'));
+  wrap.appendChild(App.h('p','lede','除繩結（只出口訣，唔出逐步圖）外，每樣技能都附圖。'));
   var subs = [
     {k:'rope',ic:'🪢',n:'繩結口訣'},
     {k:'care',ic:'🧵',n:'收繩保養'},
@@ -1011,6 +1266,7 @@ App.pages.skills = function(sub){
     '<li><b>基礎</b>：10 個繩結（見「繩結口訣」分頁）＋收繩保養——c13/c14 已教齊。</li>'+
     '<li><b>紮作預告</b>：十字紮（綁十字木）、剪立紮（A 字架）、平行紮（接長木）——留待後續先鋒工程場次，雙套結做起結收結。</li>'+
     '<li><b>應用</b>：天幕、營門、橋、瞭望台——c16 營地建設已實習天幕。</li></ul>'+
+    '<div class="svg-steps">'+figFor('pioneer','先鋒工程物料／安全距離示意')+'</div>'+
     '<div class="callout">⚠️ 紮作同繩結一樣「畫錯就教錯」，所以圖解一律以現場示範＋教案文字為準。</div></div>');
   secs.track = App.block('👣 追蹤符號（國際通用）',
     '<div class="card"><ul class="bullet">'+
@@ -1032,10 +1288,11 @@ App.pages.skills = function(sub){
     '<li><b>天氣觀察</b>：黑雲/悶熱/風向轉＝落雨先兆；行雷閃電即落山，唔企大樹下。</li>'+
     '<li><b>緊急撤退</b>：預先定撤退路線＋集合點；迷路企定＋吹哨（三短三長三短 SOS）＋等救援（c09/c10）。</li></ul>'+
     '<div class="svg-steps">'+figFor('sos','SOS 哨音節拍（三短三長三短）')+figFor('lost','迷路自保三步 S.T.A.Y.')+'</div></div>');
-  secs.aid = App.block('🩹 急救 7 種',
-    '<div class="card"><ul class="bullet">'+C17.firstaid.map(function(f){return '<li><b>'+f.n+'</b>：'+f.how+'</li>';}).join('')+'</ul>'+
-    '<div class="svg-steps">'+figFor('rice','扭傷 RICE 四步；燙傷用「沖脫泡蓋送」（c17）')+'</div>'+
-    '<p>👉 想逐張列印貼牆？去 <a href="#print">✂️ 素材庫→急救卡</a>。完整教學＋情境賽見 <a href="#plan/c17">c17</a>。</p></div>');
+  secs.aid = App.block('🩹 急救 7 種＋復原臥式（逐種有圖）',
+    '<p class="mut">口訣：<b>睇環境 → 嗌救命（999）→ 先救命</b>；唔醒／流血唔止／骨折變形／大面積燒傷一律即送院。</p>'+
+    C17.firstaid.map(function(f){ return App.aidCard(f.n, f.how, f.warn); }).join('')+
+    App.aidCard('復原臥式','唔醒但有呼吸：側臥，頭微向下、上膝屈前、上手放前面，防嘔吐物鯁親；轉身前後都要睇呼吸','有任何呼吸唔正常即打 999＋準備心肺復甦（跟有急救證書嘅領袖做）')+
+    '<p>完整教學＋情境賽：<a href="#plan/c17">c17</a>；可列印急救卡：<a href="#print">✂️ 素材庫</a>。</p>');
   wrap.appendChild(secs[cur]);
   return wrap;
 };
@@ -1044,7 +1301,7 @@ App.pages.skills = function(sub){
 App.pages.badges = function(){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'🎖️ 興趣章（興趣組專科徽章）'));
-  wrap.appendChild(App.h('p','lede','童軍支部專科徽章分 4 組：興趣組（綠底，11-13 歲入門）、技能組（藍底，13-15 歲）、服務組（紅底）、教導組（金邊）。本 tab 只列出 <b>興趣組</b>，主要由童軍團長喺團內安排考驗。其他組別詳情請看 <a href="'+EXTERNAL.badge+'" target="_blank" rel="noopener">🏅 童軍進度追蹤</a>。'));
+  wrap.appendChild(App.h('p','lede','專科徽章分 4 組：興趣組（綠底，11–13 歲入門）、技能組（藍底，13–15 歲）、服務組（紅底）、教導組（金邊）。呢度只列<b>興趣組</b>——多數由團長喺團內安排考驗。想查其他組別：<a href="'+EXTERNAL.badge+'" target="_blank" rel="noopener">🏅 童軍進度追蹤</a>。'));
   var filt = App.h('div','filters');
   var btns = [{k:'all',n:'全部'}].concat(INTERESTS.categories.map(function(c){return {k:c.k,n:c.ic+' '+c.n};}));
   btns.forEach(function(b,i){
@@ -1077,7 +1334,8 @@ App.pages.badges = function(){
       '<h3>'+b.zh+' <small>('+b.en+')</small></h3>'+
       '<div class="badge-tags">'+tags+'<span class="tag cat">'+catName+'</span></div></div>'+
       '<details><summary>📋 官方考核要求</summary><ol class="req-list">'+reqList+'</ol></details>'+
-      '<details><summary>💡 建議考核方式（僅供參考）</summary><ul class="sug-list">'+sugList+'</ul></details>';
+      '<details><summary>💡 建議考核方式（僅供參考）</summary><ul class="sug-list">'+sugList+'</ul></details>'
+      + '<p class="no-print"><button class="proj-btn" onclick="App.projSec(this.closest(\'div.badge-card\'))">🖥️ 投屏（同成員講要求）</button></p>';
     grid.appendChild(card);
   });
   wrap.appendChild(grid);
@@ -1087,55 +1345,69 @@ App.pages.badges = function(){
   return wrap;
 };
 
-/* 🔥 營火歌（取代「小隊」tab：內容＝營火歌音樂資訊＋歌紙） */
+/* 🔥 營火會（程序、歡呼、時間表＋香港旅團唱開嘅歌） */
 App.pages.songs = function(sub){
   var wrap = App.h('div','page');
   var sheets = SONGS.sheets;
-  var subs = [{k:'all',ic:'📚',n:'歌單总覽'}].concat(sheets.map(function(s){return {k:s.k,ic:'🎵',n:s.zh};}));
-  wrap.appendChild(App.h('h1',null,'🔥 營火歌'));
+  var subs = [{k:'all',ic:'📚',n:'總覽'}].concat(sheets.map(function(s){return {k:s.k,ic:'🎵',n:s.zh};}));
+  wrap.appendChild(App.h('h1',null,'🔥 營火會'));
   wrap.appendChild(App.subnav('songs',subs, (sub && sub!=='all')?sub:'all'));
 
-  // 單首歌紙
+  /* 單首歌紙 */
   if(sub && sub!=='all'){
-    var s0 = sheets.find(function(x){return x.k===sub;});
+    var s0 = sheets.filter(function(x){return x.k===sub;})[0];
     if(s0){
       var i0 = sheets.indexOf(s0);
-      var bar = App.h('div','cer-nav');
       var prev = sheets[i0-1], next = sheets[i0+1];
-      bar.innerHTML = '<a class="back-link" href="#songs">← 歌單总覽</a>'+
-        (prev?'<a class="cer-prev" href="#songs/'+prev.k+'">← '+prev.zh+'</a>':'')+
-        (next?'<a class="cer-next" href="#songs/'+next.k+'">'+next.zh+' →</a>':'');
+      var bar = App.h('div','cer-nav');
+      bar.innerHTML = '<a class="back-link" href="#songs">← 歌單總覽</a>'
+        + (prev?'<a class="cer-prev" href="#songs/'+prev.k+'">← '+prev.zh+'</a>':'')
+        + (next?'<a class="cer-next" href="#songs/'+next.k+'">'+next.zh+' →</a>':'');
       wrap.appendChild(bar);
       wrap.appendChild(App.songSec(s0, true));
       return wrap;
     }
   }
 
-  wrap.appendChild(App.h('p','lede','童軍營火歌歌紙＋音樂資訊：全部係流傳成百年嘅童軍／營火傳統歌（公版歌詞，放心唱放心印）。唔自創、唔放唔啱場合嘅歌。'));
+  wrap.appendChild(App.h('p','lede','營火會＝有程序嘅晚會：點火、唱歌、歡呼、小隊表演、營火談話、寧靜收尾。下面有 90 分鐘時間表範本、歡呼／吶喊、點火頌詞，同香港旅團真係唱開嘅 14 首歌紙。'));
   var banner = App.h('div','song-banner');
   banner.innerHTML = App.ph('fire-song', FIGS&&FIGS['fire-song']?FIGS['fire-song'].cap:'營火唱歌現場');
   wrap.appendChild(banner);
+
   var hero = App.h('div','card song-hero');
-  hero.innerHTML = '<h3>🔥 營火歌唱環節點樣帶</h3>'+
-    App.ph('fire-circle', FIGS&&FIGS['fire-circle']?FIGS['fire-circle'].cap:'火圈座位：領唱企圈內・水／沙／急救箱放背後')+
-    '<div class="svg-steps"><figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.flow:'')+'<figcaption>10–15 分鐘唱歌環節編排</figcaption></figure></div>';
+  hero.innerHTML = '<h3>🔥 營火會點樣帶</h3>'+
+    App.ph('fire-circle', FIGS&&FIGS['fire-circle']?FIGS['fire-circle'].cap:'火圈座位：領袖企圈內・水／沙／急救箱放背後')+
+    '<div class="svg-steps"><figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.flow:'')+'<figcaption>營火會三段程序：熱身 → 高潮 → 寧靜結尾</figcaption></figure></div>';
   wrap.appendChild(hero);
 
-  wrap.appendChild(App.block('🎸 音樂資訊點樣睇（歌紙通用）',
-    '<div class="card"><ul class="bullet">'+SONGS.musicTips.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>'+
-    '<p class="mut">想跟旋律：用歌名搜正版教學片（例：Oh! Susanna campfire song），或請識結他／烏克麗麗嘅領袖跟歌紙即場彈。歌紙上標明每句用咩和弦，照彈就得。</p></div>', {print:false}));
+  wrap.appendChild(App.block('🗓️ 一般營火會時間表（約 90 分鐘）',
+    '<div class="card"><ol class="steps">'+SONGS.programme.map(function(x){return '<li><b>'+x.t+'</b><br>'+x.d+'</li>';}).join('')+'</ol>'+
+    '<p class="tip">✅ '+SONGS.programmeTip+'</p></div>'));
+
+  wrap.appendChild(App.block('📣 歡呼／吶喊（代替鼓掌）',
+    '<div class="card"><ul class="bullet">'+SONGS.cheers.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul>'+
+    '<p class="tip">💡 '+SONGS.cheersTip+'</p></div>'));
+
+  wrap.appendChild(App.block('👥 營火會工作人員＋點火儀式',
+    '<div class="card"><ul class="bullet">'+SONGS.staff.map(function(x){return '<li><b>'+x.r+'</b>：'+x.d+'</li>';}).join('')+'</ul>'+
+    '<h4>🔥 點火儀式</h4><p>'+SONGS.ignition.how+'</p>'+
+    '<ul class="bullet">'+SONGS.ignition.words.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
+    '<h4>🎒 設備清單</h4><ul class="bullet">'+SONGS.gear.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>'));
 
   var grid = App.h('div','song-grid');
-  sheets.forEach(function(s){
+  sheets.forEach(function(sg){
     var card = App.h('a','card song-card');
-    card.href = '#songs/'+s.k;
-    card.innerHTML = '<h3>🎵 '+s.zh+'<br><small>'+s.en+'</small></h3>'+
-      '<p><span class="tag cat">'+s.cat+'</span> <span class="tag">'+s.meter+'</span> <span class="tag">'+s.keyName+'</span></p>'+
-      '<p class="mut">'+s.lines[0][1]+'</p>'+
-      '<p class="ws-open">撳入去睇歌紙＋和弦＋動作 →</p>';
+    card.href = '#songs/'+sg.k;
+    card.innerHTML = '<h3>🎵 '+sg.zh+(sg.en?'<br><small>'+sg.en+'</small>':'')+'</h3>'+
+      '<p><span class="tag cat">'+sg.cat+'</span>'+(sg.meter?' <span class="tag">'+sg.meter+'</span>':'')+'</p>'+
+      '<p class="mut">'+((sg.lines&&sg.lines[0])?sg.lines[0][1]:'').slice(0,22)+'…</p>'+
+      '<p class="ws-open">歌詞、玩法、領唱提示</p>';
     grid.appendChild(card);
   });
   wrap.appendChild(grid);
+
+  wrap.appendChild(App.block('🎤 冇樂器都帶得（營火會實況）',
+    '<div class="card"><ul class="bullet">'+SONGS.musicTips.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>', {print:false}));
 
   wrap.appendChild(App.block('🎤 領唱 5 招',
     '<div class="card"><ol class="steps">'+SONGS.leaderTips.map(function(t,i){return '<li><b>第'+(i+1)+'招：</b>'+t+'</li>';}).join('')+'</ol></div>', {print:false}));
@@ -1143,99 +1415,317 @@ App.pages.songs = function(sub){
   var must = SONGS.mustKnow;
   var mustHtml = '<div class="card"><p>'+must.why+'</p><ul class="bullet">'+must.list.map(function(m){
       return '<li>'+(m.must?'⭐必學：':'')+'<b>'+m.n+'</b> — '+m.tip+'</li>';
-    }).join('')+'</ul><p class="tip">✅ '+must.check+'</p>'+
-    (DIAGRAMS.fire&&DIAGRAMS.fire.scarf?'<div class="svg-steps"><figure>'+DIAGRAMS.fire.scarf+'<figcaption>營火袍：縫至少兩枚布章（營火章要求第 3 項）・袍色／布章樣式照旅團慣例，本 app 唔出插畫避免畫錯</figcaption></figure></div>':'')+
-    '<p>💡 營火章考核要求詳見 <a href="#badges">🎖️ 興趣章→營火</a>。</p></div>';
-  wrap.appendChild(App.block('⭐ 營火章「必識十首」＋有版權歌名單', mustHtml, {print:false}));
+    }).join('')+'</ul><p class="tip">✅ '+must.check+'</p>'
+    + '<p>💡 營火專科徽章要求詳見 <a href="#badges">🎖️ 興趣章→營火</a>。</p></div>';
+  wrap.appendChild(App.block('⭐ 營火章要識嘅歌（有版權嗰幾首）', mustHtml, {print:false}));
 
   wrap.appendChild(App.block('📋 唱歌環節編排（10–15 分鐘）＋安全底線',
     '<div class="card"><ol class="steps">'+SONGS.hostPlan.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ol>'+
     '<ul class="bullet">'+SONGS.safety.map(function(x){return '<li>⚠️ '+x+'</li>';}).join('')+'</ul></div>'));
 
-  wrap.appendChild(App.block('📣 小隊歡呼庫（開場／收尾用）',
+  wrap.appendChild(App.block('📣 小隊自己嘅歡呼點作',
     '<div class="card"><ul class="bullet">'+
     '<li><b>準備三連呼</b>：準備！準備！準備！耶！（右拳每次舉高，最後跳起）</li>'+
     '<li><b>小隊名威風呼</b>：（小隊名）！最威！最叻！耶！（圍圈搭膊，嗌名向圓心跳一步）</li>'+
-    '<li><b>拍手節奏呼</b>：拍拍拍！童軍！童軍！正！（節奏拍手＋踏腳，越嚟越快）</li>'+
-    '<li><b>勝利 V 呼</b>：贏！贏！贏！我哋係第一！（雙手 V 字舉高，完場勝利用）</li>'+
-    '<li><b>營火晚安呼</b>：（細聲）晚安～童軍～聽日見～（搭膊頭細聲講，營火完結用）</li></ul>'+
-    '<p>💡 c07 教自創歡呼——用上面做藍本，改個小隊名就係你哋專屬歡呼。<a href="#plan/c07">去 c07 →</a></p></div>'));
+    '<li><b>勝利 V 呼</b>：贏！贏！贏！我哋係第一！（雙手 V 字舉高）</li>'+
+    '<li><b>動物吶喊</b>：用自己小隊嘅動物做叫聲＋一個動作（狼嚎、鷹拍翼），小隊表演完由小隊長帶。</li></ul>'+
+    '<p>💡 想小隊有自己嘅歡呼？<a href="#plan/c07">c07</a> 有教點樣一齊作。</p></div>'));
+
+  wrap.appendChild(App.h('p','source-note','📚 程序／歡呼／頌詞依據：'+SONGS.hostNote+'〈談談營火會〉。歌詞來源：'+SONGS.sources.join('、')+'。如旅團流傳版本同呢度有出入，以自己旅團／區訓練組嘅版本為準。'));
   return wrap;
 };
 
-/* 一首歌嘅歌紙卡（可列印） */
-App.songSec = function(s, single){
-  var sec = App.sec('🎵 '+s.zh+'（'+s.en+'）', {id:'song-'+s.k});
+/* 歌紙內容（🔥 營火會分頁同 ✂️ 素材庫共用） */
+App.songSheetHtml = function(sg){
   var html = '<div class="card song-sheet">';
-  html += '<p><span class="tag cat">'+s.cat+'</span>'+
-    '<span class="tag">拍子 '+s.meter+'</span>'+
-    '<span class="tag">速度 '+s.tempo+'</span>'+
-    '<span class="tag">調：'+s.keyName+'</span></p>';
-  html += '<p><b>曲式：</b>'+s.form+'</p>';
+  html += '<p><span class="tag cat">'+sg.cat+'</span>'
+    + (sg.meter?'<span class="tag">拍子 '+sg.meter+'</span>':'')
+    + (sg.tempo?'<span class="tag">'+sg.tempo+'</span>':'')+'</p>';
+  if (sg.tune) html += '<p><b>旋律：</b>'+sg.tune+'</p>';
+  if (sg.form) html += '<p><b>曲式：</b>'+sg.form+'</p>';
   html += '<div class="song-lines">';
-  s.lines.forEach(function(pair){
-    html += '<div class="song-pair"><div class="chord">'+pair[0]+'</div><div class="ly">'+pair[1]+'</div></div>';
+  (sg.lines||[]).forEach(function(pair){
+    html += '<div class="song-pair">'+(pair[0]?'<div class="chord">'+pair[0]+'</div>':'')+'<div class="ly">'+pair[1]+'</div></div>';
   });
   html += '</div>';
-  if(s.acts && s.acts.length) html += '<p><b>動作／玩法：</b></p><ul class="bullet">'+s.acts.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
-  if(s.howto && s.howto.length) html += '<p><b>領唱提示：</b></p><ul class="bullet">'+s.howto.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
-  html += '<p class="source-note">© '+s.note+'</p>';
+  if (sg.acts && sg.acts.length) html += '<p><b>玩法／動作：</b></p><ul class="bullet">'+sg.acts.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
+  if (sg.howto && sg.howto.length) html += '<p><b>領唱提示：</b></p><ul class="bullet">'+sg.howto.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
+  if (sg.from) html += '<p class="source-note">📚 '+sg.from+'</p>';
   html += '</div>';
-  sec._body.innerHTML = html;
+  return html;
+};
+
+/* 一首歌嘅歌紙卡（可列印／可投屏） */
+App.songSec = function(sg, single){
+  var sec = App.sec('🎵 '+sg.zh+(sg.en?'（'+sg.en+'）':''), {id:'song-'+sg.k});
+  var html = App.songSheetHtml(sg);
+  sec._body.innerHTML = html
+
   return sec;
 };
 
-/* 集會現場工具狀態（計分板等；喺 📖 手冊→集會工具） */
-App.patrolScores = [0,0,0,0];
-App.patrolNames = ['第一小隊','第二小隊','第三小隊','第四小隊'];
-App.patrolTimer = null;
+/* 一張急救卡（技能 tab 同素材庫共用）：圖＋處理＋注意 */
+App.aidCard = function(name, how, warn, svgFallback){
+  var key = (typeof AID_FIG !== 'undefined' && AID_FIG[name]) ? AID_FIG[name] : '';
+  var cap = (key && typeof FIGS !== 'undefined' && FIGS[key]) ? FIGS[key].cap : (svgFallback ? '' : '');
+  var fb = svgFallback || ((name==='復原臥式' && typeof DIAGRAMS!=='undefined' && DIAGRAMS.skillx) ? DIAGRAMS.skillx.faint : '');
+  return '<div class="card aid-card" data-title="急救卡 '+name+'">'+
+    '<h3>🩹 '+name+'</h3>'+
+    (key ? App.ph(key, cap, fb) : (fb ? '<figure class="dgm-fig"><div class="dgm-wrap">'+fb+'</div><figcaption>📐 '+name+'位置圖解</figcaption></figure>' : ''))+
+    '<p><b>處理：</b>'+how+'</p>'+
+    (warn ? '<p class="safety"><b>⚠️ 注意：</b>'+warn+'</p>' : '')+
+    '</div>';
+};
+
+/* ══════════ 集會現場工具（計分板／抽籤／倒數／分組）＋🖥️ 投屏 ══════════
+   用戶要求（v31）：① 小隊數目可以自己加減（唔一定四隊）② 自己手機用得，但一定要有投屏版，
+   領袖手機操作、投影／大電視同步顯示，成員睇得見。 */
+App.troop = {
+  count: 4,
+  names: ['第一小隊','第二小隊','第三小隊','第四小隊','第五小隊','第六小隊','第七小隊','第八小隊'],
+  scores: [0,0,0,0,0,0,0,0],
+  timer: { total: 300, left: 300, end: 0, running: false, id: null },
+  drawn: [], groups: [], list: []
+};
+App.patrolScores = App.troop.scores;   /* 舊名保留 */
+App.patrolNames = App.troop.names;
+
+App.patrolCount = function(n){
+  n = parseInt(n,10);
+  if (isNaN(n)) n = App.troop.count;          /* 入錯字就唔變 */
+  n = Math.max(2, Math.min(8, n));            /* 2–8 隊 */
+  App.troop.count = n;
+  App.toolsRefresh();
+  if (typeof Projector !== 'undefined' && Projector.on && Projector.liveKind === 'score') Projector.render();
+};
 App.patrolScore = function(i,d){
-  App.patrolScores[i] = Math.max(0,(App.patrolScores[i]||0)+d);
-  var el = document.getElementById('pt-score-'+i);
-  if(el) el.innerHTML = App.patrolScores[i];
+  App.troop.scores[i] = Math.max(0,(App.troop.scores[i]||0)+d);
+  App.toolsRefresh();
 };
 App.patrolScoreReset = function(){
-  App.patrolScores = [0,0,0,0];
-  for(var i=0;i<4;i++){ var el = document.getElementById('pt-score-'+i); if(el) el.innerHTML = '0'; }
+  var i;
+  for (i=0;i<8;i++) App.troop.scores[i] = 0;
+  App.toolsRefresh();
 };
-App.patrolName = function(i,v){ App.patrolNames[i] = v; };
+App.patrolName = function(i,v){ App.troop.names[i] = String(v||'').slice(0,12); App.toolsRefresh(); };
+
+/* 計分板（手機版／投屏版同一份分數） */
+App.boardHtml = function(big){
+  var n = App.troop.count, rows = '', i;
+  if (big) {
+    for (i=0;i<n;i++){
+      rows += '<div><span class="pj-team">'+App.troop.names[i]+'</span><b>'+App.troop.scores[i]+'</b>'
+        + '<span class="pj-ops"><button onclick="App.act(\'score:'+i+':1\')">＋1</button>'
+        + '<button onclick="App.act(\'score:'+i+':5\')">＋5</button>'
+        + '<button onclick="App.act(\'score:'+i+':-1\')">－1</button></span></div>';
+    }
+    return '<div class="pj-score">'+rows+'</div>'
+      + '<p class="pj-note">分數兩邊一樣：投影上面嘅數字同領袖手機同步，加咗幾多分人人睇到。'
+      + '<button onclick="App.act(\'reset\')">🔄 全部清零</button></p>';
+  }
+  for (i=0;i<n;i++){
+    rows += '<tr><td><input class="pt-name" value="'+String(App.troop.names[i]).replace(/"/g,'&quot;')+'" onchange="App.patrolName('+i+',this.value)"></td>'
+      + '<td class="pt-num">'+App.troop.scores[i]+'</td>'
+      + '<td class="pt-ops"><button onclick="App.patrolScore('+i+',1)">＋1</button>'
+      + '<button onclick="App.patrolScore('+i+',5)">＋5</button>'
+      + '<button onclick="App.patrolScore('+i+',-1)">－1</button></td></tr>';
+  }
+  return '<table class="meeting-table score-table"><thead><tr><th>小隊</th><th>分數</th><th>加減</th></tr></thead><tbody>'+rows+'</tbody></table>';
+};
+
+/* 投屏入面嘅掣（同一頁面，所以直接改狀態） */
+App.act = function(cmd){
+  var p = String(cmd||'').split(':');
+  if (p[0]==='score') App.patrolScore(parseInt(p[1],10)||0, parseInt(p[2],10)||0);
+  else if (p[0]==='reset') App.patrolScoreReset();
+  else if (p[0]==='lots') App.drawLots();
+  else if (p[0]==='group') App.groupRandom();
+  else if (p[0]==='timer') App.timerCmd(p[1], p[2]);
+  App.toolsRefresh();
+};
+
+/* 手機版面同投屏同步（改咗分數／倒數，兩邊即刻一樣） */
+App.toolsRefresh = function(){
+  var b = document.getElementById('pt-board');
+  if (b) b.innerHTML = App.boardHtml(false);
+  var m = document.getElementById('pt-troop-n');
+  if (m && String(App.troop.count) !== String(m.value)) m.value = App.troop.count;
+  var o = document.getElementById('pt-cd-out');
+  if (o) o.innerHTML = App.clockHtml(false);
+  if (typeof Projector !== 'undefined' && Projector.on && Projector.mode === 'live') Projector.render();
+};
+
+App.listFrom = function(id){
+  var t = document.getElementById(id);
+  if (!t) return App.troop.list;
+  App.troop.list = String(t.value||'').split('\n').map(function(x){return x.trim();}).filter(function(x){return x;});
+  return App.troop.list;
+};
 App.drawLots = function(){
-  var t = document.getElementById('pt-lots-names'); if(!t) return;
-  var names = t.value.split('\n').map(function(x){return x.trim();}).filter(function(x){return x;});
+  var names = App.listFrom('pt-lots-names');
   var nEl = document.getElementById('pt-lots-n');
   var n = Math.max(1, parseInt((nEl&&nEl.value)||'1',10)||1);
-  var out = document.getElementById('pt-lots-out');
-  if(!names.length){ if(out) out.innerHTML = '⚠️ 請先輸入名單（一行一個）。'; return; }
+  if (!names.length) { App.toast('⚠️ 先入名單（一行一個名）'); return; }
   var pool = names.slice(), picked = [];
-  while(pool.length&&picked.length<n){ picked.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
-  if(out) out.innerHTML = '🎲 抽中：<b>'+picked.join('、')+'</b>';
+  while (pool.length && picked.length<n) picked.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+  App.troop.drawn = picked;
+  var out = document.getElementById('pt-lots-out');
+  if (out) out.innerHTML = '🎲 抽中：<b>'+picked.join('、')+'</b>';
+  if (typeof Projector !== 'undefined' && Projector.on && Projector.mode==='live') Projector.render();
 };
-App.countdownStart = function(){
-  var mEl = document.getElementById('pt-cd-m'), sEl = document.getElementById('pt-cd-s');
-  var m = parseInt((mEl&&mEl.value)||'0',10)||0, sc = parseInt((sEl&&sEl.value)||'0',10)||0;
-  var total = m*60+sc; if(total<=0) return;
-  var out = document.getElementById('pt-cd-out');
-  App.countdownStop();
-  function tick(){
-    var mm = Math.floor(total/60), ss = total%60;
-    if(out) out.innerHTML = '<b style="font-size:2em;">'+mm+':'+(ss<10?'0':'')+ss+'</b>';
-    if(total<=0){ if(out) out.innerHTML = '<b style="font-size:2em;color:#2E7D32;">⏰ 時間到！</b>'; App.countdownStop(); return; }
-    total--;
-    App.patrolTimer = setTimeout(tick,1000);
-  }
-  tick();
-};
-App.countdownStop = function(){ if(App.patrolTimer){ clearTimeout(App.patrolTimer); App.patrolTimer = null; } };
 App.groupRandom = function(){
-  var t = document.getElementById('pt-grp-names'); if(!t) return;
-  var names = t.value.split('\n').map(function(x){return x.trim();}).filter(function(x){return x;});
+  var names = App.listFrom('pt-grp-names');
   var gEl = document.getElementById('pt-grp-n');
   var g = Math.max(2, parseInt((gEl&&gEl.value)||'2',10)||2);
-  var out = document.getElementById('pt-grp-out');
-  if(!names.length){ if(out) out.innerHTML = '⚠️ 請先輸入名單（一行一個）。'; return; }
-  var pool = names.slice();
-  for(var i=pool.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var tmp=pool[i]; pool[i]=pool[j]; pool[j]=tmp; }
-  var groups = []; for(var k=0;k<g;k++) groups.push([]);
+  if (!names.length) { App.toast('⚠️ 先入名單（一行一個名）'); return; }
+  var pool = names.slice(), i, j, t;
+  for (i=pool.length-1;i>0;i--){ j=Math.floor(Math.random()*(i+1)); t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+  var groups = [], k; for (k=0;k<g;k++) groups.push([]);
   pool.forEach(function(nm,idx){ groups[idx%g].push(nm); });
-  if(out) out.innerHTML = groups.map(function(gr,gi){return '<p><b>第 '+(gi+1)+' 組：</b>'+gr.join('、')+'</p>';}).join('');
+  App.troop.groups = groups;
+  var out = document.getElementById('pt-grp-out');
+  if (out) out.innerHTML = groups.map(function(gr,gi){return '<p><b>第 '+(gi+1)+' 組：</b>'+gr.join('、')+'</p>';}).join('');
+  if (typeof Projector !== 'undefined' && Projector.on && Projector.mode==='live') Projector.render();
 };
+
+/* ── 倒數（手機同投屏用同一個計時器）── */
+App.timerSet = function(min){
+  App.timerStop();
+  App.troop.timer.total = Math.max(5, Math.round((parseFloat(min)||1)*60));
+  App.troop.timer.left = App.troop.timer.total;
+  App.toolsRefresh();
+};
+App.timerCmd = function(what, arg){
+  if (what==='set') App.timerSet(arg);
+  else if (what==='start') App.timerStart();
+  else if (what==='stop') App.timerStop();
+  else if (what==='reset') App.timerSet(App.troop.timer.total/60);
+};
+App.timerStart = function(){
+  var T = App.troop.timer;
+  if (T.running) return;
+  if (T.left<=0) T.left = T.total;
+  T.end = Date.now() + T.left*1000;
+  T.running = true;
+  if (T.id) clearInterval(T.id);
+  T.id = setInterval(function(){
+    var left = Math.round((T.end - Date.now())/1000);
+    T.left = left>0?left:0;
+    if (left<=0) App.timerStop();
+    App.toolsRefresh();
+  }, 250);
+  App.toolsRefresh();
+};
+App.timerStop = function(){
+  var T = App.troop.timer;
+  if (T.id) { clearInterval(T.id); T.id = null; }
+  if (T.running) T.left = Math.max(0, Math.round((T.end - Date.now())/1000));
+  T.running = false;
+  App.toolsRefresh();
+};
+App.timerText = function(){
+  var T = App.troop.timer, left = T.running ? Math.max(0, Math.round((T.end - Date.now())/1000)) : T.left;
+  var m = Math.floor(left/60), sec = left%60;
+  return m+':'+(sec<10?'0':'')+sec;
+};
+App.clockHtml = function(big){
+  var T = App.troop.timer;
+  if (big){
+    return '<div class="pj-clock'+(T.left<=0 && !T.running?' done':'')+'">'+App.timerText()+'</div>'
+      + '<p class="pj-note">'
+      + '<button onclick="App.act(\'timer:set:1\')">1 分鐘</button>'
+      + '<button onclick="App.act(\'timer:set:2\')">2 分鐘</button>'
+      + '<button onclick="App.act(\'timer:set:5\')">5 分鐘</button>'
+      + '<button onclick="App.act(\'timer:set:10\')">10 分鐘</button>'
+      + (T.running ? '<button onclick="App.act(\'timer:stop\')">⏸ 暫停</button>' : '<button onclick="App.act(\'timer:start\')">▶ 開始</button>')
+      + '<button onclick="App.act(\'timer:reset\')">↺ 重設</button></p>';
+  }
+  return '<b class="pt-clock">'+App.timerText()+'</b>'
+    + (T.running ? ' <button onclick="App.timerStop()">⏸ 暫停</button>' : ' <button onclick="App.timerStart()">▶ 開始</button>')
+    + ' <button onclick="App.timerCmd(\'reset\')">↺ 重設</button>';
+};
+/* 舊名兼容 */
+App.countdownStart = function(){
+  var mEl = document.getElementById('pt-cd-m'), sEl = document.getElementById('pt-cd-s');
+  var m = parseInt((mEl&&mEl.value)||'0',10)||0, sec = parseInt((sEl&&sEl.value)||'0',10)||0;
+  var total = m*60+sec;
+  if (total>0) { App.troop.timer.total = total; App.troop.timer.left = total; }
+  App.timerStart();
+};
+App.countdownStop = function(){ App.timerStop(); };
+
+/* 投屏用嘅即時畫面 */
+App.projHtml = function(kind){
+  if (kind==='score') return '<h3>🏆 小隊計分板</h3>'+App.boardHtml(true);
+  if (kind==='timer') return '<h3>⏱️ 倒數</h3>'+App.clockHtml(true);
+  if (kind==='lots') {
+    return '<h3>🎲 抽籤</h3><p class="pj-big">'+(App.troop.drawn.length?App.troop.drawn.join('、'):'（未抽）')+'</p>'
+      + '<p class="pj-note"><button onclick="App.act(\'lots\')">🎲 再抽一次</button>'
+      + '<span class="mut">名單喺手機度入（一行一個名）；抽籤係即場隨機，全場一齊睇住抽。</span></p>';
+  }
+  if (kind==='group') {
+    var g = App.troop.groups;
+    return '<h3>👥 隨機分組</h3>'+(g.length?g.map(function(gr,gi){
+      return '<div class="pj-group"><b>第 '+(gi+1)+' 組</b><span>'+gr.join('、')+'</span></div>';
+    }).join(''):'<p class="pj-big">（未分組）</p>')
+      + '<p class="pj-note"><button onclick="App.act(\'group\')">👥 再分一次</button>'
+      + '<span class="mut">即場隨機抽，抽完即刻投出嚟，人人睇到。</span></p>';
+  }
+  return '<p class="pj-big">（冇內容）</p>';
+};
+
+/* 集會現場工具（📖 手冊→集會工具；每個都可以投影） */
+App.toolsSecs = function(){
+  var frag = App.h('div','');
+
+  var sBoard = App.sec('🏆 小隊計分板', {print:false, proj:false, id:'pt-board-sec'});
+  sBoard._body.innerHTML =
+    '<div class="card"><p><b>今日有幾多隊？</b> '+
+      '<button onclick="App.patrolCount(App.troop.count-1)">－</button> '+
+      '<input id="pt-troop-n" type="number" min="2" max="8" value="'+App.troop.count+'" onchange="App.patrolCount(this.value)" style="width:56px;text-align:center"> '+
+      '<button onclick="App.patrolCount(App.troop.count+1)">＋</button> 隊 '+
+      '<small class="mut">（2–8 隊；小隊名可以改）</small></p>'+
+      '<div id="pt-board">'+App.boardHtml(false)+'</div>'+
+      '<p><button onclick="App.patrolScoreReset()">🔄 全部清零</button> '+
+      '<button class="proj-big" onclick="Projector.live(\'score\',\'🏆 小隊計分板\')">🖥️ 投屏</button></p>'+
+      '<p class="mut">分數喺呢部機暫存，閂咗個 App 先清零。</p></div>';
+  frag.appendChild(sBoard);
+
+  var sLots = App.sec('🎲 抽籤', {print:false, proj:false});
+  sLots._body.innerHTML =
+    '<div class="card"><p>名單（一行一個）：</p><textarea id="pt-lots-names" rows="4" style="width:100%" placeholder="陳大文&#10;李小明&#10;…"></textarea>'+
+    '<p>抽幾個？<input id="pt-lots-n" type="number" value="1" min="1" style="width:60px"> '+
+    '<button onclick="App.drawLots()">抽籤！</button> '+
+    '<button class="proj-big" onclick="Projector.live(\'lots\',\'🎲 抽籤\')">🖥️ 投屏</button></p>'+
+    '<div id="pt-lots-out"></div>'+
+    '</div>';
+  frag.appendChild(sLots);
+
+  var sCd = App.sec('⏱️ 倒數計時', {print:false, proj:false});
+  sCd._body.innerHTML =
+    '<div class="card"><p><button onclick="App.timerCmd(\'set\',1)">1 分鐘</button> '+
+    '<button onclick="App.timerCmd(\'set\',2)">2 分鐘</button> '+
+    '<button onclick="App.timerCmd(\'set\',5)">5 分鐘</button> '+
+    '<button onclick="App.timerCmd(\'set\',10)">10 分鐘</button> '+
+    '<input id="pt-cd-m" type="number" value="5" min="0" style="width:56px"> 分 '+
+    '<input id="pt-cd-s" type="number" value="0" min="0" max="59" style="width:56px"> 秒 '+
+    '<button onclick="App.countdownStart()">▶ 用呢個時間開始</button></p>'+
+    '<p id="pt-cd-out">'+App.clockHtml(false)+'</p>'+
+    '<p><button class="proj-big" onclick="Projector.live(\'timer\',\'⏱️ 倒數\')">🖥️ 投屏</button></p>'+
+    '<p class="mut">分組討論、遊戲計時用。</p></div>';
+  frag.appendChild(sCd);
+
+  var sGrp = App.sec('👥 隨機分組', {print:false, proj:false});
+  sGrp._body.innerHTML =
+    '<div class="card"><p>名單（一行一個）：</p><textarea id="pt-grp-names" rows="4" style="width:100%" placeholder="陳大文&#10;李小明&#10;…"></textarea>'+
+    '<p>分幾多組？<input id="pt-grp-n" type="number" value="2" min="2" max="8" style="width:60px"> '+
+    '<button onclick="App.groupRandom()">隨機分組！</button> '+
+    '<button class="proj-big" onclick="Projector.live(\'group\',\'👥 隨機分組\')">🖥️ 投屏</button></p>'+
+    '<div id="pt-grp-out"></div>'+
+    '</div>';
+  frag.appendChild(sGrp);
+
+  return frag;
+};
+
+if (typeof module !== 'undefined' && module.exports) module.exports = App;

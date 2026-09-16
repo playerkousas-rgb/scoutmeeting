@@ -3,14 +3,16 @@ import { spawnSync } from 'child_process';
 import { createContext, runInContext } from 'vm';
 const root = new URL('..', import.meta.url).pathname;
 const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js','js/c15-lesson.js','js/c16-lesson.js','js/c17-lesson.js','js/c18-lesson.js','js/c19-lesson.js','js/c20-lesson.js','js/c21-lesson.js','js/c22-lesson.js','js/c23-lesson.js','js/c24-lesson.js'];
-const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/app.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png',
+const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js','js/app.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png',
   'img/fig/cer-open.avif','img/fig/cer-close.avif','img/fig/cer-drill.avif','img/fig/cer-flag.avif',
   'img/fig/cer-oath.avif','img/fig/cer-salute.avif','img/fig/fire-circle.avif','img/fig/fire-song.avif',  'img/fig/game-ball.avif','img/fig/game-shape.avif','img/fig/game-tarp.avif','img/fig/game-pack.avif',
   'img/fig/game-relay-cards.avif','img/fig/game-tug.avif','img/fig/game-aid.avif','img/fig/game-orienteer.avif',
   'img/fig/game-beachflag.avif','img/fig/game-water.avif','img/fig/game-lineup.avif',
   'img/fig/skill-ropecare.avif','img/fig/skill-legend.avif','img/fig/skill-tent.avif',
   'img/fig/skill-stove.avif','img/fig/skill-rice.avif','img/fig/skill-lost.avif',
-  'img/fig/skill-knife.avif','img/fig/skill-sos.avif', ...lessonFiles];
+  'img/fig/skill-knife.avif','img/fig/skill-sos.avif',
+  'img/fig/skill-pack.avif','img/fig/skill-pioneer.avif','img/fig/skill-track.avif','img/fig/skill-field.avif',
+  'img/fig/aid-nosebleed.avif','img/fig/aid-cramp.avif','img/fig/aid-burn.avif','img/fig/aid-cut.avif','img/fig/aid-sting.avif', ...lessonFiles];
 for (const f of files) {
   if (!existsSync(root + f)) { console.error('❌ Missing', f); process.exit(1); }
   console.log('✅', f);
@@ -19,7 +21,7 @@ const interestsSrc = readFileSync(root + 'js/interests.js', 'utf8');
 const bm = interestsSrc.match(/k:'[a-z_]+',\s*en:'/g);
 console.log('✅ 興趣章數：', bm ? bm.length : 0);
 const html = readFileSync(root + 'index.html', 'utf8');
-['scoutbadge.vercel.app','districtbadgesystem30.vercel.app','scout-circulars.vercel.app','1MhGE2LP3kiCEmyJAGUfIlLzL0Iq4fK33','js/ceremony.js','js/uniform.js','js/svg-kit.js','js/songs.js','js/figs.js', ...lessonFiles, 'icons/icon-192.png'].forEach(u => {
+['scoutbadge.vercel.app','districtbadgesystem30.vercel.app','scout-circulars.vercel.app','1MhGE2LP3kiCEmyJAGUfIlLzL0Iq4fK33','js/ceremony.js','js/uniform.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js', ...lessonFiles, 'icons/icon-192.png'].forEach(u => {
   if (!html.includes(u)) { console.error('❌ index.html 缺少', u); process.exit(1); }
 });
 if (html.includes('js/redesign.js')) { console.error('❌ index.html 仲有死引用 js/redesign.js'); process.exit(1); }
@@ -121,7 +123,7 @@ console.log('✅ v19 icon：192/512/maskable 齊晒（尺寸啱）');
 
 const ctx={window:{addEventListener:()=>{},print:()=>{},scrollTo:()=>{}},document:{getElementById:()=>({appendChild:()=>{},innerHTML:'',classList:{add:()=>{},remove:()=>{},toggle:()=>{}},setAttribute:()=>{},onclick:null,style:{}}),querySelector:()=>null,querySelectorAll:()=>[],createElement:(t)=>({classList:{add:()=>{},remove:()=>{},toggle:()=>{}},setAttribute:()=>{},appendChild:()=>{},innerHTML:'',style:{}}),addEventListener:()=>{}},location:{hash:'',href:'',replace:()=>{}},navigator:{onLine:true,serviceWorker:{register:()=>new Promise(()=>{})}},addEventListener:()=>{},setTimeout:()=>0};
 createContext(ctx);
-['js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js', ...lessonFiles, 'js/data.js','js/app.js'].forEach(f => {
+['js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/projector.js', ...lessonFiles, 'js/data.js','js/app.js'].forEach(f => {
   runInContext(readFileSync(root+f,'utf8'), ctx, {filename:f});
 });
 console.log('✅ JS 執行：', Object.keys(ctx.App.pages).join(','));
@@ -144,7 +146,69 @@ console.log('✅ 遊戲庫 12 個');
 for (const f of ['patrolScore','drawLots','countdownStart','groupRandom']) {
   if(typeof ctx.App[f]!=='function'){ console.error('❌ 缺集會現場工具函數 '+f); process.exit(1); }
 }
-console.log('✅ 集會現場工具函數齊（已併入手冊）');
+/* v31：小隊數可加減＋每個工具都有投屏 */
+for (const f of ['patrolCount','patrolScoreReset','patrolName','boardHtml','projHtml','toolsRefresh','projSec','projPage','projPlan']) {
+  if(typeof ctx.App[f]!=='function'){ console.error('❌ v31 缺函數 '+f); process.exit(1); }
+}
+{
+  const before = ctx.App.troop.count;
+  ctx.App.patrolCount(6); if (ctx.App.troop.count !== 6) { console.error('❌ 小隊數改唔到（應 6，實際 '+ctx.App.troop.count+'）'); process.exit(1); }
+  ctx.App.patrolCount(0); if (ctx.App.troop.count < 2) { console.error('❌ 小隊數下限冇守住'); process.exit(1); }
+  ctx.App.patrolCount(99); if (ctx.App.troop.count > 8) { console.error('❌ 小隊數上限冇守住'); process.exit(1); }
+  ctx.App.patrolCount(before);
+  if (ctx.App.boardHtml(false).indexOf('第一小隊') < 0) { console.error('❌ 計分板冇小隊名'); process.exit(1); }
+  if (ctx.App.boardHtml(true).indexOf('pj-score') < 0) { console.error('❌ 計分板冇投屏大字版'); process.exit(1); }
+  for (const k of ['score','timer','lots','group']) {
+    const h = ctx.App.projHtml(k);
+    if (!h || h.indexOf('冇內容') >= 0) { console.error('❌ 投屏畫面缺 '+k); process.exit(1); }
+  }
+}
+if (typeof ctx.Projector !== 'object' || typeof ctx.Projector.deck !== 'function' || typeof ctx.Projector.live !== 'function') {
+  console.error('❌ projector.js 未載入或 API 唔齊'); process.exit(1);
+}
+console.log('✅ 集會現場工具函數齊（小隊數 2–8 可加減・4 個工具都有投屏版）');
+
+// ═════════ v31：🖥️ 投屏（投影機／大電視）＋ 小隊數可加減 ═════════
+if (typeof ctx.Projector !== 'object') { console.error('❌ projector.js 冇載入'); process.exit(1); }
+for (const f of ['boot','show','deck','live','step','font','close','fullscreen','secondScreen','syncScreen','html']) {
+  if (typeof ctx.Projector[f] !== 'function') { console.error('❌ Projector 缺 API：'+f); process.exit(1); }
+}
+for (const mk of ['App.projSec','App.projPage','App.projSong','App.projPlan','App.projBody','App.projHtml','App.act','App.toolsRefresh']) {
+  if (typeof ctx.App[mk.split('.')[1]] !== 'function') { console.error('❌ app.js 缺投屏函數：'+mk); process.exit(1); }
+}
+/* 每個教學區塊都有「🖥️ 投屏」（App.sec 自動加） */
+{ const appSrcV31 = readFileSync(root+'js/app.js','utf8');
+  const secSrc = appSrcV31.slice(appSrcV31.indexOf('App.sec = function'), appSrcV31.indexOf('App.sec = function')+1600);
+  if (secSrc.indexOf('proj-btn') < 0) { console.error('❌ App.sec 冇自動加「🖥️ 投屏」掣'); process.exit(1); } }
+if (readFileSync(root+'js/app.js','utf8').indexOf('Projector.live(') < 0) { console.error('❌ 集會工具四個冇即時投屏'); process.exit(1); }
+/* 小隊數 2–8 可加減 */
+{
+  const before = ctx.App.troop.count;
+  ctx.App.patrolCount(6);  if (ctx.App.troop.count !== 6) { console.error('❌ 小隊數改唔到'); process.exit(1); }
+  ctx.App.patrolCount(99); if (ctx.App.troop.count !== 8) { console.error('❌ 小隊數上限唔係 8'); process.exit(1); }
+  ctx.App.patrolCount(0);  if (ctx.App.troop.count !== 2) { console.error('❌ 小隊數下限唔係 2'); process.exit(1); }
+  ctx.App.patrolCount(before);
+  const v31src = readFileSync(root+'js/app.js','utf8');
+  if (v31src.indexOf('App.patrolCount(App.troop.count+1)') < 0 || v31src.indexOf('App.patrolCount(App.troop.count-1)') < 0) {
+    console.error('❌ 冇「＋／－」改小隊數嘅掣'); process.exit(1);
+  }
+  const big = ctx.App.boardHtml(true), small = ctx.App.boardHtml(false);
+  if (big.indexOf('pj-score') < 0 || small.indexOf('score-table') < 0) { console.error('❌ 計分板冇手機版／投屏版'); process.exit(1); }
+  for (const k of ['score','timer','lots','group']) {
+    const h = ctx.App.projHtml(k);
+    if (!h || h.length < 60) { console.error('❌ 投屏即時畫面「'+k+'」內容不足'); process.exit(1); }
+    if (/undefined/.test(h)) { console.error('❌ 投屏即時畫面「'+k+'」有 undefined'); process.exit(1); }
+  }
+}
+/* 投屏 CSS＋接線 */
+{
+  const cssV31 = readFileSync(root+'css/app.css','utf8');
+  for (const c of ['#proj','.proj-btn','.proj-fab','.pj-page','.pj-score','.pj-clock','.pg-row','.subrow','.score-table','.aid-card','.song-grid','.print-host']) {
+    if (!cssV31.includes(c)) { console.error('❌ CSS 缺 v31 樣式：'+c); process.exit(1); }
+  }
+  if (cssV31.indexOf('.proj-btn,.proj-big,.proj-fab') < 0) { console.error('❌ 列印時冇隱藏投屏掣'); process.exit(1); }
+}
+console.log('✅ v31 投屏：projector.js API 齊・每節都有投屏掣・4 個即時工具・小隊數 2–8 可加減');
 // v19：tab render——songs 取代 patrol；儀式/制服/手冊/技能帶 sub 都要 render 到
 for (const p of ['print','play','skills','songs','badges','book','uniform','ceremony']) {
   try{ ctx.App.pages[p](); }catch(e){ console.error('❌ pages.'+p+':',e.message); process.exit(1); }
@@ -162,12 +226,35 @@ for (const mk of ['工作紙','只印本節','game-card','小隊計分板','隨�
 }
 // v19 要求：唔出繩結卡（素材庫）、 Interest tab 唔放區系統 CTA、整行可撳
 if (appSrc.includes('列印繩結卡')) { console.error('❌ 素材庫仲有「列印繩結卡」（用戶要求移除）'); process.exit(1); }
+/* v31 用戶要求：素材庫要真分頁（撳 chip 換內容），唔係錨點跳位 */
+for (const mk of ['App.printCats','App.printPanel','App.printSong','App.projSong','App.filterbar','App.projSec','App.projPage','App.projPlan','App.projBody']) {
+  if (!appSrc.includes(mk)) { console.error('❌ app.js 缺 v31 標記 '+mk); process.exit(1); }
+}
+{
+  const ps = appSrc.slice(appSrc.indexOf('App.pages.print = function'), appSrc.indexOf('App.printPanel = function'));
+  if (ps.indexOf('App.filterbar(') < 0) { console.error('❌ 素材庫冇用真分頁掣（filterbar）'); process.exit(1); }
+  if (ps.indexOf('App.chiprow(') >= 0) { console.error('❌ 素材庫仲用錨點 chiprow（用戶要撳掣即換內容）'); process.exit(1); }
+  if (ps.indexOf('App.jump(') >= 0) { console.error('❌ 素材庫仲用跳位 App.jump'); process.exit(1); }
+}
+{
+  const cats = (appSrc.match(/App\.printCats = \[([\s\S]*?)\];/)||[])[1] || '';
+  const n = (cats.match(/\{k:'/g)||[]).length;
+  if (n < 6) { console.error('❌ 素材庫分頁得 '+n+' 類（應 6：工作紙／急救卡／誓詞／收繩／國歌／營火歌）'); process.exit(1); }
+}
+/* 用戶要求：刪 🅰️／🅱️ 兩句 navcap 同相關字句 */
+if (appSrc.includes('🅰️') || appSrc.includes('🅱️')) { console.error('❌ app.js 仲有 🅰️／🅱️ 字句'); process.exit(1); }
+console.log('✅ v31 素材庫真分頁（6 類即時切換）・🅰️／🅱️ 字句已清');
 if (appSrc.includes('前往區總部報章系統')) { console.error('❌ 興趣章仲有「前往區總部報章系統」連結（用戶要求移除）'); process.exit(1); }
 if (!appSrc.includes('data-href')) { console.error('❌ 集會目錄冇整行可撳（data-href）'); process.exit(1); }
 console.log('✅ v19：無繩結卡・無區系統CTA・整行可撳');
 
 const cssSrc = readFileSync(root+'css/app.css','utf8');
 if(!cssSrc.includes('.print-btn, .filters')){ console.error('❌ CSS 缺列印隱藏規則'); process.exit(1); }
+/* v31 投屏 */
+for (const c of ['#proj','.proj-btn','.proj-fab','.pj-score','.pj-clock','.pg-row','.song-grid','.score-table','.aid-card']) {
+  if(!cssSrc.includes(c)){ console.error('❌ CSS 缺 v31 樣式 '+c); process.exit(1); }
+}
+if (!/proj-btn,\.proj-big,\.proj-fab/.test(cssSrc)) { console.error('❌ CSS 冇喺列印時隱藏投屏掣'); process.exit(1); }
 for (const c of ['.subnav','.print-one','#printzone','.dgm-fig','.song-grid','.meet-row']) {
   if(!cssSrc.includes(c)){ console.error('❌ CSS 缺 v19 樣式 '+c); process.exit(1); }
 }
@@ -190,20 +277,40 @@ console.log('✅ 搜尋索引', ctx.App.buildSearchIndex().length, '項');
 for (const mk of ['義勇軍進行曲','searchGo','buildSearchIndex','全站搜尋']) {
   if(!appSrc.includes(mk)){ console.error('❌ app.js 缺標記 '+mk); process.exit(1); }
 }
-// 歌紙：必須係傳統童軍營火歌，唔可以留自創歌
+// 歌紙（v31 用戶要求）：換成香港旅團真係唱開嘅營火歌
 const songsSrc = readFileSync(root+'js/songs.js','utf8');
-for (const s of ['Skip to My Lou','Oh! Susanna','Home on the Range','My Bonnie Lies Over the Ocean','This Old Man','Ten Green Bottles',"Campfire's Burning",'Kookaburra']) {
-  if(!songsSrc.includes(s)){ console.error('❌ songs.js 缺傳統營火歌 '+s); process.exit(1); }
+const NEED_SONGS = ['campfire-hk','hk-scouts','bp-spirit','laofu','mosquito-net','sleepy-pig','happy','morra','we-sing-well','happy-wanderer','ging-gang','parting','grace','good-scout'];
+for (const k of NEED_SONGS) {
+  if (!songsSrc.includes("k:'"+k+"'")) { console.error('❌ songs.js 缺香港營火歌 '+k); process.exit(1); }
+}
+if (songsSrc.includes('Skip to My Lou') || songsSrc.includes('Oh! Susanna') || songsSrc.includes('Ten Green Bottles')) {
+  console.error('❌ 仲有西方傳統歌（用戶要求換成香港旅團歌）'); process.exit(1);
 }
 if (appSrc.includes('Scout Hub 原創') || songsSrc.includes('原創歌詞')) { console.error('❌ 仲有「自創」歌（用戶明確禁止）'); process.exit(1); }
 if (appSrc.includes('營火之夜') || appSrc.includes('小隊同心')) { console.error('❌ 素材庫仲殘留舊自創歌名'); process.exit(1); }
-if (ctx.SONGS.sheets.length < 10) { console.error('❌ 歌紙不足 10 首'); process.exit(1); }
-console.log('✅ 營火歌：11 首傳統公版歌紙＋必識十首歌單（無自創/無流行歌）');
+if (ctx.SONGS.sheets.length < 14) { console.error('❌ 歌紙不足 14 首（實際 '+ctx.SONGS.sheets.length+'）'); process.exit(1); }
+for (const sh of ctx.SONGS.sheets) {
+  if (!sh.zh || !sh.cat || !sh.from || !sh.lines || !sh.lines.length) { console.error('❌ 歌紙欄位唔齊：'+sh.k); process.exit(1); }
+  if (!sh.acts || !sh.acts.length) { console.error('❌ 歌紙冇玩法／動作：'+sh.k); process.exit(1); }
+  if (!sh.howto || !sh.howto.length) { console.error('❌ 歌紙冇領唱提示：'+sh.k); process.exit(1); }
+}
+if (!ctx.SONGS.leaderTips || ctx.SONGS.leaderTips.length < 3) { console.error('❌ 缺領唱技巧'); process.exit(1); }
+if (!ctx.SONGS.musicTips || ctx.SONGS.musicTips.length < 3) { console.error('❌ 缺冇樂器帶歌技巧'); process.exit(1); }
+if (!ctx.SONGS.hostPlan || ctx.SONGS.hostPlan.length < 6) { console.error('❌ 缺唱歌環節編排'); process.exit(1); }
+if (!ctx.SONGS.safety || ctx.SONGS.safety.length < 3) { console.error('❌ 缺營火安全底線'); process.exit(1); }
+if (!ctx.SONGS.mustKnow || !ctx.SONGS.mustKnow.list || ctx.SONGS.mustKnow.list.length < 3) { console.error('❌ 缺營火章必識歌清單'); process.exit(1); }
+if (!ctx.SONGS.mustKnow.list.some(function(x){return x.must===true;})) { console.error('❌ 必識歌清單冇標明邊首係「必學」'); process.exit(1); }
+if (!ctx.SONGS.sources || ctx.SONGS.sources.length < 3) { console.error('❌ 歌詞來源不足'); process.exit(1); }
+console.log('✅ 營火歌：'+ctx.SONGS.sheets.length+' 首香港旅團歌紙（每首有歌詞/動作/領唱提示/出處）＋領唱技巧＋環節編排＋安全');
 
 // index.html 接線
 const htmlSrc = readFileSync(root+'index.html','utf8');
 if(!htmlSrc.includes('js/diagrams.js') || !htmlSrc.includes("#search'")){ console.error('❌ index.html 缺 diagrams/search 接線'); process.exit(1); }
 if(!htmlSrc.includes('data-tab="songs"') || htmlSrc.includes('data-tab="patrol"')){ console.error('❌ index.html 底部 tab 未轉營火歌'); process.exit(1); }
+if(htmlSrc.includes('navcap')){ console.error('❌ index.html 仲有 navcap（用戶要求刪 🅰️／🅱️ 兩句）'); process.exit(1); }
+if(htmlSrc.includes('🅰️') || htmlSrc.includes('🅱️')){ console.error('❌ index.html 仲有 🅰️／🅱️ 字句'); process.exit(1); }
+if(!htmlSrc.includes('js/projector.js') || !htmlSrc.includes('id="projfab"')){ console.error('❌ index.html 未接 projector.js／投屏掣'); process.exit(1); }
+if(htmlSrc.indexOf('js/projector.js') > htmlSrc.indexOf('js/app.js')){ console.error('❌ projector.js 要喺 app.js 之前載入'); process.exit(1); }
 console.log('✅ index.html 接線齊（🔥營火歌 tab）');
 
 // manifest：分頁捷徑＋maskable icon
@@ -216,8 +323,8 @@ const swSrc = readFileSync(root+'sw.js','utf8');
 const swVer = (swSrc.match(/scout-v(\d+)-c24-(\d+)/)||[])[1];
 if(!swVer || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js cache 名唔係 scout-vN-c24-日期 格式'); process.exit(1); }
 if(!readFileSync(root+'README.md','utf8').includes('scout-v'+swVer+'-c24')){ console.error('❌ README 寫嘅 cache 版本同 sw.js（v'+swVer+'）唔一致'); process.exit(1); }
-if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js')){ console.error('❌ sw.js 未 cache v19 新檔'); process.exit(1); }
-console.log('✅ sw.js cache 版本 v'+swVer+'（README 已同步）・28 張示意圖');
+if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js') || !swSrc.includes('projector.js')){ console.error('❌ sw.js 未 cache 新檔（svg-kit/songs/projector）'); process.exit(1); }
+console.log('✅ sw.js cache 版本 v'+swVer+'（README 已同步）');
 
 // README
 const rm = readFileSync(root+'README.md','utf8');
@@ -375,11 +482,12 @@ const figSandbox = {}; createContext(figSandbox);
 runInContext(readFileSync(root+'js/figs.js','utf8'), figSandbox, {filename:'js/figs.js'});
 const FIGSJ = figSandbox.FIGS || {};
 const figKeys = Object.keys(FIGSJ);
-if (figKeys.length < 28) { console.error('❌ FIGS 不足 28 張，實際', figKeys.length); process.exit(1); }
+if (figKeys.length < 37) { console.error('❌ FIGS 不足 37 張（v31 加咗 4 技能＋5 急救），實際', figKeys.length); process.exit(1); }
 if (figKeys.some(k => k === 'note' || typeof FIGSJ[k] === 'string')) { console.error('❌ FIGS 混咗非圖項目（note 應該用全域 FIGS_NOTE）'); process.exit(1); }
 if (figSandbox.FIGS_NOTE !== undefined && !/唔代表制服標準/.test(figSandbox.FIGS_NOTE)) { console.error('❌ FIGS_NOTE 冇寫明唔代表制服標準'); process.exit(1); }
 for (const k of figKeys) {
   if (/robe|uniform|scarf|制服|領巾|布章|章/.test(k)) { console.error('❌ FIGS 出咗制服／布章類插畫（用戶禁止，AI 會畫錯）：'+k); process.exit(1); }
+  if (/skill-|aid-/.test(k) && /制服|旅巾|領巾|布章|徽章|帽章/.test(FIGSJ[k].alt)) { console.error('❌ '+k+' alt 講咗制服／徽章：', FIGSJ[k].alt); process.exit(1); }
   if (/帽章|布章|領巾|巾圈|旅巾/.test(FIGSJ[k].alt)) { console.error('❌ '+k+' alt 描述咗制服細節：', FIGSJ[k].alt); process.exit(1); }
   if (/杏色|草青|深綠軟帽|neckerchief|badge/i.test(FIGSJ[k].alt)) { console.error('❌ '+k+' alt 仲當住係制服圖'); process.exit(1); }
 }
@@ -481,7 +589,8 @@ console.log('✅ 遊戲插畫：11 張 AVIF 場地圖＋1 個退回平面圖（p
 
 // ═════════ v23：批次 3 — 技能插畫 ＋ QA fail 名單（唔准回流） ═════════
 const SF = figSandbox.SKILL_FIG || {};
-if (Object.keys(SF).length < 6) { console.error('❌ SKILL_FIG 只覆蓋 '+Object.keys(SF).length+' 項技能（應 6）'); process.exit(1); }
+if (Object.keys(SF).length < 12) { console.error('❌ SKILL_FIG 只覆蓋 '+Object.keys(SF).length+' 項技能（v31 應 12）'); process.exit(1); }
+for (const need of ['pack','pioneer','track','field']) { if (!SF[need]) { console.error('❌ SKILL_FIG 缺 '+need+'（v31 用戶要求：技能除繩結外全部要有圖）'); process.exit(1); } }
 for (const nm of Object.keys(SF)) { if (!FIGSJ[SF[nm]]) { console.error('❌ SKILL_FIG 指向冇圖嘅 key：'+nm); process.exit(1); } }
 // QA fail 咗嘅三張（刀交接／SOS 節奏／凳數）絕唔准悄悄放返入 repo
 for (const banned of ['game-chairs.avif']) {
@@ -515,9 +624,174 @@ for (const f of avifs) {
   if (!allSrc.includes(f)) { console.error('❌ img/fig/'+f+' 冇喺 FIGS 入面（孤兒圖，要咪刪走咪補 entry）'); process.exit(1); }
   if (!swSrc.includes(f)) { console.error('❌ sw.js 漏 cache img/fig/'+f); process.exit(1); }
 }
-if (Object.keys(SF).length < 8) { console.error('❌ SKILL_FIG 得 '+Object.keys(SF).length+' 項（應 8：ropecare/legend/tent/stove/rice/lost/knife/sos）'); process.exit(1); }
-for (const sub of ['camp','field']) { try { ctx.App.pages.skills(sub); } catch(e) { console.error('❌ pages.skills('+sub+') render 失敗：', e.message); process.exit(1); } }
-console.log('✅ 技能插畫 8/8 齊（刀/SOS 已用硬指令重出通過 QA）・圖檔 28 張全數入 FIGS＋sw');
+for (const sub of ['care','map','pack','camp','pioneer','track','field','aid']) { try { ctx.App.pages.skills(sub); } catch(e) { console.error('❌ pages.skills('+sub+') render 失敗：', e.message); process.exit(1); } }
+console.log('✅ 技能插畫 '+Object.keys(SF).length+'/12 齊（除繩結外全部技能有圖）・圖檔 '+figKeys.length+' 張全數入 FIGS＋sw');
+
+// ═════════ v31：急救每種都有圖（AI 插畫＋手繪位置圖） ═════════
+const AF = figSandbox.AID_FIG || {};
+if (!AF || !Object.keys(AF).length) { console.error('❌ figs.js 冇 export AID_FIG'); process.exit(1); }
+for (const f of ctx.C17.firstaid) {
+  if (!AF[f.n]) { console.error('❌ 急救「'+f.n+'」冇對應插畫 key'); process.exit(1); }
+  if (!FIGSJ[AF[f.n]]) { console.error('❌ AID_FIG 指向冇圖嘅 key：'+f.n+' → '+AF[f.n]); process.exit(1); }
+  if (!swSrc.includes(FIGSJ[AF[f.n]].src)) { console.error('❌ sw.js 冇 cache 急救圖：'+AF[f.n]); process.exit(1); }
+  const card = ctx.App.aidCard(f.n, f.how, f.warn);
+  if (card.indexOf(AF[f.n]+'.avif') < 0) { console.error('❌ 急救卡「'+f.n+'」冇出圖'); process.exit(1); }
+  if (card.indexOf('undefined') >= 0) { console.error('❌ 急救卡「'+f.n+'」洩漏 undefined'); process.exit(1); }
+}
+{
+  const faint = ctx.App.aidCard('復原臥式','側臥','有呼吸先做');
+  if (faint.indexOf('<svg') < 0) { console.error('❌ 復原臥式冇手繪位置圖（AI 咪畫得準，用量圖）'); process.exit(1); }
+  if (!ctx.DIAGRAMS.skillx || !ctx.DIAGRAMS.skillx.faint) { console.error('❌ 缺 DIAGRAMS.skillx.faint 復原臥式圖解'); process.exit(1); }
+}
+console.log('✅ 急救 '+(Object.keys(AF).length+1)+' 張卡全部有圖（7 種用 AVIF 插畫＋復原臥式用手繪側臥圖）');
+
+// ═════════ v31：制服徽章佩戴位置圖（用戶要圖，呢度用 SVG 手繪，唔用 AI） ═════════
+{
+  const U = ctx.UNIFORM;
+  if (!ctx.DIAGRAMS.uniform || !ctx.DIAGRAMS.uniform.chest || !ctx.DIAGRAMS.uniform.body) {
+    console.error('❌ 缺 DIAGRAMS.uniform.chest / body（徽章位置圖）'); process.exit(1);
+  }
+  if (!U.placement || !U.placement.chest || U.placement.chest.length < 5) { console.error('❌ UNIFORM.placement.chest 唔齊'); process.exit(1); }
+  if (!U.placement.body || U.placement.body.length < 3) { console.error('❌ UNIFORM.placement.body 唔齊'); process.exit(1); }
+  for (const rr of U.placement.chest.concat(U.placement.body)) {
+    if (!rr.n || !rr.side || !rr.items || !rr.items.length) { console.error('❌ placement 條目唔齊：'+JSON.stringify(rr).slice(0,60)); process.exit(1); }
+  }
+  const badgeSrc = appSrc.slice(appSrc.indexOf("if(cur==='badge')"), appSrc.indexOf("if(cur==='badge')")+3000);
+  if (badgeSrc.indexOf('DIAGRAMS.uniform.chest') < 0 || badgeSrc.indexOf('DIAGRAMS.uniform.body') < 0) {
+    console.error('❌ 徽章頁冇出 ①–⑥ / ⑦–⑨ 位置圖'); process.exit(1);
+  }
+  if (!/UNIFORM\.placement/.test(badgeSrc) || !/圖上/.test(badgeSrc)) { console.error('❌ 徽章頁冇出位置對照表'); process.exit(1); }
+  const chestSvg = ctx.DIAGRAMS.uniform.chest, bodySvg = ctx.DIAGRAMS.uniform.body;
+  if (!/①|1/.test('') === false) {}
+  for (const [nm, svgStr] of [['chest',chestSvg],['body',bodySvg]]) {
+    if (!/^<svg /.test(svgStr) || svgStr.indexOf('viewBox') < 0) { console.error('❌ DIAGRAMS.uniform.'+nm+' 唔係完整 SVG'); process.exit(1); }
+    if (svgStr.indexOf('undefined') >= 0) { console.error('❌ DIAGRAMS.uniform.'+nm+' 有 undefined'); process.exit(1); }
+  }
+  if (chestSvg.indexOf('①') < 0 || chestSvg.indexOf('⑥') < 0) { console.error('❌ 胸袋圖冇 ①–⑥ 標記'); process.exit(1); }
+  if (bodySvg.indexOf('⑦') < 0 || bodySvg.indexOf('⑨') < 0) { console.error('❌ 全身圖冇 ⑦–⑨ 標記'); process.exit(1); }
+  try { ctx.App.pages.uniform('badge'); } catch(e) { console.error('❌ 徽章頁 render 失敗：', e.message); process.exit(1); }
+}
+console.log('✅ 徽章佩戴位置圖：SVG 手繪 ①–⑥（胸袋）＋⑦–⑨（全身）＋ UNIFORM.placement 對照表');
 console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間、敬禮以右格作準、集隊右翼定義、升旗以制服整齊與否決定舉手');
+
+// ═════════ v32：真分頁（唔再錨點跳位）＋營火會＋清 agent 字句＋補圖 ═════════
+{
+  const appSrc = readFileSync(root+'js/app.js','utf8');
+  /* 1) 唔准再有錨點跳位 helper */
+  if (appSrc.indexOf('App.jump =') >= 0 || appSrc.indexOf('App.chiprow = function') >= 0) {
+    console.error('❌ 仲有錨點跳位 helper（App.jump／App.chiprow）'); process.exit(1);
+  }
+  if (/App\.chiprow\(/.test(appSrc)) { console.error('❌ 仲有地方用 App.chiprow()'); process.exit(1); }
+  if (appSrc.indexOf('scrollIntoView') >= 0) { console.error('❌ 仲有 scrollIntoView 錨點跳位'); process.exit(1); }
+  /* 2) 一頁幾版＝撳掣即換內容 */
+  if (appSrc.indexOf('App.showPane') < 0 || appSrc.indexOf('tabpane') < 0 || appSrc.indexOf('data-pane') < 0) {
+    console.error('❌ 冇「撳掣即換版」嘅分頁實作（App.showPane／tabpane）'); process.exit(1);
+  }
+  if (typeof ctx.App.showPane !== 'function' || typeof ctx.App.tabs !== 'function') {
+    console.error('❌ app.js 未 export 分頁 API'); process.exit(1);
+  }
+  if (appSrc.indexOf('wrap.appendChild(tabHost)') < 0) { console.error('❌ 教案頁分頁條冇掛上去'); process.exit(1); }
+  if (appSrc.indexOf("pane.setAttribute('data-pane'") < 0) { console.error('❌ 分頁冇 data-pane 標記'); process.exit(1); }
+  /* 3) agent 指示字句／內部講法一律唔准出現喺 app */
+  for (const bad of ['搵今日集會','黑箱作業','一版講一個遊戲','🅰️','🅱️']) {
+    if (appSrc.includes(bad)) { console.error('❌ app.js 仲有「'+bad+'」呢類字句'); process.exit(1); }
+  }
+  /* 4) static 次序：appendChild(projAll) 一定要喺 var projAll 之後（曾出過 TypeError） */
+  for (const v of ['projAll']) {
+    const decl = appSrc.indexOf('var '+v+' = ');
+    const use = appSrc.indexOf('wrap.appendChild('+v+')');
+    if (decl < 0 || use < 0) { console.error('❌ 搵唔到 '+v+' 嘅宣告／使用'); process.exit(1); }
+    if (use < decl) { console.error('❌ '+v+' 未宣告就用（真瀏覽機會 TypeError）'); process.exit(1); }
+  }
+  /* 5) 🔥 營火會：歡呼＋時間表＋工作人員＋頌詞 */
+  const S = ctx.SONGS;
+  if (!S || !Array.isArray(S.programme) || S.programme.length < 5) { console.error('❌ SONGS.programme 時間表唔齊'); process.exit(1); }
+  if (!Array.isArray(S.cheers) || S.cheers.length < 5) { console.error('❌ SONGS.cheers 歡呼／吶喊唔齊'); process.exit(1); }
+  if (!Array.isArray(S.staff) || S.staff.length < 4) { console.error('❌ SONGS.staff 工作人員唔齊'); process.exit(1); }
+  if (!S.ignition || S.ignition.words.length < 3) { console.error('❌ SONGS.ignition 點火頌詞唔齊'); process.exit(1); }
+  if (S.ignition.how.indexOf('點火') < 0) { console.error('❌ 點火儀式冇寫法'); process.exit(1); }
+  if (!S.hostNote || S.hostNote.indexOf('414') < 0) { console.error('❌ 營火會程序冇標出處（月刊 414 期）'); process.exit(1); }
+  if (ctx.SONGS.meta.title.indexOf('營火會') < 0) { console.error('❌ SONGS.meta.title 未改做營火會'); process.exit(1); }
+  try { ctx.App.pages.songs(); } catch(e) { console.error('❌ 營火會頁 render 失敗：', e.message); process.exit(1); }
+  for (const t of ['一般營火會時間表','歡呼／吶喊','營火會工作人員','點火儀式','營火會點樣帶']) {
+    if (appSrc.indexOf(t) < 0) { console.error('❌ 營火會頁缺區塊：'+t); process.exit(1); }
+  }
+  const html = readFileSync(root+'index.html','utf8');
+  if (html.indexOf('營火會') < 0 || /<span>🔥<\/span>營火歌/.test(html)) { console.error('❌ index.html nav 未改做「營火會」'); process.exit(1); }
+  {
+    const mf = JSON.parse(readFileSync(root+'manifest.webmanifest','utf8'));
+    if (mf.description.indexOf('跟住做') >= 0 || mf.description.indexOf('營火歌') >= 0) {
+      console.error('❌ manifest description 仲有舊寫法（跟住做／營火歌）'); process.exit(1);
+    }
+    if (!mf.shortcuts.some(s => s.name.indexOf('營火會') >= 0)) { console.error('❌ manifest 捷徑未改做「營火會」'); process.exit(1); }
+  }
+  /* 6) 制服：局部放大圖＋旅巾圖 */
+  if (!ctx.DIAGRAMS.uniform.zoom || !/^<svg /.test(ctx.DIAGRAMS.uniform.zoom)) { console.error('❌ 冇徽章局部放大圖'); process.exit(1); }
+  if (ctx.DIAGRAMS.uniform.zoom.indexOf('3cm') < 0 || ctx.DIAGRAMS.uniform.zoom.indexOf('1cm') < 0) { console.error('❌ 放大圖冇標實際距離'); process.exit(1); }
+  if (!ctx.DIAGRAMS.uniform.scarf || ctx.DIAGRAMS.uniform.scarf.indexOf('3.5cm') < 0) { console.error('❌ 冇旅巾綁法圖'); process.exit(1); }
+  for (const b of ['land','sea','air']) {
+    if (!ctx.DIAGRAMS.uniform[b] || ctx.DIAGRAMS.uniform[b].indexOf('undefined') >= 0) { console.error('❌ 制服本地顏色圖缺：'+b); process.exit(1); }
+  }
+  if (appSrc.indexOf("DIAGRAMS.uniform.zoom") < 0) { console.error('❌ 徽章頁冇用局部放大圖'); process.exit(1); }
+  /* 7) 補圖：先鋒工程都要有圖 */
+  if (appSrc.indexOf("figFor('pioneer'") < 0) { console.error('❌ 先鋒工程冇圖'); process.exit(1); }
+  /* 8) 遊戲庫每個遊戲都有圖（插畫或俯視擺位圖） */
+  for (const g of ctx.DATA.games) {
+    const has = (ctx.GAME_FIG[g.n]) || (ctx.DIAGRAMS.game && ctx.DIAGRAMS.game[g.n]);
+    if (!has) { console.error('❌ 遊戲冇圖：'+g.n); process.exit(1); }
+  }
+  /* 9) 儀式 8 張卡全部有圖（插畫或 SVG 位置圖） */
+  for (const c of ctx.CEREMONY.cards) {
+    const dk = c.fig || c.dgm;
+    const has = c.fig ? !!ctx.FIGS['cer-'+c.fig] : !!(dk && ctx.DIAGRAMS.cer[dk]);
+    if (!has) { console.error('❌ 儀式卡冇圖：'+c.n); process.exit(1); }
+  }
+}
+console.log('✅ v32：真分頁（無錨點跳位）・營火會（時間表＋歡呼＋頌詞）・清 agent 字句・活動／技能／制服／儀式全部有圖');
+
+/* 粗檢：SVG 內每個 <text> 嘅 y 座標唔可以超出 viewBox 高度（防止圖文出框） */
+function plotCheck(svgStr, name){
+  const m = svgStr.match(/viewBox="0 0 (\d+) (\d+)"/);
+  if (!m) { console.error('❌ '+name+' 冇 viewBox'); process.exit(1); }
+  const h = +m[2];
+  const ys = [...svgStr.matchAll(/<text[^>]*\sy="(-?[\d.]+)"/g)].map(x => +x[1]);
+  for (const y of ys) {
+    if (y > h - 2) { console.error('❌ '+name+' 有文字出框（y='+y+'／高 '+h+'）'); process.exit(1); }
+  }
+}
+// ═════════ v33：制服配件（領巾／巾圈／領帶／基維爾／皮帶襪）═════════
+{
+  const NW = ctx.UNIFORM.neckwear, KW = ctx.UNIFORM.kilwell, BS = ctx.UNIFORM.beltSocks;
+  if (!NW || !KW || !BS) { console.error('❌ UNIFORM 缺 neckwear／kilwell／beltSocks'); process.exit(1); }
+  if (NW.scarves.length !== 4) { console.error('❌ 領巾唔係 4 種'); process.exit(1); }
+  if (NW.rings.length !== 4) { console.error('❌ 巾圈唔係 4 種'); process.exit(1); }
+  if (NW.ties.length !== 4) { console.error('❌ 領帶唔係 4 色'); process.exit(1); }
+  if (NW.wear.length !== 8) { console.error('❌ 捲巾佩戴唔係 8 步'); process.exit(1); }
+  const nwAll = JSON.stringify(NW) + JSON.stringify(KW) + JSON.stringify(BS);
+  for (const t of ['3.5 厘米','12–15 厘米','Windsor','棗紅色領帶','深綠色領帶','黑色領帶','深藍色領帶','顏色巾圈','童軍巾圈','小隊活動巾圈','基維爾巾圈','基維爾領巾','木章','襪帶','鞋碼','棕色皮帶']) {
+    if (nwAll.indexOf(t) < 0) { console.error('❌ 制服配件缺資料：'+t); process.exit(1); }
+  }
+  if (NW.source.indexOf('3.4') < 0 || BS.source.indexOf('3.6') < 0) { console.error('❌ 制服配件冇標章節出處'); process.exit(1); }
+  for (const k of ['ties','kilwell','scarf','zoom']) {
+    const svg = ctx.DIAGRAMS.uniform[k];
+    if (!svg || !/^<svg /.test(svg) || svg.indexOf('undefined') >= 0) { console.error('❌ 制服圖缺失／壞：'+k); process.exit(1); }
+  }
+  plotCheck(ctx.DIAGRAMS.uniform.ties, '領帶圖');
+  try { const node = ctx.App.pages.uniform('acc'); if (!node) throw new Error('冇回傳'); }
+  catch(e) { console.error('❌ 制服「領巾領帶」分頁 render 失敗：', e.message); process.exit(1); }
+  /* 制服毛衣／附加配件：只指向童軍物品供應社，唔自創內容 */
+  const SH = ctx.UNIFORM.shop;
+  if (!SH || SH.url.indexOf('hkscoutshop.org.hk') < 0) { console.error('❌ 冇童軍物品供應社資料'); process.exit(1); }
+  if (SH.rest.indexOf('3.7') < 0 || SH.rest.indexOf('3.8') < 0) { console.error('❌ 供應社說明冇交代 3.7／3.8 唔詳列'); process.exit(1); }
+  if (SH.rule.indexOf('3.1') < 0) { console.error('❌ 供應社說明冇引手冊 3.1（以供應社為標準）'); process.exit(1); }
+  if (!/tel|2957/.test(SH.tel)) { console.error('❌ 供應社冇電話'); process.exit(1); }
+  const appSrcV33 = readFileSync(root+'js/app.js','utf8');
+  if (appSrcV33.indexOf('UNIFORM.shop.url') < 0) { console.error('❌ 制服頁冇出供應社連結'); process.exit(1); }
+  if (appSrcV33.indexOf("k:'acc'") < 0) { console.error('❌ 制服 subnav 冇「領巾領帶」分頁'); process.exit(1); }
+  /* 自查清單要包含配件規格 */
+  const cl = ctx.UNIFORM.checklist.join(' ');
+  for (const t of ['領帶','巾圈','皮帶']) { if (cl.indexOf(t) < 0) { console.error('❌ 自查清單缺：'+t); process.exit(1); } }
+}
+console.log('✅ v33：制服配件（領巾 4 種・巾圈 4 種・領帶 4 色・基維爾木章・皮帶皮鞋襪）＋ 兩張新圖');
 
 console.log('\n🎉 全部 smoke test 通過（v30：集會套包範圍收斂＋基本級 D 圖補晒——8 張儀式卡全部有圖）');

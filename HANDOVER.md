@@ -578,3 +578,61 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 
 ### 合併
 - PR #3（`arena/01a0a749-scoutmeeting` → `main`）v19–v30 一次過合併；合併前 `npm test` 必綠＋`gh pr view 3 --json mergeable,mergeStateStatus` 要 `MERGEABLE/CLEAN`；repo 慣用 merge commit（main 頭先係「Merge pull request #2…」）。
+
+## 27. v32：真分頁／清 agent 字句／補圖／營火會（2026-09-16，用戶睇完 v31 追加 5 項）
+
+### 1. 清走「教你點用個 App」嘅字句（全站覆核）
+- 刪：首頁 lede「搵今日集會：撳一行任何位置…」、集會工具 lede「…成員唔會覺得黑箱作業」、活動庫「一版講一個遊戲，唔會一次過彈晒…」、各頁「想印邊張就撳…／投屏出嚟一齊讀…」等。
+- **寫法守則（以後照跟）**：UI 講內容同事實，唔講「你應該點撳」。`npm test` 有禁字檢查：`搵今日集會／黑箱作業／一版講一個遊戲／🅰️／🅱️`（app.js 連註解都唔准出現，projector.js 亦已改寫）。
+
+### 2. 錨點跳位清零（`App.jump`／`App.chiprow` 已刪）
+- 教案頁原本用 chip 行跳節：而家**改真分頁**——`App.filterbar(items, cur, pick, root)` 加 `root` 參數＋`App.showPane(root,key)`／`App.tabs()`；每個 section 包入 `div.tabpane[data-pane]`，撳掣即換版。
+- 實作重點：`renderMeeting` 內以 `secList` 記錄 section 次序（**唔可以靠 `wrap.children`**——smoke 嘅 DOM stub 冇呢個 property，會 `filter called on null`），並包住 `wrap.appendChild` 收集；`tabHost` 一定要 `wrap.appendChild(tabHost)`（漏咗就冇分頁條，肉眼睇唔出，只有撳唔到掣）。
+- 列印：`@media print{.tabpane{display:block!important}.tabhost,.pane-note{display:none!important}}`，所以「整場教案全部列印」照樣印晒；每節「🖨️ 只印本節」不變。
+- 全 app 掃過 `chiprow／App.jump／scrollIntoView` 已清零；素材庫／制服／技能／儀式本身已經係 `#tab/key` 路由（真轉頁）。
+
+### 3. 徽章位置局部放大圖（跟手冊做法）
+- 用戶指：**《儀容與制服手冊》本身有局部放大插圖**。`D.uniform.zoom` 照住做兩個放大圈：左胸袋（袋蓋上方 3cm ↔ 袋中央）、右袖肩膊（旅章肩膊下 2cm、地域章前區章後相距 1cm）。
+- 徽章頁加 callout 連去手冊第三章＋2023 年第 13 號通告 PDF 對照；另加 `D.uniform.scarf` 旅巾綁法（巾圈／3.5cm／12–15cm／巾尾唔超皮帶扣）。
+
+### 4. 補圖（除繩結外全部有圖）
+- 技能：`pioneer` 補 `figFor('pioneer')`（原本漏接）。
+- 制服：新增 `D.uniform.land／sea／air` 顏色示意圖（**本地 SVG，離線都睇得到**；官網圖係熱連，離線會冇圖），AI 制服圖禁令照舊。
+- 活動 12 個遊戲（11 AVIF＋1 俯視圖）、儀式 8 卡全部有圖；`tests/runtime.mjs` 逐項 check。
+
+### 5. 🔥 營火歌 → 營火會
+- 資料：`js/songs.js` 加 `staff`（4 位工作人員）、`ignition`（點火儀式＋3 款頌詞）、`cheers`（Bravo 三連呼／「童子軍，食雲吞」／「123，321，1234567」／拍手節奏呼／小隊吶喊／晚安呼）、`programme`（90 分鐘三段程序：熱身 → 高潮 → 寧靜結尾）、`gear`（設備清單）、`hostNote`。
+- **出處**：《香港童軍》月刊第 414 期〈談談營火會〉（顏明仁、馮源）— https://scout.org.hk/article_attach/31112/sa_hksm_414_p2-4.pdf （已 fetch，內容已落地；重點：歡呼代替鼓掌、短劇 ≤3 分鐘、上半場多唱舊歌）。
+- Nav／頁標題／搜尋索引全部改名「營火會」；`SONGS.meta.title`＝香港童軍營火會；SW cache `scout-v32-c24-20260916`。
+
+### 測試
+- `npm test` ＝ `tests/smoke.mjs` ＋ `tests/runtime.mjs`（**已修好舊 runtime**：佢以前引用 `js/jungle-data.js` 等唔存在嘅檔＋舊 API `App.vPlan`，載入次序亦錯（`js/data.js` 要用 C01 → 必須 lessons 先）。而家 runtime 會 render 全部頁面／分頁／24 場教案，並檢查畫面冇漏 `undefined`）。
+- ⚠️ 教訓：**static patch 完要驗「掛唔掛得上樹」** — tabHost 冇 append、`appendChild(projAll)` 喺 `var projAll` 之前，兩單都係 harness／smoke 捉唔到嘅（stub 唔 throw）。所以加咗 static 次序檢查＋`tabHost` 掛樹檢查。
+
+## 28. v33：制服配件補齊（2026-09-16，用戶：「一併補埋」）
+
+- 依《儀容與制服手冊》**第三章 3.4–3.6**（Drive #7，fetch 到文字層）補齊：領巾 4 種、**巾圈 4 種**、捲巾 8 步規格、**領帶 4 色**、基維爾巾圈／領巾／木章（3.5）、皮帶／皮鞋／襪（3.6）。
+- 落地位置：`js/uniform.js` 新增 `UNIFORM.neckwear`（scarves／rings／ringsOther／wear／ties／tieWear／rules）、`UNIFORM.kilwell`、`UNIFORM.beltSocks`；`js/app.js` 制服 subnav 加 `{k:'acc',ic:'🧣',n:'領巾領帶'}`；`js/svg-kit.js` 加 `D.uniform.ties`（4 色）＋`D.uniform.kilwell`（木章皮繩位置）。
+- 註：3.6 原文「戶外活動尼龍皮帶：童軍成員（小童軍除外）穿著戶外活動服裝時可佩戴」；3.7 制服毛衣／3.8 附加配件喺掃描圖冇文字層，未入 app（需要就跟紙本核對）。
+- 測試：smoke 加 v33 block（4／4／4／8 數量、關鍵字、圖齊、分頁 render、自查清單含領帶／巾圈／皮帶）、新 `plotCheck()` 檢查 SVG 文字唔出框。
+- SW cache → `scout-v33-c24-20260916`。
+- QA 手法（新）：冇 chromium／playwright，所以寫咗 `/tmp/svg2png.py`（純 Python 極簡 SVG rasterizer）＋`/tmp/svgaudit.mjs`（幾何座標出框檢查）嚟肉眼睇手繪圖——**只放 /tmp，唔入 repo**。
+
+## 29. v33 收尾：讀完 Drive #8＋互動測試＋無障礙
+
+- **Drive #8（`1sHG952U73znOwhSnZzoRpO1oSm_xZONG`）已讀**＝第五章「勳章及獎勵」＋第六章附錄（禮服／晚禮服款式、晚禮服黑色硬帽編號 UM01–UM05、金屬職級肩章）。**全部係成年成員／總監勳章範疇**，同 §3 用戶約定（範圍收斂：只做會員章＋日常集會）唔相關 → **決定唔入 app**，避免又開新範圍。連帶：#7 chunk 1 亦已讀（只係上頁最後一句）。
+- 手冊第三章現況：3.1／3.2／3.3／3.4／3.5／3.6 已落地；**3.7 制服毛衣、3.8 附加配件仍係掃描圖（無文字層）**，未有紙本可核對前唔寫。
+- 互動修正：
+  1. 活動庫分類掣唔再用全域 `document.querySelectorAll('#view .filter-btn')` 清 active（會誤清其他篩選 bar）→ 改為只喺自己條 bar 切換，卡片篩選 scope 喺本頁 `wrap`，並補 `role="tablist"`／`aria-selected`。
+  2. `App.filterbar`／`App.showPane` 補 `role="tab"`／`aria-selected`／`role="tabpanel"`／`aria-hidden`。
+  3. 素材庫工作紙嗰句「（跟住做時一齊印）；呢度係「淨係想印某張」嘅入口」＝agent 味 → 改寫成「同集會目錄每場教案用嘅係同一份工作紙。」
+- 測試（`tests/runtime.mjs`）：**(1) 行為測試**——撳第 3 個分頁掣 → 只顯示第 3 版、active／aria-selected 跟住移；活動庫撳分類 → 只顯示該類、撳「全部」還原。**(2) DOM stub 升級**：`className` 同 `classList` 同步（用 accessor），否則「一開頭只顯示一版」呢類測試會假過。
+- 文件：README 手動 QA 清單加 v32／v33 項目（分頁唔跳位、列印展開、活動篩選、制服配件、營火會區塊）；POSITIONING.md 字眼「營火歌」→「營火會」。
+
+## 30. v33 最終：3.7／3.8 唔入 app（用戶決定）＋合併 main
+
+- 用戶指示（2026-09-16）：「制服手冊 3.7 制服毛衣、3.8 附加配件 那不用加，就叫有需要到童軍用品供應社查詢」。
+- 落地：`UNIFORM.source.shopUrl` ＋ 新 `UNIFORM.shop`（名稱／網址 https://www.hkscoutshop.org.hk/ ／地址（香港童軍中心 11 樓）／電話 2957 6444／電郵／`rule`＝手冊 3.1「配件以童軍物品供應社所供應者為標準」／`rest`＝「3.7／3.8 本 app 唔詳列，有需要到供應社查詢」）。
+- 顯示位置：制服「🧣 領巾領帶」分頁尾、每個支部頁「三組共通」callout、自查清單頁。**冇自創 3.7／3.8 內容**（避免估錯用品款式）。
+- 教訓／守則：手冊冇文字層嘅章節，一律用「指向供應社／官方」收尾，唔好靠估。
+- 之後：`gh pr merge 4 --merge`（repo 慣用 merge commit），main 由 `88c4f6e` 前進。

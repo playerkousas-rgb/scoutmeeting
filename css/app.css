@@ -2978,3 +2978,142 @@ ul.motto li{ font-size:15px; }
 @media print{
   .ph-fig .ph-note{display:none!important}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   v31：🖥️ 投屏（投影機／大電視）＋ 素材庫真分頁 ＋ 教學頁小執靚
+   ═══════════════════════════════════════════════════════════════ */
+/* ---- 投屏掣（同 🖨️ 只印本節 一齊排喺每節標題右邊）---- */
+.proj-btn{flex:none;white-space:nowrap;font-size:.72rem;padding:5px 9px;border-radius:9px;
+  background:#E3F2FD;color:#0D47A1;border:1.5px solid #BBDEFB;font-weight:800}
+.proj-btn:hover{background:#BBDEFB}
+.proj-big{display:inline-flex;align-items:center;gap:6px;background:#1565C0;color:#fff;border-radius:12px;
+  padding:9px 16px;font-weight:800;font-size:.95rem;box-shadow:var(--sh)}
+.proj-big:hover{background:#0D47A1}
+.no-print .proj-btn{margin-top:8px}
+/* 浮動投屏掣（右下，手機同桌面都有） */
+.proj-fab{position:fixed;right:14px;z-index:45;background:#1565C0;color:#fff;border-radius:99px;
+  padding:10px 15px;font-weight:800;font-size:.86rem;box-shadow:0 6px 18px rgba(13,71,161,.35);
+  bottom:calc(64px + env(safe-area-inset-bottom))}
+@media(min-width:900px){.proj-fab{bottom:22px}}
+body.proj-on #app,body.proj-on #projfab,body.proj-on #leadroot{display:none!important}
+
+/* ---- 投影畫面 ---- */
+#proj{position:fixed;inset:0;z-index:90;background:#0B1A12;color:#F1F8E9;display:flex;flex-direction:column}
+#proj.hidden{display:none!important}
+.proj-bar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#12321F;color:#A5D6A7;
+  flex-wrap:wrap;border-bottom:1px solid #1E4A2C}
+.proj-title{color:#FFF;font-size:1rem}
+.proj-nav{display:flex;align-items:center;gap:8px}
+.pj-btn{background:#1E4A2C;color:#E8F5E9;border-radius:9px;padding:6px 11px;font-size:.82rem;font-weight:700}
+.pj-btn:hover{background:#2E7D32}
+.pj-btn.close{background:#B71C1C;color:#fff}
+.pj-count{font-size:.8rem;color:#A5D6A7;min-width:46px;text-align:center}
+.proj-tools{display:flex;gap:6px;margin-left:auto}
+.proj-stage{flex:1;overflow:auto;padding:3vh 4vw}
+.pj-page{max-width:1500px;margin:0 auto;line-height:1.6}
+.pj-page h3,.pj-page h4{color:#FFD54F;font-size:1.35em;margin:.3em 0 .5em}
+.pj-page h2{color:#FFD54F;font-size:1.5em}
+.pj-page img{max-width:100%;max-height:62vh;display:block;margin:0 auto 12px;border-radius:12px;background:#fff}
+.pj-page ul,.pj-page ol{margin:.3em 0 .6em 1.3em}
+.pj-page li{margin:.22em 0}
+.pj-page table{border-collapse:collapse;width:100%;font-size:.9em;margin:.4em 0}
+.pj-page th,.pj-page td{border:1px solid #4E6B57;padding:6px 9px;text-align:left}
+.pj-page th{background:#16371F;color:#FFD54F}
+.pj-page .card{background:#12291B;box-shadow:none;border-left:none}
+.pj-page .mut,.pj-page small{color:#B0BEC5}
+.pj-page .callout,.pj-page .tip,.pj-page .safety{background:#16371F;color:#E8F5E9;border-left:4px solid #FFD54F}
+.pj-page .worksheet-line,.pj-page .write-lines{border-color:#4E6B57}
+.pj-page button{background:#1E4A2C;color:#E8F5E9;border-radius:9px;padding:7px 13px;font-weight:700;margin:3px 4px 3px 0}
+.pj-page button:hover{background:#2E7D32}
+.pj-note{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:#B0BEC5;font-size:.95em}
+.pj-big{font-size:2.4em;font-weight:800;text-align:center;color:#FFD54F;margin:.3em 0}
+/* 即時工具（計分板／倒數／抽籤／分組）大字版 */
+.pj-score{display:flex;gap:2vw;justify-content:center;flex-wrap:wrap;margin:2vh 0}
+.pj-score>div{background:#16371F;border-radius:16px;padding:2vh 2.4vw;text-align:center;min-width:150px}
+.pj-score .pj-team{display:block;color:#A5D6A7;font-size:1.05em;font-weight:700}
+.pj-score b{display:block;font-size:3em;color:#FFD54F;line-height:1.1}
+.pj-score .pj-ops{display:flex;gap:4px;justify-content:center;margin-top:6px}
+.pj-clock{text-align:center;font-size:16vh;font-weight:800;color:#FFD54F;line-height:1.1;letter-spacing:.02em}
+.pj-clock.done{color:#FF8A65}
+.pj-group{background:#16371F;border-radius:14px;padding:10px 16px;margin:8px 0}
+.pj-group b{color:#FFD54F;margin-right:10px}
+.pj-page .svg-steps svg{background:#fff;border-radius:12px;max-width:100%;height:auto}
+.pj-page .svg-steps figcaption{color:#B0BEC5}
+
+/* ---- 🧩 分頁版本掣（一次過唔會擠爆一版）---- */
+.pg-row{display:flex;align-items:center;gap:8px;width:100%;margin:2px 0 2px}
+.pg-btn{border:1.5px solid var(--line);background:#fff;color:var(--mute);border-radius:9px;padding:4px 9px;font-size:.72rem;font-weight:800}
+.pg-btn:not([disabled]):hover{border-color:var(--or);color:var(--ink);background:#F6FBF4}
+.pg-row .pg-btn[disabled]{opacity:.45;cursor:default}
+.pg-of{font-size:.72rem;color:var(--mute);font-weight:700;margin-left:auto;margin-right:auto}
+.subnav .subrow{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.print-host{margin-top:6px}
+.print-host .sec{margin-top:14px}
+.aid-wrap{margin:14px 0}
+.aid-wrap .card{margin:8px 0}
+.aid-ops{margin:0 0 6px}
+.aid-card h3{margin-bottom:6px}
+.aid-card .ph-fig{margin:8px 0}
+
+/* ---- 集會工具：計分板／倒數 ---- */
+.score-table td,.score-table th{vertical-align:middle}
+.pt-name{width:100%;min-width:92px;padding:6px 8px;border:1.5px solid var(--line);border-radius:9px;font-weight:700;font-family:inherit;font-size:.95rem}
+.pt-num{text-align:center;font-size:1.4rem;font-weight:800;color:var(--grd);white-space:nowrap}
+.pt-ops{white-space:nowrap}
+.pt-ops button{background:#E8F5E9;color:var(--grd);border-radius:9px;padding:6px 10px;font-weight:800;margin-right:4px}
+.pt-ops button:hover{background:#C8E6C9}
+.pt-clock{font-size:1.8rem;font-weight:800;color:var(--grd);letter-spacing:.02em}
+#pt-board-sec .card,#pt-board-sec .card button,.aid-wrap button{font-size:.9rem}
+#pt-board-sec .card p>button,#pt-cd-out button{background:#E8F5E9;color:var(--grd);border-radius:9px;padding:6px 11px;font-weight:800;margin:2px 3px 2px 0}
+#pt-board-sec input[type=number],.aid-wrap input{border:1.5px solid var(--line);border-radius:9px;padding:5px 7px;font-family:inherit}
+textarea{font-family:inherit;border:1.5px solid var(--line);border-radius:12px;padding:8px 10px}
+
+/* ---- 🔥 營火歌 ---- */
+.song-banner .ph-fig{margin:10px 0 14px;border-radius:16px}
+.song-hero{background:#FFFDF6}
+.song-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin:12px 0}
+.song-card{display:block;margin:0}
+.song-card h3{font-size:1rem;line-height:1.35}
+.song-card h3 small{font-size:.72rem;color:var(--mute);font-style:italic}
+.song-card .ws-open{color:var(--or);font-weight:800;font-size:.8rem;margin:6px 0 0}
+.song-lines{margin:8px 0;padding:10px 12px;background:#FFFDF6;border:1px dashed var(--line);border-radius:12px}
+.song-pair{margin:5px 0}
+.song-pair .chord{font-size:.72rem;font-weight:800;color:#0D47A1;letter-spacing:.4px}
+.song-pair .ly{font-size:1.02rem;line-height:1.6}
+.song-sheet .tag{margin-right:4px}
+.source-note{font-size:.78rem;color:var(--mute)}
+.song-float{position:fixed;right:14px;z-index:44;display:flex;flex-direction:column;gap:6px;
+  bottom:calc(120px + env(safe-area-inset-bottom))}
+.song-float button{background:#fff;border:1.5px solid var(--line);border-radius:99px;padding:7px 12px;
+  font-size:.78rem;font-weight:800;color:var(--grd);box-shadow:var(--sh)}
+.song-float .spotify-btn{background:#1DB954;border-color:#1DB954;color:#fff}
+.song-float .yt-btn{background:#FF0000;border-color:#FF0000;color:#fff}
+@media(max-width:520px){.song-float{bottom:calc(108px + env(safe-area-inset-bottom));right:10px}}
+
+/* ---- 列印：投屏掣、浮動掣一律唔印 ---- */
+@media print{
+  .proj-btn,.proj-big,.proj-fab,.song-float,.pg-row,.filters,.fbar{display:none!important}
+  .aid-wrap,.aid-card{break-inside:avoid;page-break-inside:avoid}
+  .aid-card img{max-height:70mm}
+  .song-lines{background:#fff}
+  .print-host .sec{margin:0}
+}
+@media(max-width:520px){
+  .proj-btn{padding:4px 7px;font-size:.68rem}
+  .pj-page table{font-size:.78em}
+  .pj-clock{font-size:22vh}
+}
+/* 投屏畫面本身唔會印（列印時一定要收埋） */
+@media print{#proj{display:none!important}}
+/* 投屏版字級：坐到最後一行都睇得到 */
+.pj-page{font-size:clamp(17px,1rem + 1vw,30px)}
+@media(min-width:1200px){.pj-page{font-size:clamp(20px,1rem + 1.4vw,34px)}}
+
+/* ── v32：教案頁「一行一個掣，撳咗即換版」── 列印時要全部展開（唔可以淨印當前嗰版）── */
+.tabpane{display:block}
+.tabhost{margin:10px 0 4px}
+.pane-note{font-size:.85rem;margin:4px 0 10px}
+@media print{
+  .tabpane{display:block!important}
+  .tabhost,.pane-note{display:none!important}
+}
