@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from 'fs';
+import { spawnSync } from 'child_process';
 import { createContext, runInContext } from 'vm';
 const root = new URL('..', import.meta.url).pathname;
 const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js','js/c15-lesson.js','js/c16-lesson.js','js/c17-lesson.js','js/c18-lesson.js','js/c19-lesson.js','js/c20-lesson.js','js/c21-lesson.js','js/c22-lesson.js','js/c23-lesson.js','js/c24-lesson.js'];
@@ -8,7 +9,8 @@ const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/dat
   'img/fig/game-relay-cards.avif','img/fig/game-tug.avif','img/fig/game-aid.avif','img/fig/game-orienteer.avif',
   'img/fig/game-beachflag.avif','img/fig/game-water.avif','img/fig/game-lineup.avif',
   'img/fig/skill-ropecare.avif','img/fig/skill-legend.avif','img/fig/skill-tent.avif',
-  'img/fig/skill-stove.avif','img/fig/skill-rice.avif','img/fig/skill-lost.avif', ...lessonFiles];
+  'img/fig/skill-stove.avif','img/fig/skill-rice.avif','img/fig/skill-lost.avif',
+  'img/fig/skill-knife.avif','img/fig/skill-sos.avif', ...lessonFiles];
 for (const f of files) {
   if (!existsSync(root + f)) { console.error('❌ Missing', f); process.exit(1); }
   console.log('✅', f);
@@ -211,9 +213,9 @@ console.log('✅ manifest：新 icon＋營火歌 shortcut');
 
 // sw.js
 const swSrc = readFileSync(root+'sw.js','utf8');
-if(!swSrc.includes('scout-v23') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v23'); process.exit(1); }
+if(!swSrc.includes('scout-v24') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v24'); process.exit(1); }
 if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js')){ console.error('❌ sw.js 未 cache v19 新檔'); process.exit(1); }
-console.log('✅ sw.js cache 已升級（v23 含 26 張示意圖）');
+console.log('✅ sw.js cache 已升級（v24 含 28 張示意圖）');
 
 // README
 const rm = readFileSync(root+'README.md','utf8');
@@ -224,7 +226,7 @@ const figSandbox = {}; createContext(figSandbox);
 runInContext(readFileSync(root+'js/figs.js','utf8'), figSandbox, {filename:'js/figs.js'});
 const FIGSJ = figSandbox.FIGS || {};
 const figKeys = Object.keys(FIGSJ);
-if (figKeys.length < 26) { console.error('❌ FIGS 不足 26 張，實際', figKeys.length); process.exit(1); }
+if (figKeys.length < 28) { console.error('❌ FIGS 不足 28 張，實際', figKeys.length); process.exit(1); }
 if (figKeys.some(k => k === 'note' || typeof FIGSJ[k] === 'string')) { console.error('❌ FIGS 混咗非圖項目（note 應該用全域 FIGS_NOTE）'); process.exit(1); }
 if (figSandbox.FIGS_NOTE !== undefined && !/唔代表制服標準/.test(figSandbox.FIGS_NOTE)) { console.error('❌ FIGS_NOTE 冇寫明唔代表制服標準'); process.exit(1); }
 for (const k of figKeys) {
@@ -247,7 +249,7 @@ for (const k of figKeys) {
   if (!f.alt || f.alt.length < 20) { console.error('❌ '+k+' alt 描述太短'); process.exit(1); }
   if (!f.cap || f.cap.length < 15) { console.error('❌ '+k+' 缺圖說'); process.exit(1); }
 }
-if (figBytes > 900*1024) { console.error('❌ 插畫總容量過大：', Math.round(figBytes/1024)+'KB'); process.exit(1); }
+if (figBytes > 1200*1024) { console.error('❌ 插畫總容量過大（離線 PWA 上限 1.2MB）：', Math.round(figBytes/1024)+'KB'); process.exit(1); }
 for (const k of figKeys) {
   if (/knot|reef|bowline|fig8|繩結|結/.test(k)) { console.error('❌ FIGS 出咗繩結圖（用戶明確禁止）：'+k); process.exit(1); }
 }
@@ -259,7 +261,14 @@ if (cerCardsWithFig.length < 6) { console.error('❌ 有圖儀式卡不足 6'); 
 const figHtml = ctx.App.cerFig(cerCardsWithFig[0]);
 if (!figHtml.includes('class="ph-fig"')) { console.error('❌ 儀式圖未用 ph-fig 結構'); process.exit(1); }
 if (!/img src="img\/fig\/cer-open\.avif"/.test(figHtml)) { console.error('❌ 儀式圖冇 AVIF <img>：', figHtml.slice(0,120)); process.exit(1); }
-if (!figHtml.includes('width="1000"') || !figHtml.includes('height="747"')) { console.error('❌ 儀式圖缺尺寸屬性（會 layout shift）'); process.exit(1); }
+{ const f0 = FIGSJ[cerCardsWithFig[0].fig ? 'cer-'+cerCardsWithFig[0].fig : ''];
+  if (!f0 || !figHtml.includes('width="'+f0.w+'"') || !figHtml.includes('height="'+f0.h+'"')) { console.error('❌ 儀式圖 w/h 屬性同 FIGS 資料唔一致（會 layout shift）'); process.exit(1); } }
+for (const c of cerCardsWithFig) {
+  const f = FIGSJ['cer-'+c.fig];
+  const head = existsSync(root+f.src) ? readFileSync(root+f.src) : null;
+  if (head) { const size = spawnSync('identify', ['-format','%wx%h', root+f.src], {encoding:'utf8'}).stdout.trim();
+    if (size !== f.w+'x'+f.h) { console.error('❌ '+f.src+' 實際尺寸 '+size+' 唔等於 FIGS 記嘅 '+f.w+'x'+f.h); process.exit(1); } }
+}
 if (!figHtml.includes('<details class="dgm-alt no-print"')) { console.error('❌ 儀式圖冇折疊後備圖解'); process.exit(1); }
 if (!figHtml.includes('onerror=')) { console.error('❌ 圖冇 onerror 後備'); process.exit(1); }
 if (!figHtml.includes('ph-note') || !figHtml.includes('唔代表制服標準')) { console.error('❌ 圖說冇「唔代表制服標準」聲明'); process.exit(1); }
@@ -325,10 +334,18 @@ const SF = figSandbox.SKILL_FIG || {};
 if (Object.keys(SF).length < 6) { console.error('❌ SKILL_FIG 只覆蓋 '+Object.keys(SF).length+' 項技能（應 6）'); process.exit(1); }
 for (const nm of Object.keys(SF)) { if (!FIGSJ[SF[nm]]) { console.error('❌ SKILL_FIG 指向冇圖嘅 key：'+nm); process.exit(1); } }
 // QA fail 咗嘅三張（刀交接／SOS 節奏／凳數）絕唔准悄悄放返入 repo
-for (const banned of ['skill-knife.avif','skill-sos.avif','game-chairs.avif']) {
-  if (existsSync(root+'img/fig/'+banned)) { console.error('❌ '+banned+' 返咗入面（QA fail：會教錯人）'); process.exit(1); }
+for (const banned of ['game-chairs.avif']) {
+  if (existsSync(root+'img/fig/'+banned)) { console.error('❌ '+banned+' 返咗入面（QA fail：凳數唔啱「少一張」）'); process.exit(1); }
 }
-if (SF.knife || SF.sos) { console.error('❌ knife/sos 唔准入 SKILL_FIG（AI 畫錯傳刀同音節）'); process.exit(1); }
+if (!SF.knife || !SF.sos) { console.error('❌ knife/sos 應該已重出並入 SKILL_FIG（v24）'); process.exit(1); }
+// v24 儀式圖 QA 修正：宣誓唔可以合十、旗唔可以插喺二人之間；敬禮邊格作準要講明；升旗戴帽／無帽條文要喺圖說
+const capOath = FIGSJ['cer-oath'].cap + ' ' + ceremonySrc;
+if (!/唔係合十/.test(capOath)) { console.error('❌ 宣誓圖冇交代「唔好合十／立正垂手」'); process.exit(1); }
+if (!/中間唔准放嘢|唔可以插喺二人之間/.test(capOath)) { console.error('❌ 宣誓圖冇交代「旗唔准喺二人之間」'); process.exit(1); }
+if (!/照<b>右格<\/b>數|照右格/.test(FIGSJ['cer-salute'].cap + ceremonySrc)) { console.error('❌ 敬禮圖冇講明手指數以邊格作準'); process.exit(1); }
+if (!/右翼/.test(FIGSJ['cer-open'].cap)) { console.error('❌ 集隊圖冇講明右翼以邊個為準'); process.exit(1); }
+if (!/戴帽行三指禮|戴帽就行三指禮/.test(FIGSJ['cer-flag'].cap + ceremonySrc)) { console.error('❌ 升旗圖冇交代戴帽／無帽分別'); process.exit(1); }
+if (FIGSJ['cer-open'].w*1 !== 1000 || FIGSJ['cer-open'].h === 747) { console.error('❌ cer-open 裁圖後 w/h 未更新（會 layout shift）'); process.exit(1); }
 if (GF['大風吹']) { console.error('❌ 大風吹唔准入 GAME_FIG（凳數畫錯）'); process.exit(1); }
 // 技能頁逐分頁 render：有圖用 ph-fig，冇圖退回 dgm-fig
 for (const sub of ['care','map','camp','field','aid']) {
@@ -348,6 +365,9 @@ for (const f of avifs) {
   if (!allSrc.includes(f)) { console.error('❌ img/fig/'+f+' 冇喺 FIGS 入面（孤兒圖，要咪刪走咪補 entry）'); process.exit(1); }
   if (!swSrc.includes(f)) { console.error('❌ sw.js 漏 cache img/fig/'+f); process.exit(1); }
 }
-console.log('✅ 技能插畫 6 張＋QA fail 名單守住（刀/SOS/凳 唔准回流）・圖檔 26 張全數入 FIGS＋sw');
+if (Object.keys(SF).length < 8) { console.error('❌ SKILL_FIG 得 '+Object.keys(SF).length+' 項（應 8：ropecare/legend/tent/stove/rice/lost/knife/sos）'); process.exit(1); }
+for (const sub of ['camp','field']) { try { ctx.App.pages.skills(sub); } catch(e) { console.error('❌ pages.skills('+sub+') render 失敗：', e.message); process.exit(1); } }
+console.log('✅ 技能插畫 8/8 齊（刀/SOS 已用硬指令重出通過 QA）・圖檔 28 張全數入 FIGS＋sw');
+console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間、敬禮以右格作準、集隊右翼定義、升旗戴帽條文');
 
-console.log('\n🎉 全部 smoke test 通過（v23：補圖批次 3——技能 6 張＋有口難言；QA 擋走 3 張）');
+console.log('\n🎉 全部 smoke test 通過（v24：儀式逐張 QA 修正＋刀/SOS 重出）');

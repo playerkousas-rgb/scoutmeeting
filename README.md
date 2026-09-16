@@ -72,8 +72,9 @@
 
 ## 技術
 - 純靜態 HTML/CSS/vanilla JS，無 build
-- PWA：Service Worker `scout-v23-c24-20260916`（逐檔 add，缺圖唔會拖冧核心預緩存）
-- 示意插畫：`img/fig/*.avif`（AVIF，26 張 886KB）；資料喺 `js/figs.js`（遊戲名→`GAME_FIG`、技能→`SKILL_FIG`）
+- PWA：Service Worker `scout-v24-c24-20260916`（逐檔 add，缺圖唔會拖冧核心預緩存）
+- 示意插畫：`img/fig/*.avif`（AVIF，28 張 929KB）；資料喺 `js/figs.js`（遊戲名→`GAME_FIG`、技能→`SKILL_FIG`）
+- ⚠️ 每張圖上線前對住 `js/ceremony.js`／教案逐項 QA（手勢手指數、旗位、人與人關係）；會教錯人嘅圖唔 ship（見 HANDOVER §20）
 - ⚠️ 插畫只畫中性練習衫（**唔生成制服圖**）：目標係睇明動作／站位；制服一律用官網圖
 - 森林綠＋金色百合花飾 icon
 - renderMeeting 已升級支援兩種教案格式（c01-c09 舊 inline 格式、c10+ 新多欄位格式），向下兼容；家長通知同時支援物件／長文；工作紙同時支援 prompts／fields 兩種格式；實戰後備支援物件／陣列兩種格式；小知識支援 h/d 同 q/a 兩種格式

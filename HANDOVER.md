@@ -367,3 +367,32 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 - 圖說全部寫明邊度「圖冇畫、要照文字」：收繩圈繞步驟、爐具漏氣／熄火次序、包紮力度與燙傷五步
 - `sw.js` CACHE=`scout-v23-c24-20260916`，ASSETS 26 張圖；全場插畫 886KB（AVIF q58–64／1000px）
 - 而家覆蓋率：儀式 6/6、遊戲 11/12、技能 6/8（另 2 張刻意用圖解）、營火／歌 3/3、制服 0（只用官網圖，永久規則）、興趣章 0（用戶話唔使）
+
+## 20. v24 改動記錄（2026-09-16，用戶抓錯：儀式圖逐張 QA）
+
+用戶指出 `cer-oath` 兩個錯：**(1) 領袖雙手合什（祈禱式，唔係童軍動作）(2) 團旗插喺團長與新成員中間 → 二人無法「面對團長及團旗」；排位怪**。跟手要求「儀式認真睇返有冇錯」（遊戲/活動按文字生成、錯嘅機會低、無傷大雅 → 唔使逐張重做）。
+
+### 逐張核對結果（對住 `js/ceremony.js` 程序）
+| 圖 | 發現 | 處理 |
+|---|---|---|
+| cer-oath | 合什＋旗喺中間 | 重出：`COMPLETELY EMPTY floor between them — no pole, no stand`＋`no praying hands, no palms pressed together, no folded/clasped hands`＋`ONE SINGLE flag pole, no second pole, no pennant` |
+| cer-salute | 左格全禮像得兩指（角度遮無名指），右格三指啱 | 重出（手畫大、兩格幾何一致、寫明「exactly three straight extended fingers」）＋圖說加「數手指照右格」 |
+| cer-open | 「團旗喺右側」有歧義（畫面右 vs 隊員右手邊）；隊列散 | 改由**隊員背後**睇（畫面右＝隊列右翼，零歧義）＋整齊直排；顺手 crop 走左邊多餘木架（1392→1000×727，FIGS w/h 已更新） |
+| cer-flag | 人物冇戴帽卻行三指禮（程序：戴帽三指禮、無帽注目禮） | 圖冇再重出（重出風險係旗位又錯）；改喺 figcap＋FIGS cap 補返呢條，話明「圖冇畫帽係避免畫錯制服，教嗰陣要補」 |
+| cer-close | 折旗／交接無硬傷 | 保留 |
+| cer-drill | 行進腳手配對圖唔可靠 | 保留（圖說已寫「次序照文字」） |
+| skill-knife／skill-sos（v23 被 QA fail） | 用硬指令重出通過：刀「俾柄唔俾刃」＋跌刀後退舉手；SOS 恰好「三組、每組三條、冇第四組」 | 入 `SKILL_FIG`（技能插畫 8/8 齊） |
+| game-chairs | 凳數仍唔啱「少一張」 | **繼續 ban**（smoke test 断言檔案唔准存在） |
+
+### 下次補圖／改圖必守（QA SOP）
+1. 圖生成後**一定要 `read_file` 睇返**，逐項對程序文字：手勢手指數、旗／物位置、人與人關係（面對面／背向）、物件有冇多餘、帽與程序條文有冇矛盾。
+2. prompt 用**可數嘅硬約束**：`exactly three groups of arcs, nine arcs total, no fourth group`／`ONE SINGLE flag pole`／`no praying hands, no clasped hands`／`chairs = players − 1`。
+3. 有歧義嘅「左／右」改用視角消歧義（例如由隊員背後睇，畫面右＝右翼）。
+4. 錯得會教錯人 → **唔 ship**：檔名入 `tests/smoke.mjs` ban 名單（一出現即 fail），原圖留 `assets_src/figsrc/`（gitignore）等改 prompt 重出。
+5. 圖做唔到但程序要緊 → 寫入 `figcap`／`cap`（例：升旗戴帽條文、敬禮以邊格作準、收繩步驟照文字）。
+6. 改咗圖就改 CACHE（`scout-vNN`）；改咗尺寸就改 `FIGS.w/h`（新断言會用 `identify` 對實際尺寸）。
+
+### 容量／測試
+- 28 張 AVIF = 929KB（上限放寬到 1.2MB，逐張 ≤140KB；smoke test 有斷言）
+- 新斷言：oath「唔係合十」＋「旗唔准喺二人之間」、salute「照右格數手指」、open「右翼定義」、flag「戴帽行三指禮」缺席即 fail；每張儀式圖實際像素要等於 `FIGS.w/h`；`SKILL_FIG` 必須 8 項；`game-chairs.avif` 存在即 fail
+- `sw.js` CACHE=`scout-v24-c24-20260916`（+skill-knife、+skill-sos）
