@@ -219,19 +219,22 @@ App.projOpen = function(){ return typeof Projector !== 'undefined' && Projector.
 App.sec = function(title, opts){
   opts = opts || {};
   var s = App.h('section','sec');
+  var secTitle = title.replace(/<[^>]*>/g,'').replace(/🖨️.*/,'').trim();
   if(opts.id) s.id = opts.id;
-  s.setAttribute('data-title', title.replace(/<[^>]*>/g,'').replace(/🖨️.*/,'').trim());
+  s.setAttribute('data-title', secTitle);
   var head = App.h('div','sec-head');
   var h = App.h('h2', null, title);
   head.appendChild(h);
   var body = App.h('div','sec-body');
   if(opts.print !== false){
-    var b = App.h('button','print-btn','🖨️ 只印本節');
+    var b = App.h('button','print-btn','🖨️ 印本節');
+    b.setAttribute('aria-label','列印本節：'+secTitle);
     b.onclick = function(){ App.printSec(s); };
     head.appendChild(b);
   }
   if(opts.proj !== false){
-    var p = App.h('button','proj-btn','🖥️ 投屏');
+    var p = App.h('button','proj-btn','🖥️ 投本節');
+    p.setAttribute('aria-label','投屏本節：'+secTitle);
     p.onclick = function(){ App.projSec(s); };
     head.appendChild(p);
   }
@@ -255,9 +258,11 @@ App.ph = function(key, cap, svgHtml){
   if(!f) return svgHtml ? '<figure class="dgm-fig"><div class="dgm-wrap">'+svgHtml+'</div><figcaption>🖼️ '+(cap||'示意圖解')+'</figcaption></figure>' : '';
   var onerr = "var p=this.closest('.ph-fig');if(p){p.classList.add('imgfail');var d=p.querySelector('details');if(d)d.open=true;}";
   var img = '<div class="ph-wrap"><img src="'+f.src+'" width="'+(f.w||1000)+'" height="'+(f.h||750)+'" alt="'+(f.alt||'')+'" loading="lazy" decoding="async" onerror="'+onerr+'"></div>';
-  var note = (typeof FIGS_NOTE!=='undefined' && FIGS_NOTE) ? '<span class="ph-note">'+FIGS_NOTE+'</span>' : '';
+  var noteText = (f.note!==undefined) ? f.note : ((typeof FIGS_NOTE!=='undefined' && FIGS_NOTE) ? FIGS_NOTE : '');
+  var note = noteText ? '<span class="ph-note">'+noteText+'</span>' : '';
+  var credit = f.credit ? '<span class="ph-credit">📷 '+f.credit+(f.source?' · <a href="'+f.source+'" target="_blank" rel="noopener">來源</a>':'')+'</span>' : '';
   return '<figure class="ph-fig" data-fig="'+key+'">'+img+
-    (cap?'<figcaption>🖼️ '+cap+note+'</figcaption>':'')+
+    (cap?'<figcaption>🖼️ '+cap+note+credit+'</figcaption>':'')+
     '<div class="ph-fail">📷 呢張圖load唔到（舊瀏覽器唔支援 AVIF／檔案未落 cache）；用下面嘅平面圖解代替。</div>'+
     (svgHtml?'<details class="dgm-alt no-print"><summary>📐 平面／位置圖解（睇位用）</summary><div class="dgm-wrap">'+svgHtml+'</div></details>':'')+
     '</figure>';
@@ -366,7 +371,11 @@ App.buildSearchIndex = function(){
       text:(s.zh+' '+(s.en||'')+' 營火會 營火歌 唱歌 歌紙 歌詞 香港 '+s.cat+' '+(s.lines||[]).map(function(l){return l[1];}).join(' ')).toLowerCase()});
   });
   if(typeof SONGS!=='undefined'){
-    idx.push({type:'營火會', title:'營火會時間表＋歡呼吶喊＋營火章要識嘅歌', link:'#songs', desc:'歌單', text:'營火會 營火 頌詞 點火 時間表 歡呼 吶喊 bravo 熊熊烈火 campfire burning kookaburra 友誼之光 童軍歌 必識 領唱 香港 兩隻老虎 猜拳歌 打開蚊帳 臨歧頌 謝飯歌'});
+    idx.push({type:'營火會', title:'90 分鐘時間表＋三段氣氛', link:'#songs/flow', desc:'流程', text:'營火會 營火 時間表 程序 熱身 高潮 寧靜結尾 90分鐘'});
+    idx.push({type:'營火會', title:'歡呼／吶喊＋小隊歡呼創作', link:'#songs/cheers', desc:'歡呼', text:'營火會 歡呼 吶喊 bravo 童子軍食雲吞 香港童軍好精神 小隊歡呼'});
+    idx.push({type:'營火會', title:'工作人員＋點火頌詞＋設備', link:'#songs/staff', desc:'人手設備', text:'營火會 人手 工作人員 領唱 歡呼領袖 設備管理員 點火 頌詞 柴火 水 沙 電筒'});
+    idx.push({type:'營火會', title:'冇樂器帶唱＋領唱 5 招', link:'#songs/lead', desc:'帶唱', text:'營火會 領唱 帶唱 冇樂器 手勢 快歌 慢歌 唱歌環節'});
+    idx.push({type:'營火會', title:'安全底線＋營火章必識歌', link:'#songs/safety', desc:'安全考章', text:'營火會 安全 營火章 熊熊烈火 campfire burning kookaburra 友誼之光 必識'});
   }
   App.searchIndex = idx;
   return idx;
@@ -521,7 +530,7 @@ App.renderMeeting = function(tid){
       var mats = '';
       if(p.mats && p.mats.length) mats = '<br><small>🎒 '+p.mats.join('、')+'</small>';
       else if(p.materials) mats = '<br><small>🎒 '+p.materials+'</small>';
-      tbl.innerHTML += '<tr><td>'+(idx+1)+'</td><td>'+(mins||'')+'</td><td>'+type+(type?'<br>':'')+'<small>'+title+'</small></td><td>'+detail+mats+'</td></tr>';
+      tbl.innerHTML += '<tr><td data-label="序">'+(idx+1)+'</td><td data-label="分鐘">'+(mins||'')+'</td><td data-label="項目">'+type+(type?'<br>':'')+'<small>'+title+'</small></td><td data-label="帶領要點">'+detail+mats+'</td></tr>';
     });
     tbl.innerHTML += '</tbody>';
     var sProg = App.sec('📋 '+(m.duration||90)+' 分鐘 9 段程序表',{id:tid+'-program'});
@@ -732,8 +741,7 @@ App.pages.search = function(sub){
   var q0 = '';
   try{ q0 = sub?decodeURIComponent(sub):''; }catch(e){ q0 = sub||''; }
   var box = App.h('div','card');
-  box.innerHTML = '<p><input id="q-input" style="width:70%;font-size:1.1em;padding:6px;" placeholder="例：儀式 / 急救 / 背囊 / 營火會…" value="'+q0.replace(/"/g,'&quot;')+'" oninput="App.searchGo()"> '+
-    '<button onclick="App.searchGo()">搵！</button></p>'+
+  box.innerHTML = '<label class="search-field" for="q-input"><span>🔍 關鍵字</span><input id="q-input" type="search" inputmode="search" autocomplete="off" placeholder="例：儀式 / 急救 / 背囊 / 營火會…" value="'+q0.replace(/"/g,'&quot;')+'" oninput="App.searchGo()"></label>'+
     '<p>熱門：<a href="#search/儀式">儀式</a> · <a href="#search/急救">急救</a> · <a href="#search/背囊">背囊</a> · <a href="#search/地圖">地圖</a> · <a href="#search/營火會">營火會</a> · <a href="#search/小隊">小隊</a></p>'+
     '<div id="q-out"><p class="mut">輸入關鍵字即時搵，全站 24 場集會＋遊戲＋興趣章＋技能＋儀式＋歌都搵到。</p></div>';
   wrap.appendChild(box);
@@ -742,25 +750,64 @@ App.pages.search = function(sub){
 
 /* 📅 集會目錄（整行可撳） */
 App.pages.plan = function(){
-  var wrap = App.h('div','page');
+  var wrap = App.h('div','page plan-page');
   wrap.appendChild(App.h('h1',null,'📅 集會目錄'));
-  wrap.appendChild(App.h('p','lede','24 場集會：會員章 6 場、探索 12 場、標準／總結 6 場。每場有序號、目標、時間、場地同對應獎章。'));
-  var planProj = App.h('p','','');
-  planProj.innerHTML = '<button class="proj-big" onclick="App.projPlan(\'年度集會目錄\')">🖥️ 投屏（睇年度計劃／同家長講）</button>';
+  var guide = App.h('div','role-guide');
+  guide.innerHTML = '<div><span class="role-ic">🧭</span><p><b>第一次帶集會</b><br>先揀一場，再由「領袖預備」逐頁做到「安全注意」。</p></div>'+
+    '<div><span class="role-ic">⚡</span><p><b>熟手即場搵料</b><br>用畫面下方「素材庫／活動／技能／興趣章／營火會」。</p></div>';
+  wrap.appendChild(guide);
+  wrap.appendChild(App.h('p','lede','24 場完整集會：會員章 6 場、探索 12 場、標準／總結 6 場。撳任何一張就開教案。'));
+
+  var filterItems = [
+    {k:'all',n:'全部 24 場'}, {k:'member',n:'會員章 c01–06'},
+    {k:'explore',n:'探索 c07–18'}, {k:'standard',n:'標準／總結 c19–24'},
+    {k:'special',n:'特別集會'}
+  ];
+  var filter = App.h('div','plan-filter filters');
+  filter.setAttribute('aria-label','篩選集會');
+  var result = App.h('p','plan-result','顯示 24 場');
+
   var table = App.h('table','meeting-table plan-table');
-  table.innerHTML = '<thead><tr><th>場次</th><th>月份</th><th>主題</th><th>對應獎章</th><th>形式</th><th>狀態</th><th></th></tr></thead><tbody>' +
-    DATA.meetings.map(function(m){
+  table.innerHTML = '<thead><tr><th>場次／月份</th><th>主題／對應獎章</th><th>形式</th><th>狀態</th><th><span class="sr-only">開啟</span></th></tr></thead><tbody>' +
+    DATA.meetings.map(function(m,idx){
       var tag = m.placeholder ? '<span class="tag wip">🚧 規劃中</span>' : (m.full ? '<span class="tag ok">✓ 完整</span>' : '<span class="tag wip">🚧</span>');
       var spec = m.special ? '<span class="tag sp">特別</span>' : '';
-      return '<tr class="meet-row" data-href="#plan/'+m.tid+'" tabindex="0"><td>'+m.tid+'</td><td>'+m.month+'</td><td>'+m.n+'</td><td>'+m.badge+'</td><td>'+m.form+spec+'</td><td>'+tag+'</td><td class="row-go">▶</td></tr>';
+      var stage = idx<6 ? 'member' : (idx<18 ? 'explore' : 'standard');
+      var groups = stage+(m.special?' special':'');
+      return '<tr class="meet-row" data-groups="'+groups+'" data-href="#plan/'+m.tid+'" tabindex="0" role="link" aria-label="開啟 '+m.tid+' '+m.n+'">'+
+        '<td class="plan-id"><b>'+m.tid+'</b><small>'+m.month+'</small></td>'+
+        '<td class="plan-topic"><b>'+m.n+'</b><small>🎖️ '+m.badge+'</small></td>'+
+        '<td class="plan-form">'+m.form+spec+'</td><td class="plan-status">'+tag+'</td><td class="row-go" aria-hidden="true">▶</td></tr>';
     }).join('') + '</tbody>';
+
+  filterItems.forEach(function(it,i){
+    var btn = App.h('button','filter-btn'+(i===0?' active':''),it.n);
+    btn.setAttribute('aria-pressed',i===0?'true':'false');
+    btn.onclick = function(){
+      Array.prototype.forEach.call(filter.querySelectorAll('.filter-btn'),function(x){
+        x.classList.remove('active'); x.setAttribute('aria-pressed','false');
+      });
+      btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
+      var shown = 0;
+      Array.prototype.forEach.call(table.querySelectorAll('tr.meet-row'),function(tr){
+        var on = it.k==='all' || (' '+tr.getAttribute('data-groups')+' ').indexOf(' '+it.k+' ')>=0;
+        tr.classList.toggle('hidden',!on); if(on) shown++;
+      });
+      result.textContent = '顯示 '+shown+' 場';
+    };
+    filter.appendChild(btn);
+  });
+  wrap.appendChild(filter);
+  wrap.appendChild(result);
   if(table.querySelectorAll){
     Array.prototype.forEach.call(table.querySelectorAll('tr.meet-row'), function(tr){
       tr.onclick = function(){ location.hash = tr.getAttribute('data-href'); };
-      tr.onkeydown = function(e){ if(e && e.key==='Enter') location.hash = tr.getAttribute('data-href'); };
+      tr.onkeydown = function(e){ if(e && (e.key==='Enter'||e.key===' ')){ if(e.preventDefault)e.preventDefault(); location.hash = tr.getAttribute('data-href'); } };
     });
   }
   wrap.appendChild(table);
+  var planProj = App.h('p','plan-project');
+  planProj.innerHTML = '<button class="proj-big" onclick="App.projPlan(\'年度集會目錄\')">🖥️ 投年度表</button>';
   wrap.appendChild(planProj);
   wrap.appendChild(App.h('h2',null,'🌟 特別集會／活動'));
   var ul = App.h('ul','bullet');
@@ -854,8 +901,8 @@ App.pages.uniform = function(sub){
       '<figcaption>本地顏色示意（離線都睇得到）：'+t.name+' 各件顏色配搭；實際樣式以官網圖同手冊為準</figcaption></figure></div>' : '';
     return '<div class="card uniform-card"><h3>'+t.name+'</h3>'+bfig+
       '<div class="uniform-split">'+
-        '<a href="'+t.img+'" target="_blank" rel="noopener"><img src="'+t.img+'" alt="'+t.name+' 官方圖" loading="lazy" class="uniform-img" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\';"></a>'+
-        '<div class="uniform-img-fallback" style="display:none">⚠️ （圖片需上網載入；網址：'+t.img+'）</div>'+
+        '<div class="uniform-visual"><a href="'+t.img+'" target="_blank" rel="noopener"><img src="'+t.img+'" alt="'+t.name+' 官方圖" loading="lazy" class="uniform-img" onerror="this.hidden=true;var v=this.closest(\'.uniform-visual\');var f=v?v.querySelector(\'.uniform-img-fallback\'):null;if(f)f.hidden=false;"></a>'+
+        '<div class="uniform-img-fallback" hidden>⚠️ 官網圖片暫時載入唔到；上面本地顏色圖照常可用。<br><a href="'+t.img+'" target="_blank" rel="noopener">稍後開官方圖</a></div></div>'+
         '<table class="uniform-table"><tbody>'+rows+'</tbody></table>'+
       '</div></div>';
   }
@@ -1075,12 +1122,12 @@ App.printPanel = function(cat){
           + '<div class="ws-head"><b>'+m.tid+aud+'</b><span class="mut"> '+m.n+'</span> '
           + '<a class="mut ws-goto" href="#plan/'+m.tid+'">睇完整教案 ↗</a>'
           + '<button class="print-btn" onclick="App.printSec(this.closest(\'div.ws-item\'))">🖨️ 只印呢張</button>'
-          + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.ws-item\'))">🖥️ 投屏</button></div>'
+          + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.ws-item\'))">🖥️ 投呢張</button></div>'
           + App.worksheetHtml(m.data.worksheet)
           + '</div>';
       });
     });
-    box.appendChild(App.block('📝 工作紙（逐張印／逐張投）', wsHtml));
+    box.appendChild(App.block('📝 工作紙（逐張印／逐張投）', wsHtml, {print:false,proj:false}));
     return box;
   }
 
@@ -1089,13 +1136,13 @@ App.printPanel = function(cat){
     C17.firstaid.forEach(function(f){
       html += '<div class="aid-wrap" data-title="急救卡 '+f.n+'">'+App.aidCard(f.n, f.how, f.warn)
         + '<p class="aid-ops"><button class="print-btn" onclick="App.printSec(this.closest(\'div.aid-wrap\'))">🖨️ 只印呢張</button>'
-        + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.aid-wrap\'))">🖥️ 投屏</button></p></div>';
+        + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.aid-wrap\'))">🖥️ 投呢張</button></p></div>';
     });
     var faint = App.aidCard('復原臥式','唔醒但有呼吸：側臥，頭微向下、上膝屈前、上手放前面，防嘔吐物鯁親；轉身前後都要睇呼吸','呼吸唔正常即打 999；跟有急救證書嘅領袖做');
     html += '<div class="aid-wrap" data-title="急救卡 復原臥式">'+faint
       + '<p class="aid-ops"><button class="print-btn" onclick="App.printSec(this.closest(\'div.aid-wrap\'))">🖨️ 只印呢張</button>'
-      + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.aid-wrap\'))">🖥️ 投屏</button></p></div>';
-    box.appendChild(App.block('🩹 急救卡（8 張，連圖）', html));
+      + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.aid-wrap\'))">🖥️ 投呢張</button></p></div>';
+    box.appendChild(App.block('🩹 急救卡（8 張，連圖）', html, {print:false,proj:false}));
     return box;
   }
 
@@ -1131,10 +1178,10 @@ App.printPanel = function(cat){
     songHtml += '<tr><td><b>'+sg.zh+'</b></td><td><span class="tag cat">'+sg.cat+'</span></td>'
       + '<td class="mut">'+((sg.lines&&sg.lines[0])?sg.lines[0][1]:'').slice(0,18)+'…</td>'
       + '<td class="nowrap"><button class="print-btn" onclick="App.printSong(\''+sg.k+'\')">🖨️ 印呢首</button>'
-      + '<button class="proj-btn" onclick="App.projSong(\''+sg.k+'\')">🖥️ 投屏</button></td></tr>';
+      + '<button class="proj-btn" onclick="App.projSong(\''+sg.k+'\')">🖥️ 投呢首</button></td></tr>';
   });
   songHtml += '</tbody></table>';
-  box.appendChild(App.block('🔥 營火會歌紙（14 首）', songHtml));
+  box.appendChild(App.block('🔥 營火會歌紙（14 首）', songHtml, {print:false,proj:false}));
   return box;
 };
 
@@ -1185,9 +1232,6 @@ App.pages.play = function(){
     filt.appendChild(btn);
   });
   wrap.appendChild(filt);
-  var projAll = App.h('p','no-print');
-  projAll.innerHTML = '<button class="proj-big" onclick="App.projPage(\'🎮 活動（遊戲庫）\')">🖥️ 投屏</button>';
-  wrap.appendChild(projAll);
   DATA.games.forEach(function(g){
     var card = App.h('div','card game-card');
     card.setAttribute('data-cat',g.cat);
@@ -1201,8 +1245,8 @@ App.pages.play = function(){
       '<p><b>玩法：</b></p><ol class="steps">'+g.steps.map(function(st){return '<li>'+st+'</li>';}).join('')+'</ol>'+
       '<p class="tip">💡 '+g.tips+'</p>'+
       '<p class="safety"><b>⚠️ 安全：</b>'+g.safety+'</p>'+
-      '<p><button class="print-btn" onclick="App.printSec(this.closest(\'div.game-card\'))">🖨️ 只印呢個遊戲</button> '
-      + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.game-card\'))">🖥️ 投屏（講解用）</button></p>';
+      '<p class="card-actions"><button class="print-btn" onclick="App.printSec(this.closest(\'div.game-card\'))">🖨️ 印遊戲</button> '
+      + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.game-card\'))">🖥️ 投講解</button></p>';
     wrap.appendChild(card);
   });
   return wrap;
@@ -1346,92 +1390,126 @@ App.pages.badges = function(){
 };
 
 /* 🔥 營火會（程序、歡呼、時間表＋香港旅團唱開嘅歌） */
+App.campTabs = [
+  {k:'flow',ic:'🗓️',n:'流程'},
+  {k:'cheers',ic:'📣',n:'歡呼'},
+  {k:'staff',ic:'👥',n:'人手設備'},
+  {k:'lead',ic:'🎤',n:'帶唱'},
+  {k:'library',ic:'🎵',n:'歌單（14）'},
+  {k:'safety',ic:'⚠️',n:'安全考章'}
+];
 App.pages.songs = function(sub){
-  var wrap = App.h('div','page');
+  var wrap = App.h('div','page camp-page');
   var sheets = SONGS.sheets;
-  var subs = [{k:'all',ic:'📚',n:'總覽'}].concat(sheets.map(function(s){return {k:s.k,ic:'🎵',n:s.zh};}));
+  var song = sub ? sheets.filter(function(x){return x.k===sub;})[0] : null;
+  var cur = song ? 'library' : (App.campTabs.some(function(x){return x.k===sub;}) ? sub : 'flow');
   wrap.appendChild(App.h('h1',null,'🔥 營火會'));
-  wrap.appendChild(App.subnav('songs',subs, (sub && sub!=='all')?sub:'all'));
+  wrap.appendChild(App.subnav('songs',App.campTabs,cur));
 
-  /* 單首歌紙 */
-  if(sub && sub!=='all'){
-    var s0 = sheets.filter(function(x){return x.k===sub;})[0];
-    if(s0){
-      var i0 = sheets.indexOf(s0);
-      var prev = sheets[i0-1], next = sheets[i0+1];
-      var bar = App.h('div','cer-nav');
-      bar.innerHTML = '<a class="back-link" href="#songs">← 歌單總覽</a>'
-        + (prev?'<a class="cer-prev" href="#songs/'+prev.k+'">← '+prev.zh+'</a>':'')
-        + (next?'<a class="cer-next" href="#songs/'+next.k+'">'+next.zh+' →</a>':'');
-      wrap.appendChild(bar);
-      wrap.appendChild(App.songSec(s0, true));
-      return wrap;
-    }
+  /* 單首歌紙：保留舊深層連結，但主導航只列六類，唔再將 14 首歌塞入總覽。 */
+  if(song){
+    var i0 = sheets.indexOf(song);
+    var prev = sheets[i0-1], next = sheets[i0+1];
+    var bar = App.h('div','cer-nav song-nav');
+    bar.innerHTML = '<a class="back-link" href="#songs/library">← 14 首歌單</a>'
+      + (prev?'<a class="cer-prev" href="#songs/'+prev.k+'" aria-label="上一首：'+prev.zh+'">← '+prev.zh+'</a>':'')
+      + (next?'<a class="cer-next" href="#songs/'+next.k+'" aria-label="下一首：'+next.zh+'">'+next.zh+' →</a>':'');
+    wrap.appendChild(bar);
+    wrap.appendChild(App.songSec(song, true));
+    return wrap;
   }
 
-  wrap.appendChild(App.h('p','lede','營火會＝有程序嘅晚會：點火、唱歌、歡呼、小隊表演、營火談話、寧靜收尾。下面有 90 分鐘時間表範本、歡呼／吶喊、點火頌詞，同香港旅團真係唱開嘅 14 首歌紙。'));
-  var banner = App.h('div','song-banner');
-  banner.innerHTML = App.ph('fire-song', FIGS&&FIGS['fire-song']?FIGS['fire-song'].cap:'營火唱歌現場');
-  wrap.appendChild(banner);
+  var source = '<p class="source-note">📚 營火會程序依據：'+SONGS.hostNote+'；歌詞來源：'+SONGS.sources.join('、')+'。旅團版本如有出入，以自己旅團／區訓練組版本為準。</p>';
 
-  var hero = App.h('div','card song-hero');
-  hero.innerHTML = '<h3>🔥 營火會點樣帶</h3>'+
-    App.ph('fire-circle', FIGS&&FIGS['fire-circle']?FIGS['fire-circle'].cap:'火圈座位：領袖企圈內・水／沙／急救箱放背後')+
-    '<div class="svg-steps"><figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.flow:'')+'<figcaption>營火會三段程序：熱身 → 高潮 → 寧靜結尾</figcaption></figure></div>';
-  wrap.appendChild(hero);
+  if(cur==='flow'){
+    wrap.appendChild(App.h('p','lede','第一次帶就照住呢個 90 分鐘次序：準備 → 熱身 → 高潮 → 歌唱 → 寧靜結尾 → 完全熄火。其他資料已拆到上面五個分頁。'));
+    var hero = App.h('div','card song-hero camp-hero');
+    hero.innerHTML = '<h3>🔥 營火會點樣帶</h3><div class="svg-steps"><figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.flow:'')+'<figcaption>三段氣氛：熱身 → 高潮 → 寧靜結尾</figcaption></figure></div>';
+    wrap.appendChild(hero);
+    wrap.appendChild(App.block('🗓️ 一般營火會時間表（約 90 分鐘）',
+      '<div class="card"><ol class="steps camp-timeline">'+SONGS.programme.map(function(x){return '<li><b>'+x.t+'</b><br>'+x.d+'</li>';}).join('')+'</ol>'+
+      '<p class="tip">✅ '+SONGS.programmeTip+'</p></div>'));
+    wrap.appendChild(App.h('div','camp-next','下一步：<a href="#songs/staff">分人手、執設備 →</a>'));
+    wrap.appendChild(App.h('div','',source));
+    return wrap;
+  }
 
-  wrap.appendChild(App.block('🗓️ 一般營火會時間表（約 90 分鐘）',
-    '<div class="card"><ol class="steps">'+SONGS.programme.map(function(x){return '<li><b>'+x.t+'</b><br>'+x.d+'</li>';}).join('')+'</ol>'+
-    '<p class="tip">✅ '+SONGS.programmeTip+'</p></div>'));
+  if(cur==='cheers'){
+    wrap.appendChild(App.h('p','lede','每個表演完用一款歡呼代替鼓掌。由歡呼領袖叫第一句，全體跟；同一晚輪流用 3–4 款。'));
+    var call = App.h('div','cheer-flow');
+    call.innerHTML = '<div><b>1</b><span>歡呼領袖<br><small>叫名＋做動作</small></span></div><i>→</i><div><b>2</b><span>全體<br><small>齊聲回應</small></span></div><i>→</i><div><b>3</b><span>即刻收<br><small>接下一節目</small></span></div>';
+    wrap.appendChild(call);
+    wrap.appendChild(App.block('📣 歡呼／吶喊（代替鼓掌）',
+      '<div class="card cheer-list"><ul class="bullet">'+SONGS.cheers.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul>'+
+      '<p class="tip">💡 '+SONGS.cheersTip+'</p></div>'));
+    wrap.appendChild(App.block('📣 小隊自己嘅歡呼點作',
+      '<div class="card"><ul class="bullet">'+
+      '<li><b>準備三連呼</b>：準備！準備！準備！耶！（右拳每次舉高，最後跳起）</li>'+
+      '<li><b>小隊名威風呼</b>：（小隊名）！最威！最叻！耶！（圍圈搭膊，嗌名向圓心踏一步）</li>'+
+      '<li><b>勝利 V 呼</b>：贏！贏！贏！我哋係第一！（雙手 V 字舉高）</li>'+
+      '<li><b>動物吶喊</b>：小隊動物叫聲＋一個動作，由小隊長帶。</li></ul>'+
+      '<p>想同小隊由零創作？<a href="#plan/c07">c07 教案</a>有完整活動。</p></div>'));
+    wrap.appendChild(App.h('div','',source));
+    return wrap;
+  }
 
-  wrap.appendChild(App.block('📣 歡呼／吶喊（代替鼓掌）',
-    '<div class="card"><ul class="bullet">'+SONGS.cheers.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul>'+
-    '<p class="tip">💡 '+SONGS.cheersTip+'</p></div>'));
+  if(cur==='staff'){
+    wrap.appendChild(App.h('p','lede','小型營火會四個人已經帶得到：一人控流程、一人控歡呼、兩人管場同器材。'));
+    var setup = App.h('div','camp-visual');
+    setup.innerHTML = App.ph('fire-circle', FIGS&&FIGS['fire-circle']?FIGS['fire-circle'].cap:'營火場座位與安全設備位置');
+    wrap.appendChild(setup);
+    wrap.appendChild(App.block('👥 營火會工作人員',
+      '<div class="card"><ul class="bullet">'+SONGS.staff.map(function(x){return '<li><b>'+x.r+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.block('🔥 點火儀式＋營火頌詞',
+      '<div class="card"><p>'+SONGS.ignition.how+'</p><ul class="bullet">'+SONGS.ignition.words.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.block('🎒 設備清單',
+      '<div class="card"><ul class="check-list">'+SONGS.gear.map(function(x){return '<li><span aria-hidden="true">□</span>'+x+'</li>';}).join('')+'</ul></div>'));
+    wrap.appendChild(App.h('div','',source));
+    return wrap;
+  }
 
-  wrap.appendChild(App.block('👥 營火會工作人員＋點火儀式',
-    '<div class="card"><ul class="bullet">'+SONGS.staff.map(function(x){return '<li><b>'+x.r+'</b>：'+x.d+'</li>';}).join('')+'</ul>'+
-    '<h4>🔥 點火儀式</h4><p>'+SONGS.ignition.how+'</p>'+
-    '<ul class="bullet">'+SONGS.ignition.words.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
-    '<h4>🎒 設備清單</h4><ul class="bullet">'+SONGS.gear.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>'));
+  if(cur==='lead'){
+    wrap.appendChild(App.h('p','lede','帶唱唔靠器材：自己唱第一句、手勢請全體接、快歌先慢歌後。圖只示圍圈同領唱位置。'));
+    var banner = App.h('div','song-banner');
+    banner.innerHTML = App.ph('fire-song', FIGS&&FIGS['fire-song']?FIGS['fire-song'].cap:'營火唱歌現場');
+    wrap.appendChild(banner);
+    wrap.appendChild(App.block('🎤 冇樂器都帶得',
+      '<div class="card"><ul class="bullet">'+SONGS.musicTips.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>', {print:false}));
+    wrap.appendChild(App.block('🎤 領唱 5 招',
+      '<div class="card"><ol class="steps">'+SONGS.leaderTips.map(function(t,i){return '<li><b>第'+(i+1)+'招：</b>'+t+'</li>';}).join('')+'</ol></div>', {print:false}));
+    wrap.appendChild(App.block('📋 唱歌環節編排（10–15 分鐘）',
+      '<div class="card"><ol class="steps">'+SONGS.hostPlan.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ol></div>'));
+    wrap.appendChild(App.h('div','camp-next','揀歌：<a href="#songs/library">開 14 首歌單 →</a>'));
+    wrap.appendChild(App.h('div','',source));
+    return wrap;
+  }
 
-  var grid = App.h('div','song-grid');
-  sheets.forEach(function(sg){
-    var card = App.h('a','card song-card');
-    card.href = '#songs/'+sg.k;
-    card.innerHTML = '<h3>🎵 '+sg.zh+(sg.en?'<br><small>'+sg.en+'</small>':'')+'</h3>'+
-      '<p><span class="tag cat">'+sg.cat+'</span>'+(sg.meter?' <span class="tag">'+sg.meter+'</span>':'')+'</p>'+
-      '<p class="mut">'+((sg.lines&&sg.lines[0])?sg.lines[0][1]:'').slice(0,22)+'…</p>'+
-      '<p class="ws-open">歌詞、玩法、領唱提示</p>';
-    grid.appendChild(card);
-  });
-  wrap.appendChild(grid);
-
-  wrap.appendChild(App.block('🎤 冇樂器都帶得（營火會實況）',
-    '<div class="card"><ul class="bullet">'+SONGS.musicTips.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>', {print:false}));
-
-  wrap.appendChild(App.block('🎤 領唱 5 招',
-    '<div class="card"><ol class="steps">'+SONGS.leaderTips.map(function(t,i){return '<li><b>第'+(i+1)+'招：</b>'+t+'</li>';}).join('')+'</ol></div>', {print:false}));
+  if(cur==='library'){
+    wrap.appendChild(App.h('p','lede','14 首香港旅團唱開嘅歌。每張只顯示歌名、場合同第一句；撳入去先睇完整歌詞、玩法、領唱提示。'));
+    var grid = App.h('div','song-grid');
+    sheets.forEach(function(sg){
+      var card = App.h('a','card song-card');
+      card.href = '#songs/'+sg.k;
+      card.innerHTML = '<h3>🎵 '+sg.zh+(sg.en?'<br><small>'+sg.en+'</small>':'')+'</h3>'+
+        '<p><span class="tag cat">'+sg.cat+'</span>'+(sg.meter?' <span class="tag">'+sg.meter+'</span>':'')+'</p>'+
+        '<p class="mut">'+((sg.lines&&sg.lines[0])?sg.lines[0][1]:'').slice(0,30)+'…</p>'+
+        '<p class="ws-open">開歌紙 →</p>';
+      grid.appendChild(card);
+    });
+    wrap.appendChild(grid);
+    wrap.appendChild(App.h('div','',source));
+    return wrap;
+  }
 
   var must = SONGS.mustKnow;
   var mustHtml = '<div class="card"><p>'+must.why+'</p><ul class="bullet">'+must.list.map(function(m){
-      return '<li>'+(m.must?'⭐必學：':'')+'<b>'+m.n+'</b> — '+m.tip+'</li>';
-    }).join('')+'</ul><p class="tip">✅ '+must.check+'</p>'
-    + '<p>💡 營火專科徽章要求詳見 <a href="#badges">🎖️ 興趣章→營火</a>。</p></div>';
+    return '<li>'+(m.must?'⭐必學：':'')+'<b>'+m.n+'</b> — '+m.tip+'</li>';
+  }).join('')+'</ul><p class="tip">✅ '+must.check+'</p><p>營火專科徽章要求：<a href="#badges">🎖️ 興趣章</a>。</p></div>';
+  wrap.appendChild(App.h('p','lede','出發前逐項核對安全；考營火章要識歌名同實際帶領，唔係淨係睇歌紙。'));
+  wrap.appendChild(App.block('⚠️ 安全底線',
+    '<div class="card safety-card"><ul class="check-list">'+SONGS.safety.map(function(x){return '<li><span aria-hidden="true">□</span>'+x+'</li>';}).join('')+'</ul></div>'));
   wrap.appendChild(App.block('⭐ 營火章要識嘅歌（有版權嗰幾首）', mustHtml, {print:false}));
-
-  wrap.appendChild(App.block('📋 唱歌環節編排（10–15 分鐘）＋安全底線',
-    '<div class="card"><ol class="steps">'+SONGS.hostPlan.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ol>'+
-    '<ul class="bullet">'+SONGS.safety.map(function(x){return '<li>⚠️ '+x+'</li>';}).join('')+'</ul></div>'));
-
-  wrap.appendChild(App.block('📣 小隊自己嘅歡呼點作',
-    '<div class="card"><ul class="bullet">'+
-    '<li><b>準備三連呼</b>：準備！準備！準備！耶！（右拳每次舉高，最後跳起）</li>'+
-    '<li><b>小隊名威風呼</b>：（小隊名）！最威！最叻！耶！（圍圈搭膊，嗌名向圓心跳一步）</li>'+
-    '<li><b>勝利 V 呼</b>：贏！贏！贏！我哋係第一！（雙手 V 字舉高）</li>'+
-    '<li><b>動物吶喊</b>：用自己小隊嘅動物做叫聲＋一個動作（狼嚎、鷹拍翼），小隊表演完由小隊長帶。</li></ul>'+
-    '<p>💡 想小隊有自己嘅歡呼？<a href="#plan/c07">c07</a> 有教點樣一齊作。</p></div>'));
-
-  wrap.appendChild(App.h('p','source-note','📚 程序／歡呼／頌詞依據：'+SONGS.hostNote+'〈談談營火會〉。歌詞來源：'+SONGS.sources.join('、')+'。如旅團流傳版本同呢度有出入，以自己旅團／區訓練組嘅版本為準。'));
+  wrap.appendChild(App.h('div','',source));
   return wrap;
 };
 

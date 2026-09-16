@@ -85,6 +85,9 @@ for (const s of ['land', 'sea', 'air', 'badge', 'acc', 'check']) {
 for (const c of sb.CEREMONY.cards) {
   try { App.pages.ceremony(c.k); ok(true, 'ceremony/' + c.k + ' render'); } catch (e) { ok(false, 'ceremony/' + c.k + '：' + e.message); }
 }
+for (const k of ['flow','cheers','staff','lead','library','safety']) {
+  try { App.pages.songs(k); ok(true, 'songs/' + k + ' render'); } catch (e) { ok(false, 'songs/' + k + '：' + e.message); }
+}
 for (const s of sb.SONGS.sheets) {
   try { App.pages.songs(s.k); ok(true, 'songs/' + s.k + ' render'); } catch (e) { ok(false, 'songs/' + s.k + '：' + e.message); }
 }
