@@ -43,7 +43,7 @@ const ceremonySrc = readFileSync(root + 'js/ceremony.js','utf8');
 });
 // v19：儀式卡要附圖（fig 欄位）
 if ((ceremonySrc.match(/fig:'/g)||[]).length < 6) { console.error('❌ 儀式卡 fig 圖解欄不足 6 套'); process.exit(1); }
-console.log('✅ 7 套儀式卡存在（6 套附圖解）');
+console.log('✅ 8 套儀式卡存在（6 套附 AVIF 插畫＋2 套手繪平面圖解）');
 
 function checkLesson(file, tid, name, keys, expectedSegs){
   const src = readFileSync(root + file, 'utf8');
@@ -278,6 +278,70 @@ if(!rm.includes('c24')){ console.error('❌ README 缺 c24'); process.exit(1); }
   console.log('✅ v29 範圍收斂：儀式卡 '+keys.length+' 張（會員章＋日常集會）・基本圖解 '+Object.keys(C).length+' 張・深階步操已交返訓練班＋手冊連結');
 }
 
+// ── v30：基本級 D 圖「補晒」（每張儀式卡都有圖・冇孤兒圖解・面板內文字唔准出框）──
+{
+  const C = ctx.DIAGRAMS.cer;
+  const got = Object.keys(C).sort();
+  const want = ['attn','close','dress','flag','formup','howl','oath','open','rest','salute','salute3','threefinger','drill'].sort();
+  if (got.join(',')!==want.join(',')) { console.error('❌ D.cer 圖解應得 13 張（'+want.join('/')+'）；而家 '+got.length+' 張：'+got.join(',')); process.exit(1); }
+  // 每張儀式卡至少有一張圖（AI 插畫 fig 或手繪圖解 dgm／steps[].dgm／types[].dgm）
+  const used = new Set();
+  for (const c of ctx.CEREMONY.cards) {
+    const refs = [c.fig, c.dgm]
+      .concat((c.steps||[]).map(x=>x.dgm), (c.types||[]).map(x=>x.dgm)).filter(Boolean);
+    if (!refs.length) { console.error('❌ 儀式卡「'+c.k+'」完全冇圖 — 基本級都要有示意圖（站位／動作）'); process.exit(1); }
+    for (const r of refs) {
+      if (!C[r]) { console.error('❌ 卡「'+c.k+'」引用咗冇嘅圖解 key：'+r); process.exit(1); }
+      used.add(r);
+    }
+  }
+  const orphan = Object.keys(C).filter(k=>!used.has(k));
+  if (orphan.length) { console.error('❌ 孤兒圖解（冇喺任何儀式卡引用）：'+orphan.join(',')+' — 接返上卡或刪走'); process.exit(1); }
+  // 新增四張：出處同幾何要講得明
+  if (!/2250/.test(C.formup) || !/標號員/.test(C.formup) || !/小隊長/.test(C.formup)) { console.error('❌ 集隊圖解缺 2250mm／標號員／小隊長位置（第6章§1）'); process.exit(1); }
+  if (!/留空|BLANK/.test(C.formup)) { console.error('❌ 集隊圖解冇交代人唔啱數點處理（BLANK FILE）'); process.exit(1); }
+  const dang = Array.from(C.dress.matchAll(/data-ang="(-?[\d.]+)"/g)).map(m=>+m[1]);
+  if (!dang.includes(90)) { console.error('❌ 睇齊圖解冇画「頭轉右 90 度」嘅角弧（要同立正 30 度一樣可核對）'); process.exit(1); }
+  if (!/一手位/.test(C.dress) || !/375mm/.test(C.dress) || !/1500mm/.test(C.dress)) { console.error('❌ 睇齊圖解缺「一手位／375mm／1500mm」距離（第6章§4）'); process.exit(1); }
+  if (!/25mm/.test(C.threefinger) || !/拇指壓住小指/.test(C.threefinger) || !/無名指/.test(C.threefinger)) { console.error('❌ 三指手形圖解缺 25mm／拇指壓小指／無名指（第3章§7）'); process.exit(1); }
+  if (!/官方講法/.test(C.threefinger)) { console.error('❌ 三指含義冇註明「屬團内講解・有官方講法照官方」'); process.exit(1); }
+  if (!/Horse Shoe|馬蹄鐵/.test(C.howl) || !/第8章/.test(C.howl)) { console.error('❌ 團呼圖解冇標明馬蹄鐵隊形嘅出處（第8章§6）'); process.exit(1); }
+  if (!/待核/.test(C.howl) || !/唔准自己創作/.test(C.howl)) { console.error('❌ 團呼圖解冇寫明「字句待核・唔准自創」'); process.exit(1); }
+  // 有圖都要照樣提醒待核（唔好因為補咗圖就當內容已核實）
+  const howlCard = ctx.CEREMONY.cards.find(c=>c.k==='howl');
+  if (!howlCard.pending) { console.error('❌ howl 卡補咗圖但要留低 pending:1（先至見到「待官方核對」提示）'); process.exit(1); }
+  const appSrc0 = readFileSync(root+'js/app.js','utf8');
+  if (!/if\(c\.pending && !full\) body \+= pendingNote;/.test(appSrc0)) { console.error('❌ app.js 冇喺「有圖但待核」嘅卡照樣顯示 pending 提示'); process.exit(1); }
+  if (!/pendingNote/.test(appSrc0.slice(appSrc0.indexOf('App.ceremonySec = function')))) { console.error('❌ pending 提示唔係喺 ceremonySec 內（接錯位置）'); process.exit(1); }
+  // 面板內文字／圖形唔准出框（fCL：panel 160×126，內文由 x=4 起・圖 translate(80,60) scale(.86)）
+  const estw = (t,fs)=>{ let w=0; for (const ch of t) { const c = ch.codePointAt(0); w += (c>0x2e80?1.0:(ch===' '?0.34:0.58)); } return w*fs; };
+  let pn=0, pbad=[];
+  for (const [k,src] of Object.entries(C)) {
+    if (typeof src!=='string' || src.indexOf('EAF1E6')<0) continue; pn++;
+    /* 巢式 transform 疊乘；panel＝邊個 <g> 頭先跟住 <rect 0,0,160,126> */
+    const re=/<g transform="translate\(([-\d.]+),([-\d.]+)\)(?: scale\(([-\d.]+)\))?">|<text x="(-[\d.]+)" y="(-[\d.]+)" font-size="([\d.]+)"[^>]*?text-anchor="(start|middle|end)"[^>]*>([^<]*)<\/text>|<\/g>/g;
+    let mm, st=[{x:0,y:0,s:1,p:null}];
+    while ((mm = re.exec(src))) {
+      const cur=st[st.length-1];
+      if (mm[0]==='</g>') { if (st.length>1) st.pop(); continue; }
+      if (mm[1]!==undefined) {
+        const nx=cur.x + (+mm[1])*cur.s, ny=cur.y + (+mm[2])*cur.s, ns=cur.s*(mm[3]?+mm[3]:1);
+        const pm=src.slice(re.lastIndex).match(/^<rect x="0" y="0" width="([\d.]+)" height="([\d.]+)"/);
+        st.push({x:nx,y:ny,s:ns, p: pm?{x:nx,y:ny,w:+pm[1]*ns,h:+pm[2]*ns} : cur.p});
+        continue;
+      }
+      if (mm[4]===undefined || !cur.p) continue;
+      const fs=+mm[6]*cur.s, txt=mm[8]||''; if (!txt) continue;
+      const x=cur.x + (+mm[4])*cur.s, y=cur.y + (+mm[5])*cur.s, w=estw(txt,fs), anc=mm[7];
+      let l=x,r=x; if (anc==='start') r=x+w; else if (anc==='end') l=x-w; else { l=x-w/2; r=x+w/2; }
+      if (l<cur.p.x-1 || r>cur.p.x+cur.p.w+1 || y>cur.p.y+cur.p.h-1 || y<cur.p.y-1)
+        pbad.push(k+'：「'+txt.slice(0,12)+'」'+l.toFixed(0)+'..'+r.toFixed(0)+'（面板 '+cur.p.x.toFixed(0)+'..'+(cur.p.x+cur.p.w).toFixed(0)+'，y '+y.toFixed(0)+'／限 ≤'+(cur.p.y+cur.p.h-1).toFixed(0)+'）');
+    }
+  }
+  if (pbad.length) { console.error('❌ 下圖嘅面板內文字出咗框（會疊到隔離格／睇唔晒）：\n   '+pbad.join('\n   ')); process.exit(1); }
+  console.log('✅ v30 補晒基本級 D 圖：8 張儀式卡全部有圖・D.cer 13 張冇孤兒・'+pn+' 張幀式圖解面板內文字唔出框');
+}
+
 // ── 所有手繪圖解嘅文字都要喺 viewBox 內（溢出即係睇唔到；用 stack 累加巢式 translate/scale）──
 {
   const D = ctx.DIAGRAMS;
@@ -360,9 +424,10 @@ if (!figHtml.includes('ph-note') || !figHtml.includes('唔代表制服標準')) 
 if (!appSrc.includes("App.ph('game-banner'")) { console.error('❌ 遊戲 tab 冇接封面插畫'); process.exit(1); }
 if (appSrc.includes("App.ph('fire-robe'")) { console.error('❌ 營火袍仲用 AI 插畫（應該退回平面圖解）'); process.exit(1); }
 if (figHtml.includes('undefined')) { console.error('❌ 儀式圖 markup 洩漏 undefined'); process.exit(1); }
-const howlCard = ctx.CEREMONY.cards.find(c=>!c.fig);
-if (ctx.App.cerFig(howlCard) !== '') { console.error('❌ 冇 fig 嘅卡唔應該硬出圖'); process.exit(1); }
-console.log('✅ 儀式卡 6 張全部有 AVIF 插畫＋折疊平面圖解（無圖嘅團呼卡唔硬出）');
+if (ctx.App.cerFig({k:'blank'}) !== '') { console.error('❌ 冇 fig 亦冇 dgm 嘅卡唔應該硬出圖'); process.exit(1); }
+const dgmOnly = ctx.App.cerFig(ctx.CEREMONY.cards.find(c=>!c.fig && c.dgm));
+if (!dgmOnly.includes('class="dgm-fig"') || !dgmOnly.includes('\u{1F4D0}')) { console.error('❌ 得 dgm 嘅卡冇出平面圖解（v30 補晒圖之後呢先係正常路徑）'); process.exit(1); }
+console.log('✅ 儀式卡插畫：6 張有 AVIF＋折疊後備圖解；2 張（團呼／集隊）用純手繪平面圖解（v30）');
 for (const mk of ["App.ph('fire-song'", "App.ph('fire-circle'"]) {
   if (!appSrc.includes(mk)) { console.error('❌ 營火/歌 page 未接插畫：'+mk); process.exit(1); }
 }
@@ -455,4 +520,4 @@ for (const sub of ['camp','field']) { try { ctx.App.pages.skills(sub); } catch(e
 console.log('✅ 技能插畫 8/8 齊（刀/SOS 已用硬指令重出通過 QA）・圖檔 28 張全數入 FIGS＋sw');
 console.log('✅ v24 儀式 QA 修正：宣誓唔合十＋旗唔喺二人之間、敬禮以右格作準、集隊右翼定義、升旗以制服整齊與否決定舉手');
 
-console.log('\n🎉 全部 smoke test 通過（v29：集會套包範圍收斂——只留會員章＋日常集會）');
+console.log('\n🎉 全部 smoke test 通過（v30：集會套包範圍收斂＋基本級 D 圖補晒——8 張儀式卡全部有圖）');

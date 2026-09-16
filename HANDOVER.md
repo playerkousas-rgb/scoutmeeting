@@ -550,3 +550,31 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 - `npm test` **全綠**（圖解渲染＋每張儀式卡頁 render 都跑過）；`tests/practical.mjs`／`print-songs-art.mjs` 係舊架構遺留（引用 `Ceremony.items`／`Ceremony.get('commands')`），本来已經跑唔切、亦唔喺 `npm test` 之內 — 未動。
 
 **以後嘅做法（重要）**：想加任何儀式／步操內容之前，先問「會員章要唔要？日常集會用唔用？」；兩樣都唔係 → 只寫一句指向手冊＋訓練班，唔好画圖、唔好列程序表。
+
+## 26. v30：基本級 D 圖補晒（2026-09-16，用戶：「D 圖補晒就可以合併進 main」）
+
+### 補咗 4 張手繪圖解（`js/svg-kit.js` → `D.cer.*`，9 → **13 張**；全站手繪圖解 32 → **36 張**）
+| key | 內容 | 接喺邊 |
+|---|---|---|
+| `formup` | 集隊站位頂視圖：F1 右標號員起、C1／R1 向左伸延・司令員與前排 2250mm・小隊長最右／副隊長最左・報數・人唔啱數就 `BLANK — FILE!` 留空行 | `#ceremony/fallin`（card-level `dgm`） |
+| `dress` | 睇齊 `Up—Two—Three—Move`：前排右手**向橫**＋頭轉**右 90°**（用 `fARC` 落 `data-ang`）・最右行中／後排手**向前**・移到得一手位・兩排版行與行 375mm／排與排 1500mm（`fDIM` 落 `data-mm`） | `footdrill` 步 5「睇齊」（`steps[].dgm`） |
+| `threefinger` | 童軍三指手形（宣誓＋敬禮共用）：食／中／無名指並攏、拇指壓小指、手心向前略向下；敬禮位置＝食指喺右眼眼球中心對上 **25mm**；三指含義註明屬團内講解、有官方講法照官方 | `salute.types` 第一條（`types[].dgm`）＋ `oath` 步 4 指去呢張卡 |
+| `howl` | 團呼：馬蹄鐵隊形（頂視圖・開口位）＋「邊啲有依據／邊啲待核」對照格＋帶領次序＋可評估項 | `#ceremony/howl`（card-level `dgm`） |
+
+### 範圍守則（照 §3 item 13）
+- 四張全部係**會員章／日常集會**級：無一份畫深階步操；`formup`／`howl` 內文再講明「七款集隊手號屬會操／訓練班」「團呼字句仍屬待核・唔准自創」。
+- `howl` 補咗圖但內容仍未核 → 卡上加 `pending:1`，`App.ceremonySec` 有圖都照樣出「⚠️ 仍待官方核對」提示（唔好因為有圖就當核實咗）。
+
+### 順手修到嘅舊問題
+1. **面板內文字出框**（新 checker 即時揪出）：`cer.attn`「口令 Alert!…Attention／Shun…」同 `cer.salute3` 英文口令行寬 ~200／183px，而 fCL 面板淨係 160px 寬 → 縮短至 ≤150px。
+2. `fDIM(...,'一手位',0)` 會產生 `data-mm="0"` 假毫米值 → 改画普通標線（口語距離唔硬套毫米）。
+3. `fallin` 嘅 `figcap` 由 v29 起係**死文字**（佢講緊已刪走嘅手號圖，而張卡冇 `fig`）→ 改寫成 `formup` 圖說。
+
+### 測試（`tests/smoke.mjs`，`npm test` → 149 項全綠）
+- 新增 v30 段：`D.cer` key 集合必須係嗰 13 張；**每張儀式卡都要有圖**（`fig`／`dgm`／`steps[].dgm`／`types[].dgm` 計）；**冇孤兒圖解**（每張都要俾卡引用；`fig` 當 AI 圖嘅後備圖解都算用咗）。
+- 新圖內容斷言：`formup` 2250／標號員／小隊長／BLANK；`dress` `data-ang=90`＋一手位＋375／1500mm；`threefinger` 25mm＋拇指壓小指＋「官方講法」免责；`howl` 馬蹄鐵＋第8章＋「待核」「唔准自己創作」。
+- **面板內文字溢出 checker**：巢式 `translate/scale` 疊乘後比較所屬 160×126 面板框（舊 checker 净係睇 viewBox，跨格疊字睇唔到）。`tests` 行 `node --check` 先至算數。
+- ⚠️ 教訓：**自己寫嘅 QA 要自己先驗** — 第一版 panel checker 用咗面板原點去算 art 內座標（冇乘 0.86 scale），誤報 9 條；改返逐層疊乘至正確。
+
+### 合併
+- PR #3（`arena/01a0a749-scoutmeeting` → `main`）v19–v30 一次過合併；合併前 `npm test` 必綠＋`gh pr view 3 --json mergeable,mergeStateStatus` 要 `MERGEABLE/CLEAN`；repo 慣用 merge commit（main 頭先係「Merge pull request #2…」）。

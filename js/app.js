@@ -663,10 +663,13 @@ App.ceremonySec = function(c, full){
   }
   if(c.prep) body += '<p><b>預備物資：</b>'+c.prep+'</p>';
   if(c.intro) body += '<p><b>動作要點：</b>'+c.intro+'</p>';
+  var pendingNote = '<div class="callout">⚠️ 呢套程序仍待官方核對，暫時只有文字＋參考文件連結；帶之前請先問熟悉程序之領袖。</div>';
   if(c.fig || c.dgm){
     body += App.cerFig(c);
+    /* 有圖但內容仍未核（例如團呼嘅隊形圖）— 照樣要提醒 */
+    if(c.pending && !full) body += pendingNote;
   } else if(!full){
-    body += '<div class="callout">⚠️ 呢套程序仍待官方核對，暫時只有文字＋參考文件連結；帶之前請先問熟悉程序之領袖。</div>';
+    body += pendingNote;
   }
   if(c.steps) body += '<ol class="steps">'+c.steps.map(function(st){return '<li><b>'+st.h+'</b>：'+st.d+(st.dgm?App.cerDgm(st.dgm, st.dgmc||st.h):'')+'</li>';}).join('')+'</ol>';
   if(c.types) body += '<ul class="bullet">'+c.types.map(function(t){return '<li><b>'+t.t+'：</b>'+t.d+(t.dgm?App.cerDgm(t.dgm, t.dgmc||t.t):'')+'</li>';}).join('')+'</ul>';
