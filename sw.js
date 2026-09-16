@@ -1,4 +1,4 @@
-var CACHE = "scout-v21-c24-20260916";
+var CACHE = "scout-v22-c24-20260916";
 var ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./css/app.css",
   "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/diagrams.js", "./js/svg-kit.js", "./js/songs.js",
@@ -6,6 +6,10 @@ var ASSETS = [
   "./img/fig/cer-open.avif", "./img/fig/cer-close.avif", "./img/fig/cer-drill.avif",
   "./img/fig/cer-flag.avif", "./img/fig/cer-oath.avif", "./img/fig/cer-salute.avif",
   "./img/fig/fire-circle.avif", "./img/fig/fire-song.avif", "./img/fig/game-banner.avif",
+  "./img/fig/game-ball.avif", "./img/fig/game-shape.avif", "./img/fig/game-tarp.avif",
+  "./img/fig/game-pack.avif", "./img/fig/game-relay-cards.avif", "./img/fig/game-tug.avif",
+  "./img/fig/game-aid.avif", "./img/fig/game-orienteer.avif",
+  "./img/fig/game-beachflag.avif", "./img/fig/game-water.avif",
   "./js/c01-lesson.js", "./js/c02-lesson.js", "./js/c03-lesson.js", "./js/c04-lesson.js", "./js/c05-lesson.js", "./js/c06-lesson.js", "./js/c07-lesson.js", "./js/c08-lesson.js", "./js/c09-lesson.js", "./js/c10-lesson.js", "./js/c11-lesson.js", "./js/c12-lesson.js", "./js/c13-lesson.js", "./js/c14-lesson.js", "./js/c15-lesson.js", "./js/c16-lesson.js", "./js/c17-lesson.js", "./js/c18-lesson.js", "./js/c19-lesson.js", "./js/c20-lesson.js", "./js/c21-lesson.js", "./js/c22-lesson.js", "./js/c23-lesson.js", "./js/c24-lesson.js", "./js/app.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"
 ];

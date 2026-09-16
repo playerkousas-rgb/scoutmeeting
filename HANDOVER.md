@@ -332,3 +332,17 @@ cer-flag 圖內旗面刻意只畫色塊（國旗／區旗細節唔好靠 AI）�
 
 **smoke test 新增 guard**：FIGS 任何 key 命中 `/robe|uniform|scarf|制服|領巾|布章|章/` 即 fail；`alt` 提到帽章/布章/領巾/杏色/草青 即 fail；`img/fig/fire-robe.avif` 存在即 fail；圖說冇 ph-note 即 fail。
 **下一批照跟**：遊戲 12 張、技能 8 張 — 全部中性練習衫，唔画制服、唔画章。
+
+## 18. v22 改動記錄（2026-09-16，補圖批次 2：遊戲 10 張場地圖插畫）
+
+沿用 v21 條鐵律：**唔畫制服**（人物一律灰T＋深灰短褲、冇帽冇領巾冇章）、唔畫繩結打法、唔畫醫療手法細節。
+
+- 新增 10 張 AVIF（`img/fig/`，1000×545 為主，共約 380KB）：`game-ball 直呼其名`、`game-shape 繩索挑戰`、`game-tarp 飛毯`、`game-pack 執包比賽`、`game-relay-cards 結繩接力賽`、`game-tug 拖木頭挑戰`、`game-aid 急救情境賽`、`game-orienteer 定向尋寶`、`game-beachflag 沙灘旗`、`game-water 運水接力`
+- `js/figs.js` 加 `GAME_FIG`（遊戲名 → key）；**未入表嘅 2 個遊戲（有口難言／大風吹）自動退回平面擺位圖**（呢兩個「排直線」「圍圈少張凳」用俯視圖已經夠清楚，唔揀佢哋佔額度）
+- `App.pages.play`：每卡 `App.ph(GAME_FIG[g.n], cap, DIAGRAMS.game[g.n])` → 有圖＝AVIF 主圖＋折疊平面圖；冇圖＝照舊 dgm-fig（唔會出空白）
+- 圖說帶安全提示：`game-tug`／`game-relay-cards` 寫明「結點打照 c13/c14，本 app 唔出結圖」；`game-aid` 寫明「手法照 c17」；`game-beachflag` 寫明「圖上海喺盡頭係場景，實際旗線要離水線好遠」；`game-pack` 寫明「利器唔入物料池」
+- 搜尋索引 desc 會分「附實景示意圖＋場地圖」／「附場地圖」
+- `sw.js` CACHE=`scout-v22-c24-20260916`，ASSETS 加入 10 張
+- smoke test 新增：`GAME_FIG` 覆蓋 10／未補圖必須得 2／逐遊戲 render 檢查 ph-fig 或 dgm-fig／game-* 嘅 alt 命中 `帽章|領巾|布章|巾圈|旅巾|制服|童軍帽` 即 fail／alt 出現繩結打法名即 fail／sw 漏圖即 fail
+
+**批次 3（最後一輪）待辦**：`DIAGRAMS.skillx` 八張（ropecare／legend／tent／stove／knife／rice／sos／lost）換 AVIF ＋ `game-lineup 有口難言`、`game-chairs 大風吹`。注意 `skillx.rope care`／`stove`／`knife` 三張：只畫**場合同要點**（捲繩手法唔出逐步圖、爐具只示擺位同通風、刀只示「唔傳刀、刀尖向自己」呢類原則），涉及結法／包紮／切法步驟一律留文字＋教案連結。

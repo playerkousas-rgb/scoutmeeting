@@ -194,7 +194,8 @@ App.buildSearchIndex = function(){
     idx.push({type:'集會', title:m.tid+' '+m.n, link:'#plan/'+m.tid, desc:m.badge||'', text:mt.toLowerCase()});
   });
   DATA.games.forEach(function(g){
-    idx.push({type:'遊戲', title:g.n, link:'#play', desc:g.cat+' · '+g.minutes+'分鐘（附場地圖）',
+    var gHasPh = (typeof GAME_FIG!=='undefined' && typeof FIGS!=='undefined' && g.n in GAME_FIG && !!FIGS[GAME_FIG[g.n]]);
+    idx.push({type:'遊戲', title:g.n, link:'#play', desc:g.cat+' · '+g.minutes+'分鐘'+(gHasPh?'（附實景示意圖＋場地圖）':'（附場地圖）'),
       text:(g.n+' '+g.cat+' '+g.desc+' '+g.mats).toLowerCase()});
   });
   INTERESTS.badges.forEach(function(b){
@@ -898,7 +899,7 @@ App.pages.print = function(){
 App.pages.play = function(){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'🎮 活動'));
-  wrap.appendChild(App.h('p','lede','破冰、合作遊戲、課程活動、營火、雨天後備——即開即查即用（共 '+DATA.games.length+' 個）。每個遊戲附場地圖，睇圖就知點擺位。'));
+  wrap.appendChild(App.h('p','lede','破冰、合作遊戲、課程活動、營火、雨天後備——即開即查即用（共 '+DATA.games.length+' 個）。每個遊戲附場地圖；已補插畫嘅會同時有「實景示意圖＋平面擺位圖」，睇圖就知點擺位（圖只示動作／場地，唔畫制服）。'));
   var gbn = App.h('div','game-banner');
   gbn.innerHTML = App.ph('game-banner', FIGS&&FIGS['game-banner']?FIGS['game-banner'].cap:'設場要點');
   wrap.appendChild(gbn);
@@ -923,7 +924,9 @@ App.pages.play = function(){
     var card = App.h('div','card game-card');
     card.setAttribute('data-cat',g.cat);
     card.setAttribute('data-title','遊戲 '+g.n);
-    var fig = (DIAGRAMS.game && DIAGRAMS.game[g.n]) ? '<figure class="dgm-fig"><div class="dgm-wrap">'+DIAGRAMS.game[g.n]+'</div><figcaption>🖼️ 場地擺位圖（俯視）・照圖設場就得</figcaption></figure>' : '';
+    var gk = (typeof GAME_FIG!=='undefined') ? (GAME_FIG[g.n]||'') : '';
+    var gcap = (gk && typeof FIGS!=='undefined' && FIGS[gk]) ? FIGS[gk].cap : '場地擺位圖（俯視）・照圖設場就得';
+    var fig = App.ph(gk, gcap, (DIAGRAMS.game && DIAGRAMS.game[g.n]) ? DIAGRAMS.game[g.n] : '');
     card.innerHTML = '<h3>'+g.n+' <span class="tag">'+g.cat+'</span> <span class="tag">'+g.minutes+'分鐘</span></h3>'+
       '<p><b>人數：</b>'+g.people+' &nbsp; <b>物資：</b>'+g.mats+'</p>'+
       '<p>'+g.desc+'</p>'+fig+

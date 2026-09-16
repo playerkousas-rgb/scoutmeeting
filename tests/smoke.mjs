@@ -4,7 +4,9 @@ const root = new URL('..', import.meta.url).pathname;
 const lessonFiles = ['js/c01-lesson.js','js/c02-lesson.js','js/c03-lesson.js','js/c04-lesson.js','js/c05-lesson.js','js/c06-lesson.js','js/c07-lesson.js','js/c08-lesson.js','js/c09-lesson.js','js/c10-lesson.js','js/c11-lesson.js','js/c12-lesson.js','js/c13-lesson.js','js/c14-lesson.js','js/c15-lesson.js','js/c16-lesson.js','js/c17-lesson.js','js/c18-lesson.js','js/c19-lesson.js','js/c20-lesson.js','js/c21-lesson.js','js/c22-lesson.js','js/c23-lesson.js','js/c24-lesson.js'];
 const files = ['index.html','manifest.webmanifest','sw.js','css/app.css','js/data.js','js/interests.js','js/ceremony.js','js/uniform.js','js/diagrams.js','js/svg-kit.js','js/songs.js','js/figs.js','js/app.js','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-512.png',
   'img/fig/cer-open.avif','img/fig/cer-close.avif','img/fig/cer-drill.avif','img/fig/cer-flag.avif',
-  'img/fig/cer-oath.avif','img/fig/cer-salute.avif','img/fig/fire-circle.avif','img/fig/fire-song.avif','img/fig/game-banner.avif', ...lessonFiles];
+  'img/fig/cer-oath.avif','img/fig/cer-salute.avif','img/fig/fire-circle.avif','img/fig/fire-song.avif',  'img/fig/game-ball.avif','img/fig/game-shape.avif','img/fig/game-tarp.avif','img/fig/game-pack.avif',
+  'img/fig/game-relay-cards.avif','img/fig/game-tug.avif','img/fig/game-aid.avif','img/fig/game-orienteer.avif',
+  'img/fig/game-beachflag.avif','img/fig/game-water.avif', ...lessonFiles];
 for (const f of files) {
   if (!existsSync(root + f)) { console.error('❌ Missing', f); process.exit(1); }
   console.log('✅', f);
@@ -207,9 +209,9 @@ console.log('✅ manifest：新 icon＋營火歌 shortcut');
 
 // sw.js
 const swSrc = readFileSync(root+'sw.js','utf8');
-if(!swSrc.includes('scout-v21') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v21'); process.exit(1); }
+if(!swSrc.includes('scout-v22') || !swSrc.includes('c24-lesson.js')){ console.error('❌ sw.js 未升級 v22'); process.exit(1); }
 if(!swSrc.includes('svg-kit.js') || !swSrc.includes('songs.js')){ console.error('❌ sw.js 未 cache v19 新檔'); process.exit(1); }
-console.log('✅ sw.js cache 已升級（v21 含 9 張中性示意圖）');
+console.log('✅ sw.js cache 已升級（v22 含 19 張示意圖）');
 
 // README
 const rm = readFileSync(root+'README.md','utf8');
@@ -220,7 +222,7 @@ const figSandbox = {}; createContext(figSandbox);
 runInContext(readFileSync(root+'js/figs.js','utf8'), figSandbox, {filename:'js/figs.js'});
 const FIGSJ = figSandbox.FIGS || {};
 const figKeys = Object.keys(FIGSJ);
-if (figKeys.length < 9) { console.error('❌ FIGS 不足 9 張，實際', figKeys.length); process.exit(1); }
+if (figKeys.length < 19) { console.error('❌ FIGS 不足 19 張，實際', figKeys.length); process.exit(1); }
 if (figKeys.some(k => k === 'note' || typeof FIGSJ[k] === 'string')) { console.error('❌ FIGS 混咗非圖項目（note 應該用全域 FIGS_NOTE）'); process.exit(1); }
 if (figSandbox.FIGS_NOTE !== undefined && !/唔代表制服標準/.test(figSandbox.FIGS_NOTE)) { console.error('❌ FIGS_NOTE 冇寫明唔代表制服標準'); process.exit(1); }
 for (const k of figKeys) {
@@ -278,5 +280,42 @@ for (const k of figKeys) {
 if (!swSrc.includes('./js/figs.js')) { console.error('❌ sw.js 未 cache figs.js'); process.exit(1); }
 if (!swSrc.includes('c.add(a).catch')) { console.error('❌ sw install 未改逐個 add（一張圖miss會拖冧全部）'); process.exit(1); }
 console.log('✅ 營火/歌插畫接線＋CSS 後備＋sw 預 cache（9 張）齊');
+// ═════════ v22：批次 2 — 遊戲場地圖插畫 ═════════
+const GF = figSandbox.GAME_FIG || {};
+const gfKeys = Object.keys(GF);
+if (gfKeys.length < 10) { console.error('❌ GAME_FIG 只覆蓋 '+gfKeys.length+' 個遊戲（應 10）'); process.exit(1); }
+for (const nm of gfKeys) {
+  if (!FIGSJ[GF[nm]]) { console.error('❌ GAME_FIG 指向冇圖嘅 key：'+nm+' → '+GF[nm]); process.exit(1); }
+}
+const noImg = ctx.DATA.games.filter(g => !GF[g.n]);
+if (noImg.length !== 2) { console.error('❌ 仲未補圖嘅遊戲應該得 2 個，實際 '+noImg.map(g=>g.n).join(',')); process.exit(1); }
+let phCnt = 0, dgmCnt = 0;
+for (const g of ctx.DATA.games) {
+  const gk = GF[g.n] || '';
+  const cap = (gk && FIGSJ[gk]) ? FIGSJ[gk].cap : '場地擺位圖';
+  const html = ctx.App.ph(gk, cap, ctx.DIAGRAMS.game[g.n]);
+  if (gk) {
+    if (!html.includes('class="ph-fig"') || !html.includes('img/fig/'+gk+'.avif')) { console.error('❌ 遊戲 '+g.n+' 冇用 AVIF 插畫'); process.exit(1); }
+    if (!html.includes('dgm-alt')) { console.error('❌ 遊戲 '+g.n+' 冇保留平面擺位圖後備'); process.exit(1); }
+    phCnt++;
+  } else {
+    if (!html.includes('class="dgm-fig"')) { console.error('❌ 遊戲 '+g.n+' 退回邏輯唔啱'); process.exit(1); }
+    dgmCnt++;
+  }
+  if (html.includes('undefined')) { console.error('❌ 遊戲 '+g.n+' markup 洩漏 undefined'); process.exit(1); }
+}
+if (!(phCnt===10 && dgmCnt===2)) { console.error('❌ 遊戲插畫覆蓋異常：ph='+phCnt+' dgm='+dgmCnt); process.exit(1); }
+for (const k of Object.keys(FIGSJ).filter(x=>x.indexOf('game-')===0)) {
+  const f = FIGSJ[k];
+  if (/帽章|領巾|布章|巾圈|旅巾|制服|團員|童軍帽/.test(f.alt)) { console.error('❌ '+k+' alt 描述咗制服／身份：', f.alt); process.exit(1); }
+  if (/平結|稱人結|八[字字]結|水手結/.test(f.alt)) { console.error('❌ '+k+' alt 畫咗繩結打法（禁止）'); process.exit(1); }
+}
+if (!/唔出繩結逐步圖/.test(FIGSJ['game-relay-cards'].cap) || !/唔出結圖/.test(FIGSJ['game-tug'].cap)) { console.error('❌ 繩結相關遊戲冇寫明「唔出結圖」'); process.exit(1); }
+if (!/絕對唔准衝向海邊/.test(FIGSJ['game-beachflag'].cap)) { console.error('❌ 沙灘旗圖冇寫海邊安全提示'); process.exit(1); }
+for (const k of Object.keys(FIGSJ).filter(x=>x.indexOf('game-')===0)) {
+  if (!swSrc.includes(FIGSJ[k].src)) { console.error('❌ sw.js 未 cache 遊戲圖：'+k); process.exit(1); }
+}
+try { ctx.App.pages.play(); } catch(e) { console.error('❌ pages.play 插畫接入後 render 失敗：', e.message); process.exit(1); }
+console.log('✅ 遊戲插畫：10 張 AVIF 場地圖＋2 個退回平面圖（ph='+phCnt+'/dgm='+dgmCnt+'）・sw 預 cache 齊');
 
-console.log('\n🎉 全部 smoke test 通過（v21：補圖批次 1 重做——動作／站位示意，唔畫制服）');
+console.log('\n🎉 全部 smoke test 通過（v22：補圖批次 2——遊戲 10 張場地圖）');
