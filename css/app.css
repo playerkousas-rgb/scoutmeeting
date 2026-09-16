@@ -3266,3 +3266,23 @@ textarea{font-family:inherit;border:1.5px solid var(--line);border-radius:12px;p
   .ph-credit{font-size:8pt;color:#444}
   .camp-page>.subnav{display:none!important}
 }
+
+/* ══════════ v35：圖解改用 AVIF 圖檔（用戶要求唔再用 SVG 出圖） ══════════ */
+.dgm-wrap img,.dgm-fig img,.dia-img{display:block;margin:0 auto;max-width:100%;height:auto;background:#fff;border-radius:8px}
+.svg-steps img.dia-img{border:1px solid #ccc;border-radius:8px;background:#fff;max-width:100%;height:auto}
+.dgm-fallback{margin:0 auto;text-align:center}
+.dgm-fallback svg{max-width:100%;height:auto;background:#fff}
+/* 🎖️ 興趣章：出官方章樣 */
+.badge-fig{margin:0;flex:0 0 auto;text-align:center;width:132px}
+.badge-fig img{display:block;width:132px;height:132px;background:transparent}
+.badge-fig figcaption{display:none}
+.badge-fig.imgfail{display:none}
+.badge-head{align-items:center}
+.badge-card{padding-top:10px}
+@media print{.badge-fig img{width:96px;height:96px}}
+/* 👕 制服服式圖（本地 AVIF） */
+.uniform-fig{margin:0 0 10px;text-align:center;background:#F7F6F1;border:1.5px solid var(--line);border-radius:14px;padding:8px}
+.uniform-fig img{display:block;margin:0 auto;max-width:100%;height:auto;border-radius:10px;background:#fff}
+.uniform-fig figcaption{font-size:.78rem;color:var(--mute);margin-top:6px;line-height:1.5}
+.uniform-fig.imgfail{display:none}
+.uniform-visual.no-print{display:flex;flex-direction:column;gap:6px;font-size:.8rem}

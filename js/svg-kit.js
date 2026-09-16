@@ -11,8 +11,12 @@ var D = (typeof DIAGRAMS !== 'undefined') ? DIAGRAMS : window.DIAGRAMS;
 function svg(w,h,label,body){
   return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" aria-label="'+label+'" style="max-width:100%;height:auto;background:#fff">'+body+'</svg>';
 }
-function T(x,y,s,size,fill,anchor,bold){
-  return '<text x="'+x+'" y="'+y+'" font-size="'+(size||11)+'" fill="'+(fill||'#333')+'" text-anchor="'+(anchor||'middle')+'"'+(bold?' font-weight="bold"':'')+'>'+s+'</text>';
+function T(x,y,s,size,fill,anchor,bold,halo){
+  /* halo＝文字背後一圈白邊：標籤坐喺線／圓點／圖形上面都睇得清（唔會遮住人形本身） */
+  return '<text x="'+x+'" y="'+y+'" font-size="'+(size||11)+'" fill="'+(fill||'#333')+'" text-anchor="'+(anchor||'middle')+'"'
+    + (bold?' font-weight="bold"':'')
+    + (halo?' stroke="#fff" stroke-width="2.6" stroke-linejoin="round" paint-order="stroke"':'')
+    + '>'+s+'</text>';
 }
 function dot(x,y,r,fill){ return '<circle cx="'+x+'" cy="'+y+'" r="'+(r||4.5)+'" fill="'+(fill||'#37474F')+'"/>'; }
 function sq(x,y,s,fill){ return '<rect x="'+(x-s)+'" y="'+(y-s)+'" width="'+(s*2)+'" height="'+(s*2)+'" rx="2" fill="'+fill+'"/>'; }
@@ -24,7 +28,7 @@ function row(x,y,n,gap,fill){ var s=''; for(var i=0;i<n;i++){ s+=dot(x+i*gap,y,4
 function pole(x,baseY,hh,col,label){
   return ln(x,baseY,x,baseY-hh,3,'#5D4037')
     +'<path d="M'+(x)+','+(baseY-hh)+' l20,5 l-20,5 z" fill="'+col+'"/>'
-    +T(x,baseY+12,label,10,'#5D4037');
+    +T(x,baseY+12,label,10,'#5D4037','middle',0,1);
 }
 var MK='<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#2E7D32" stroke="none"/></marker></defs>';
 
@@ -108,17 +112,58 @@ function fSFG(o){
 function fTOP(o){
   var sp = o.sp===undefined ? 30 : o.sp, g = o.gap||5, s = '';
   if (o.mm) g = o.mm*fS/2;
-  s += fln(0, -30, 0, 12, '#90A4AE', 1, 1);
-  for (var i=0;i<2;i++){
-    var dir = i===0 ? -1 : 1, hx = dir*g, hy = 0;
-    var fa = 180 + dir*sp;
-    var toe = fpv(hx, hy, fa, 17);
-    s += '<path d="M'+hx+','+hy+' L'+frd(toe[0])+','+frd(toe[1])+'" stroke="'+fA+'" stroke-width="6.4" stroke-linecap="round" data-ang="'+sp+'"/>';
-    if (o.arc) s += '<path d="M'+frd(hx)+','+(hy-13)+' A13,13 0 0 '+(i===0?0:1)+' '+frd(fpv(hx,hy,180+dir*sp,13)[0])+','+frd(fpv(hx,hy,180+dir*sp,13)[1])+'" stroke="'+fAT+'" stroke-width="1.4" fill="none" data-ang="'+sp+'"/>';
-  }
-  if (o.mm) s += fDIM(-g, 0, g, 0, o.dim, o.mm);
   if (o.shiftTo) s += fln(g, 0, o.shiftTo, 0, fAT, 1.4, 1) + fdot(o.shiftTo, 0, 2, fAT);
+  /* 中線＝正前方（兩腳之間），畫到腳跟後面少少 */
+  s += fln(0, 3, 0, -26, '#90A4AE', 1, 1);
+  /* 兩隻腳：腳跟喺 ±g，腳尖離中線 sp 度（俯視；每隻腳跟一條方向虛線幫眼睇角度） */
+  for (var i=0;i<2;i++){
+    var dir = i===0 ? -1 : 1;
+    s += fFOOT(dir*g, dir*sp);
+  }
+  /* 角度弧擺喺腳尖之外（半徑 30），唔會壓住隻腳 */
+  /* 兩個弧都由中線頂端向外掃，箭嘴指去「向外嗰邊」；標籤擺喺弧上面，唔會撞箭嘴 */
+  if (o.arc) s += fARC(0,0,30,0,sp) + fARC(0,0,30,0,-sp) + T(0,-38,'各 '+sp+'°',6.6,fAT,'middle',1);
+  /* 兩腳踭距離：尺寸線畫喺腳下面少少，數值再落一行——放喺兩腳之間會壓住隻腳 */
+  if (o.mm) s += fDIM(-g, 10, g, 10, '', o.mm) + T(0, 21, o.dim, 6.6, fAD, 'middle', 1);
   return s;
+}
+/* 白底數字標記（位置圖用）：號碼要有白底，先至唔會同斜帶／袖邊撞色睇唔清 */
+function pnum(x, y, t, c, fs){
+  fs = fs || 10;
+  return '<circle cx="'+x+'" cy="'+frd(y - fs*0.33)+'" r="'+frd(fs*0.66)+'" fill="#fff" opacity="0.92"/>'
+    + T(x, y, t, fs, c, 'middle');
+}
+/* 俯視一隻腳：腳跟喺 (hx,0)，腳尖向上再向外轉 deg 度（腳尖圓、腳跟窄，似返隻腳）
+   注意：唔用 <g rotate()> 巢式變換——直接算旋轉後嘅座標，測試嘅簡單 stack 解析器先至追得到。 */
+function fFOOT(hx, deg){
+  var r = deg*Math.PI/180;
+  function W(x, y){ return [frd(hx + x*Math.cos(r) + y*Math.sin(r)), frd(-x*Math.sin(r) + y*Math.cos(r))]; }
+  function L(pts){ return pts.map(function(p){ return p[0]+','+p[1]; }).join(' '); }
+  var heel = W(0, 0.6), toe = W(0, -26), a1 = W(-2.4, -2.4), a2 = W(-3.4, -16.4),
+      c1 = W(-3.4, -20.5), c2 = W(0, -20.5), c3 = W(3.4, -20.5), b1 = W(3.4, -16.4), b2 = W(2.4, -2.4);
+  return '<line x1="'+W(0,1.6)[0]+'" y1="'+W(0,1.6)[1]+'" x2="'+toe[0]+'" y2="'+toe[1]+'" stroke="#90A4AE" stroke-width="0.9" stroke-dasharray="3,2" data-ang="'+frd(Math.abs(deg))+'"/>'
+    + '<path d="M'+L([a1])+' Q'+L([a2])+' '+L([c1])+' Q'+L([c2])+' '+L([c3])+' Q'+L([b1])+' '+L([b2])+' Q'+L([heel])+' '+L([a1])+' z"'
+    + ' fill="'+fA+'" data-ang="'+frd(Math.abs(deg))+'"/>';
+}
+/* 白底數字標記（位置圖用）：號碼要有白底，先至唔會同斜帶／袖邊撞色睇唔清 */
+function pnum(x, y, t, c, fs){
+  fs = fs || 10;
+  return '<circle cx="'+x+'" cy="'+frd(y - fs*0.33)+'" r="'+frd(fs*0.66)+'" fill="#fff" opacity="0.92"/>'
+    + T(x, y, t, fs, c, 'middle');
+}
+/* 俯視一隻腳：腳跟喺 (hx,0)，腳尖向上再向外轉 deg 度（腳尖圓、腳跟窄，似返隻腳）
+   注意：唔用 <g rotate()> 巢式變換——直接算旋轉後嘅座標，測試嘅簡單 stack 解析器先至追得到。 */
+function fFOOT(hx, deg){
+  function P(x, y){ var p = fpv(hx, 0, deg, -y), q = [hx + (x)*Math.cos(deg*Math.PI/180) + (-y)*Math.sin(deg*Math.PI/180), 0]; return [frd(p[0]), frd(p[1])]; }
+  /* 用平面旋轉：局部 (x,y) → 世界（先繞原點轉 deg，再平移到腳跟） */
+  function W(x, y){
+    var r = deg*Math.PI/180;
+    return [frd(hx + x*Math.cos(r) + y*Math.sin(r)), frd(-x*Math.sin(r) + y*Math.cos(r))];
+  }
+  var heel = W(0, 0), toe = W(0, -26), a1 = W(-2.4, -2.4), a2 = W(-3.4, -16.4), b1 = W(3.4, -16.4), b2 = W(2.4, -2.4), c1 = W(-3.4, -19), c2 = W(3.4, -19);
+  return '<line x1="'+heel[0]+'" y1="'+heel[1]+'" x2="'+toe[0]+'" y2="'+toe[1]+'" stroke="#90A4AE" stroke-width="0.9" stroke-dasharray="3,2" data-ang="'+frd(Math.abs(deg))+'"/>'
+    + '<path d="M'+a1[0]+','+a1[1]+' Q'+a2[0]+','+a2[1]+' '+c1[0]+','+c1[1]+' Q0,'+frd(-19*Math.cos(deg*Math.PI/180)-hx*0)+' '+c2[0]+','+c2[1]+' Q'+b1[0]+','+b1[1]+' '+b2[0]+','+b2[1]+' L'+heel[0]+','+heel[1]+' z"'
+    + ' fill="'+fA+'" data-ang="'+frd(Math.abs(deg))+'"/>';
 }
 /* 正面人形（敬禮用；rArm=右手動作模式） */
 function fFGG(o){
@@ -131,7 +176,7 @@ function fFGG(o){
   else if (o.rArm === 'at') s += fln(7, -22, 20, -26) + fln(20, -26, 5, -32)
     + '<path d="M5,-32 L-1,-34.5 L-1,-30 z" fill="'+fA+'"/>'
     + fln(2.5,-30,2.5,-35.5,fAD,1) + fln(0.8,-30,4.2,-30,fAD,1) + fln(0.8,-35.5,4.2,-35.5,fAD,1)
-    + T(12,-30.5,'25mm',6.6,fAD,'start',1);
+    + T(12,-30.5,'25mm',6.6,fAD,'start',1,1);
   return s;
 }
 /* 毫米尺寸線（帶 data-mm 俾 test 核對） */
@@ -184,7 +229,7 @@ function fDGR(title, panels, cols, foot){
 /* 立正（第3章§2）— 會員章 m5 級；進階練習不進入集會套包 */
 /* 1. 立正〔第3章§2〕 */
 D.cer.attn = fDGR('立正 Position of Attention（第3章§2）', [
-  ['① 腳：腳尖向外與中線成 30 度', fTOP({sp:30, gap:4, arc:1}) + fln(0,-30,0,16,'#90A4AE',1,1),
+  ['① 腳：腳尖向外與中線成 30 度', fTOP({sp:30, gap:4, arc:1}),
     '兩腳掌平放地面・雙膝蹬直',
     '口令 Alert!（集會用）；Shun 類只用於典禮',
     '⚠️ 唔係 45 度 —— 手冊寫 30 度'],
@@ -226,8 +271,10 @@ D.cer.formup = fDGR('集隊：三排・標號員・司令員距離', [
   ['① 排好之後（頂視圖）', (function(){
       var s = fFILES(3,6);
       s += fln(0,-30,0,-19,'#90A4AE',1,1) + fdot(0,-34,4,'#2E7D32') + T(9,-31,'司令員',6.6,'#2E7D32','start',1);
-      s += fln(-4,-14,-4,-24,fAT,1.3,1) + T(-30,20,'相距 2250mm（90 吋）',6.6,fAT,'middle',1);
-      return s + T(-44,-4,'F1',6.6,fA,'end',1) + T(44,-4,'左標號員',6.4,fAT,'start',1);
+      /* 司令員→最前排 2250mm：左邊拉尺寸線，標籤擺喺隊形下面，唔會壓住啲圓點 */
+      s += fln(-58,-34,-58,-18.75,fAT,1.2,1) + fln(-61,-34,-55,-34,fAT,1.2) + fln(-61,-18.75,-55,-18.75,fAT,1.2);
+      return s + T(-44,-4,'F1',6.6,fA,'end',1) + T(44,-4,'左標號員',6.4,fAT,'start',1)
+        + T(0,33,'司令員同最前排相距 2250mm（90 吋）',6.6,fAT,'middle',1);
     })(),
     '最早到嘅企咗 F1（右標號員），其後向左伸延',
     '司令員與最前排相距 2250 毫米（90 英吋）',
@@ -250,7 +297,7 @@ D.cer.formup = fDGR('集隊：三排・標號員・司令員距離', [
     '中排同後排跟前排號數，唔使再報一次'],
   ['④ 人唔啱數：留空行', (function(){
       var s = fFILES(3,5,{skip:{3:[1,2]}});
-      return s + T(15,26,'留空嘅中排／後排',6.6,fAD,'middle',1) + fln(15,20,15,8,fAD,1,1);
+      return s + T(15,31,'留空嘅中排／後排',6.6,fAD,'middle',1,1) + fln(15,22,15,12,fAD,1,1);
     })(),
     '「BLANK — FILE!」— 留空行嘅做法',
     '打數 One—Two—Up—One—Two',
@@ -274,8 +321,8 @@ D.cer.dress = fDGR('睇齊：Up—Two—Three—Move', [
     '兩排版：前排右手叉腰（手背向天、放喺皮帶對上）'],
   ['③ 移到得一手位', (function(){
       var s = '<g transform="translate(-26,0)">'+fFGG({rArm:'side'})+'</g><g transform="translate(26,0)">'+fFGG({rArm:'side'})+'</g>';
-      s += fln(-14,32,14,32,fAD,1.1) + fln(-14,28,-14,36,fAD,1.1) + fln(14,28,14,36,fAD,1.1) + T(0,26,'一手位',6.6,fAD,'middle',1);  /* 口語距離，無毫米值——所以唔使 data-mm */
-      return s + T(0,-40,'行與行 375mm',6.8,fAD,'middle',1) + fDIM(-37.5,-34,37.5,-34,'排與排 1500mm',1500);
+      /* 一手位＝375mm：量左邊隊員嘅拳頭到右邊隊員嘅膊頭（按 0.05px/mm 畫，test 核對得返） */
+      return s + fDIM(-0.5,-34,18.25,-34,'375mm（一手位）',375) + T(0,26,'拳頭 → 右邊隊員膊頭',6.6,fAD,'middle');
     })(),
     '用碎步移動，移到與右邊隊員得「一隻手位」',
     '兩排版：行與行相隔 375mm、排與排 1500mm',
@@ -330,7 +377,7 @@ D.cer.howl = fDGR('團呼：馬蹄鐵隊形（字句屬團内傳統）', [
         s += fdot(30*Math.sin(ang), -30*Math.cos(ang)+10, 3.4, fA);
       }
       s += fdot(0,-26,4,'#2E7D32') + T(0,-34,'領袖／發號者',6.6,'#2E7D32','middle',1);
-      return s + fln(-12,30,12,30,'#90A4AE',1.2,1) + T(0,38,'開口位',6.4,fAT,'middle',1);
+      return s + fln(-12,30,12,30,'#90A4AE',1.2,1) + T(0,38,'開口位',6.4,fAT,'middle',1,1);
     })(),
     '馬蹄鐵形係手冊第8章§6 嘅官方隊形之一',
     '人人面對中心：領袖睇到每一個人，隊員亦見到領袖',
@@ -392,7 +439,7 @@ D.cer.salute3 = fDGR('原地向前敬禮（第3章§7）・Up—Two—Three—Do
     '打數 Up—Two—Three—Down',
     '左手握拳緊貼褲骨，雙腳腳掌平放'],
   ['② 「Up」向橫提至與肩膊平', fFGG({rArm:'side'})
-    + fln(-30,-22,30,-22,'#90A4AE',1,1) + T(0,-31,'肩膊水平線',6.6,'#6D4C41','middle'),
+    + fln(-30,-26,30,-26,'#90A4AE',1,1) + T(33,-29,'肩膊水平線',6.6,'#6D4C41','start'),
     '右手向橫提昇直至與肩膊平',
     '同時將右手握成童軍敬禮手號',
     '先向橫提至與肩膊平，先至擺前臂'],
@@ -450,7 +497,7 @@ D.cer.flag = svg(340,180,'升旗禮位置示意圖',
   +dot(64,84,5,'#37474F')+T(64,70,'旗手',10,'#2E7D32')
   +dot(276,84,5,'#37474F')+T(276,70,'護旗',10,'#2E7D32')
   +row(76,160,9,26)+row(76,174,9,26)
-  +T(64,158,'全體面向旗桿立正',10,'#666','start')
+  +T(20,150,'全體面向旗桿立正',10,'#666','start')
   +T(170,38,'奏國歌時同步揚旗・緩緩升至頂部',10.5,'#666')
   +T(170,54,'戴帽→三指舉手禮・無帽→注目禮',10.5,'#1565C0')
 );
@@ -461,7 +508,7 @@ D.cer.oath = svg(340,180,'宣誓儀式位置示意圖',
   +T(170,16,'宣誓儀式・站位（依儀式卡程序繪畫）',11.5,'#1B5E20','middle',1)
   +pole(170,64,26,'#C62828','團旗（中央）')
   +sq(112,70,6,'#2E7D32')+T(112,56,'團長',10.5,'#2E7D32')
-  +dot(170,76,5,'#F9A825')+T(170,92,'新成員：舉右手三指禮・跟讀誓詞',10.5,'#8D6E63')
+  +dot(170,86,5,'#F9A825')+T(170,102,'新成員：舉右手三指禮・跟讀誓詞',10.5,'#8D6E63','middle',0,1)
   +box(26,102,96,34,'#F3E5F5','#CE93D8')+T(74,116,'見證家長',10.5,'#6A1B9A')+T(74,129,'（前排／側坐）',10,'#6A1B9A')
   +box(218,102,96,34,'#E3F2FD','#90CAF9')+T(266,116,'資深成員',10.5,'#1565C0')+T(266,129,'持旗旁立',10,'#1565C0')
   +row(80,152,8,26)
@@ -534,7 +581,7 @@ D.game['繩索挑戰'] = svg(340,126,'繩索挑戰場地示意',
   +'<rect x="110" y="36" width="120" height="60" fill="none" stroke="#6D4C41" stroke-width="5" rx="4"/>'
   +dot(110,36)+dot(170,36)+dot(230,36)+dot(230,96)+dot(170,96)+dot(110,96)
   +T(170,68,'正方形',11,'#6D4C41')
-  +dot(70,48,4,'#999')+dot(58,64,4,'#999')+T(60,90,'隊員拉繩砌形',9.5,'#8D6E63','start')
+  +dot(70,48,4,'#999')+dot(58,64,4,'#999')+T(60,92,'隊員拉繩砌形',9.5,'#8D6E63','start',0,1)
   +T(170,116,'進階：砌星形・唔准講嘢・手唔可以離繩',10,'#8D6E63')
 );
 D.game['飛毯'] = svg(340,120,'飛毯場地示意',
@@ -573,7 +620,7 @@ D.game['拖木頭挑戰'] = svg(340,120,'拖木頭挑戰場地示意',
 );
 D.game['急救情境賽'] = svg(340,120,'急救情境賽站點示意',
   MK+T(170,14,'急救情境賽・一隊一張墊：抽卡 → 做＋講 → 評判核對',11,'#1B5E20','middle',1)
-  +box(20,36,88,58,'#FFEBEE','#E57373')+T(64,54,'處理區',10,'#C62828')+dot(44,78,4,'#37474F')+dot(62,78,4.5,'#90A4AE')+dot(80,78,4,'#37474F')+T(62,92,'「傷者」',9.5,'#666')
+  +box(20,36,88,58,'#FFEBEE','#E57373')+T(64,54,'處理區',10,'#C62828')+dot(44,78,4,'#37474F')+dot(62,78,4.5,'#90A4AE')+dot(80,78,4,'#37474F')+T(62,94,'「傷者」',9.5,'#666','middle',0,1)
   +arrow(114,64,134,64)
   +box(140,36,64,58,'#F5F5F5','#BDBDBD')+T(172,56,'情境卡',10,'#333')+T(172,70,'扭傷/燙親',9.5,'#666')+T(172,82,'鼻血/刺傷',9.5,'#666')
   +arrow(210,64,230,64)
@@ -583,12 +630,13 @@ D.game['急救情境賽'] = svg(340,120,'急救情境賽站點示意',
 D.game['定向尋寶'] = svg(340,130,'定向尋寶路線示意',
   MK+T(170,14,'定向尋寶・按任務卡方位逐站蓋印（每站有領袖睇住）',11,'#1B5E20','middle',1)
   +'<rect x="24" y="30" width="292" height="72" fill="#F1F8E9" stroke="#AED581" stroke-width="1.5"/>'
-  +sq(58,50,7,'#C62828')+T(58,38,'起',10,'#C62828')
-  +'<circle cx="150" cy="46" r="7" fill="#1565C0"/>'+T(150,34,'站1',10,'#1565C0')
-  +'<circle cx="240" cy="62" r="7" fill="#1565C0"/>'+T(240,50,'站2',10,'#1565C0')
-  +'<circle cx="188" cy="86" r="7" fill="#1565C0"/>'+T(188,102,'站3',10,'#1565C0')
-  +'<circle cx="284" cy="88" r="7" fill="#F9A825"/>'+T(284,114,'終點',10.5,'#E65100')
+  +sq(58,50,7,'#C62828')+'<circle cx="150" cy="46" r="7" fill="#1565C0"/>'
+  +'<circle cx="240" cy="62" r="7" fill="#1565C0"/>'+'<circle cx="188" cy="86" r="7" fill="#1565C0"/>'
+  +'<circle cx="284" cy="88" r="7" fill="#F9A825"/>'
   +arrow(66,52,140,48,'#2E7D32',1.5)+arrow(158,48,232,60,'#2E7D32',1.5)+arrow(236,68,196,82,'#2E7D32',1.5)+arrow(196,88,274,88,'#2E7D32',1.5)
+  +T(58,38,'起',10,'#C62828','middle',0,1)+T(150,34,'站1',10,'#1565C0','middle',0,1)
+  +T(240,50,'站2',10,'#1565C0','middle',0,1)+T(188,102,'站3',10,'#1565C0','middle',0,1)
+  +T(284,114,'終點',10.5,'#E65100','middle',0,1)
   +T(70,118,'🧭 例：向東50步 → 向北30步 …',10,'#666','start')
 );
 D.game['沙灘旗'] = svg(340,120,'沙灘旗場地示意',
@@ -729,13 +777,14 @@ D.fire.circle = svg(340,180,'營火圈座位示意圖',
   +'<circle cx="170" cy="94" r="38" fill="#FFF3E0" stroke="#FF8F00" stroke-width="2" stroke-dasharray="5,4"/>'
   +'<path d="M162,96 q8,-22 16,0 q8,-10 4,10 q-6,10 -24,0 q-4,-6 4,-10z" fill="#F9A825" stroke="#E65100" stroke-width="1.5"/>'
   +'<rect x="152" y="100" width="36" height="5" rx="2" fill="#6D4C41"/><rect x="156" y="105" width="28" height="5" rx="2" fill="#8D6E63"/>'
+  +'<rect x="140" y="59" width="60" height="14" rx="4" fill="#fff" opacity="0.88"/>'
   +T(170,70,'火圈範圍',9.5,'#E65100')
   +'<circle cx="170" cy="94" r="68" fill="none" stroke="#C8E6C9" stroke-width="1.5"/>'
   +(function(){var s='';for(var i=0;i<14;i++){var a=(i/14)*Math.PI*2;var x=170+Math.cos(a)*68,y=94+Math.sin(a)*68;
-    if(i===10){ s+=sq(x,y,6,'#2E7D32')+T(x,y-11,'領唱',9.5,'#2E7D32'); } else s+=dot(x,y,4.5,'#37474F');}return s;})()
+    if(i===10){ s+=sq(x,y,6,'#2E7D32')+T(x+2,y+13,'領唱',9,'#2E7D32','middle',0,1); } else s+=dot(x,y,4.5,'#37474F');}return s;})()
   +dot(296,150,5,'#1565C0')+T(296,166,'水桶/沙',9.5,'#1565C0')
   +dot(44,150,5,'#C62828')+T(44,166,'急救箱',9.5,'#C62828')
-  +T(170,130,'觀眾坐外圈・離火至少一臂以上',10,'#8D6E63')
+  +T(170,142,'觀眾坐外圈・離火至少一臂以上',10,'#8D6E63')
 );
 
 D.fire.flow = svg(340,150,'營火歌唱節目六段流程',
@@ -759,14 +808,14 @@ D.fire.flow = svg(340,150,'營火歌唱節目六段流程',
   +T(170,144,'領唱企圈內：見到晒所有人・大家見到佢張口；細聲歌坐近啲',10,'#8D6E63')
 );
 
-D.fire.scarf = svg(300,110,'營火袍示意',
+D.fire.scarf = svg(300,124,'營火袍示意',
   MK+T(150,14,'營火袍（Campfire Blanket/Robe）示意',11,'#1B5E20','middle',1)
   +'<path d="M118,26 L100,96 Q150,106 200,96 L182,26 Q150,16 118,26 z" fill="#4E342E" stroke="#3E2723" stroke-width="2"/>'
   +'<path d="M118,26 Q150,16 182,26 L182,40 Q150,30 118,40 z" fill="#6D4C41"/>'
   +'<rect x="112" y="52" width="20" height="20" rx="3" fill="#F9A825" stroke="#E65100"/>'
   +'<rect x="140" y="70" width="20" height="20" rx="3" fill="#C8E6C9" stroke="#2E7D32"/>'
   +'<rect x="168" y="50" width="20" height="20" rx="3" fill="#BBDEFB" stroke="#1565C0"/>'
-  +T(150,106,'布章至少兩枚縫喺袍上（營火章要求）',10,'#8D6E63')
+  +T(150,118,'布章至少兩枚縫喺袍上（營火章要求）',10,'#8D6E63')
 );
 /* ══════════ 👕 制服：徽章佩戴位置（v31）══════════
    《儀容與制服手冊》第 4.6／4.7 節只列位置唔易明，所以手繪位置圖；
@@ -786,9 +835,9 @@ D.uniform.chest = svg(340,200,'童軍制服胸袋徽章層次示意圖', MK
   +ln(100,66,240,66,1,'#C62828','3,3')
   +T(170,60,'袋蓋上方 3cm',9,'#C62828')
   +T(120,80,'①',13,'#C62828','middle')+T(148,80,'②',13,'#C62828','middle')
-  +T(134,108,'③',13,'#1565C0','middle')
+  +T(134,108,'③',13,'#1565C0','middle',0,1)
   +T(192,80,'④',13,'#2E7D32','middle')+T(218,80,'⑤',13,'#2E7D32','middle')
-  +T(206,108,'⑥',13,'#6A1B9A','middle')
+  +T(206,108,'⑥',13,'#6A1B9A','middle',0,1)
   +T(10,44,'右胸（着衫人嘅右手邊）',9.5,'#8D6E63','start')
   +T(330,44,'左胸',9.5,'#8D6E63','end')
   +T(170,166,'上層＝袋蓋上方 3cm　下層＝袋蓋上方　袋中央＝進度性獎章',9.5,'#8D6E63')
@@ -804,17 +853,17 @@ D.uniform.body = svg(340,250,'童軍制服徽章佩戴全位置示意圖', MK
   +'<path d="M208,62 L228,70 L236,124 L218,130 L216,92 z" fill="#F7E7C8" stroke="#C9A96A" stroke-width="2"/>'
   +box(130,118,42,28,'#FBF3E2','#B08D57',3)+ln(130,125,172,125,1.4,'#B08D57')
   +box(168,118,42,28,'#FBF3E2','#B08D57',3)+ln(168,125,210,125,1.4,'#B08D57')
-  +T(140,112,'①',10,'#C62828','middle')+T(158,112,'②',10,'#C62828','middle')
-  +T(151,138,'③',10,'#1565C0','middle')
-  +T(182,112,'④',10,'#2E7D32','middle')+T(200,112,'⑤',10,'#2E7D32','middle')
-  +T(189,138,'⑥',10,'#6A1B9A','middle')
-  +T(113,90,'⑦',10.5,'#E65100','middle')+T(227,90,'⑧',10.5,'#E65100','middle')
+  +pnum(140,112,'①','#C62828')+pnum(158,112,'②','#C62828')
+  +pnum(151,138,'③','#1565C0')
+  +pnum(182,112,'④','#2E7D32')+pnum(200,112,'⑤','#2E7D32')
+  +pnum(189,138,'⑥','#6A1B9A')
+  +pnum(117,88,'⑦','#E65100',10.5)+pnum(223,88,'⑧','#E65100',10.5)
   +'<path d="M204,66 L134,224" stroke="#2E7D32" stroke-width="7" fill="none" opacity=".45"/>'
   +'<rect x="176" y="88" width="9" height="9" fill="#fff" stroke="#2E7D32"/>'
   +'<rect x="164" y="114" width="9" height="9" fill="#fff" stroke="#2E7D32"/>'
   +'<rect x="152" y="140" width="9" height="9" fill="#fff" stroke="#2E7D32"/>'
   +'<rect x="140" y="166" width="9" height="9" fill="#fff" stroke="#2E7D32"/>'
-  +T(196,74,'⑨',10.5,'#00695C','middle')
+  +pnum(188,74,'⑨','#00695C',10.5)
   +T(96,152,'右袖',9,'#8D6E63')
   +T(244,152,'左袖',9,'#8D6E63')
   +T(170,244,'⑦⑧＝衫袖徽章（由上至下）　⑨＝專章帶（左肩斜落右腰）',9.5,'#8D6E63')
@@ -882,25 +931,25 @@ D.uniform.kilwell = svg(340,205,'基維爾木章皮繩佩戴位置示意圖', MK
   +'<path d="M36,92 L76,92 L88,140 L24,140 z" fill="#F7E7C8" stroke="#C9A96A" stroke-width="1.5"/>'
   +'<path d="M46,90 L56,110 L66,90 z" fill="#C8E6C9" stroke="#2E7D32" stroke-width="1.3"/>'
   +'<circle cx="56" cy="128" r="5" fill="#8D6E63" stroke="#4E342E" stroke-width="1.2"/>'
-  +T(56,158,'領巾制服',9.5,'#37474F','middle',1)+T(56,172,'掛領巾前面',8.5,'#8D6E63')
+  +T(56,158,'領巾制服',9.5,'#37474F','middle',1,1)+T(56,172,'掛領巾前面',8.5,'#8D6E63')
   +T(56,186,'皮繩藏頸後',8.5,'#8D6E63')
   +'<circle cx="170" cy="76" r="12" fill="#EFE0C8" stroke="#C9A96A" stroke-width="1.4"/>'
   +'<path d="M150,92 L190,92 L202,140 L138,140 z" fill="#F7E7C8" stroke="#C9A96A" stroke-width="1.5"/>'
   +tieFig(170,90,'#1B5E20')
   +'<circle cx="170" cy="110" r="5" fill="#8D6E63" stroke="#4E342E" stroke-width="1.2"/>'
-  +T(170,158,'領帶制服',9.5,'#37474F','middle',1)+T(170,172,'掛領帶前面',8.5,'#8D6E63')
+  +T(170,158,'領帶制服',9.5,'#37474F','middle',1,1)+T(170,172,'掛領帶前面',8.5,'#8D6E63')
   +T(170,186,'皮繩照穿頸項',8.5,'#8D6E63')
   +'<circle cx="284" cy="76" r="12" fill="#EFE0C8" stroke="#C9A96A" stroke-width="1.4"/>'
   +'<path d="M264,92 L304,92 L316,140 L252,140 z" fill="#ECEFF1" stroke="#90A4AE" stroke-width="1.5"/>'
   +'<path d="M262,92 L284,120 L306,92" fill="none" stroke="#455A64" stroke-width="1.6"/>'
   +'<circle cx="284" cy="102" r="5" fill="#8D6E63" stroke="#4E342E" stroke-width="1.2"/>'
-  +T(284,158,'禮服',9.5,'#37474F','middle',1)+T(284,172,'皮繩藏翻領內',8.5,'#8D6E63')
+  +T(284,158,'禮服',9.5,'#37474F','middle',1,1)+T(284,172,'皮繩藏翻領內',8.5,'#8D6E63')
   +T(284,186,'只露出木珠',8.5,'#8D6E63')
 );
 
 /* 局部放大圖：左胸袋／右袖肩膊——跟《儀容與制服手冊》本身嘅放大插圖同一個做法，
    將最易擺錯嘅兩處單獨放大，標埋實際距離（3cm／2cm／1cm） */
-D.uniform.zoom = svg(340,270,'徽章位置局部放大圖：左胸袋與右袖肩膊', MK
+D.uniform.zoom = svg(340,280,'徽章位置局部放大圖：左胸袋與右袖肩膊', MK
   +T(170,14,'局部放大：左胸袋／右袖肩膊（照手冊比例縮畫）',11,'#1B5E20','middle',1)
   /* 左胸袋放大 */
   +'<circle cx="92" cy="145" r="80" fill="#FFFDF6" stroke="#C9A96A" stroke-width="1.6"/>'
@@ -910,30 +959,30 @@ D.uniform.zoom = svg(340,270,'徽章位置局部放大圖：左胸袋與右袖�
   +ln(60,104,92,126,1.4,'#B08D57')+ln(124,104,92,126,1.4,'#B08D57')
   +ln(40,104,144,104,1,'#C62828','3,3')
   +T(92,100,'袋蓋上方 3cm',8.5,'#C62828')
-  +T(92,115,'④',11,'#C62828')
-  +T(92,132,'⑤',9.5,'#1565C0')
-  +T(92,152,'⑥',9.5,'#6A1B9A')
+  +pnum(92,115,'④','#C62828',11)
+  +pnum(92,132,'⑤','#1565C0',9.5)
+  +pnum(92,152,'⑥','#6A1B9A',9.5)
   +T(92,166,'會員章＝袋中央',8,'#6A1B9A')
   +'<path d="M150,104 L150,120" stroke="#C62828" stroke-width="1.2" marker-start="url(#ah)" marker-end="url(#ah)"/>'
-  +T(158,115,'3cm',8.5,'#C62828','start')
+  +T(162,115,'3cm',8.5,'#C62828','start',0,1)
   +T(92,196,'宣誓後才可戴會員章',8.5,'#8D6E63')
   /* 右袖肩膊放大 */
   +'<circle cx="250" cy="145" r="80" fill="#FFFDF6" stroke="#C9A96A" stroke-width="1.6"/>'
   +T(250,84,'⑦ 右袖肩膊（放大）',10,'#E65100','middle',1)
-  +'<path d="M226,108 L274,108 L280,140 L220,140 z" fill="#F7E7C8" stroke="#C9A96A" stroke-width="1.6"/>'
-  +T(250,102,'肩膊線',8,'#8D6E63')
-  +ln(214,120,286,120,1,'#C62828','3,3')
-  +T(250,116,'旅章：肩膊下 2cm',8.5,'#C62828')
-  +box(240,122,20,14,'#FFF8E1','#C62828',2)
-  +sq(250,166,0,'#fff')
-  +box(222,148,20,14,'#E8F5E9','#2E7D32',2)
-  +T(232,158,'地域',7.5,'#2E7D32')
-  +box(258,148,20,14,'#E8F5E9','#2E7D32',2)
-  +T(268,158,'區',7.5,'#2E7D32')
-  +'<path d="M244,170 L256,170" stroke="#2E7D32" stroke-width="1.2" marker-start="url(#ah)" marker-end="url(#ah)"/>'
-  +T(250,180,'兩章相距 1cm（地域前、區後）',8,'#2E7D32')
-  +T(250,146,'旅章下 2cm',8,'#C62828')
-  +T(250,196,'由上至下：旅章 → 地域 → 區',8.5,'#8D6E63')
+  +'<path d="M226,104 L274,104 L280,150 L220,150 z" fill="#F7E7C8" stroke="#C9A96A" stroke-width="1.6"/>'
+  +T(250,96,'肩膊線（旅章喺下面 2cm）',8.5,'#8D6E63')
+  +'<path d="M212,104 L212,126" stroke="#C62828" stroke-width="1.2" marker-start="url(#ah)" marker-end="url(#ah)"/>'
+  +T(208,118,'2cm',8,'#C62828','end')
+  +ln(220,126,280,126,1,'#C62828','3,3')
+  +box(240,128,20,14,'#FFF8E1','#C62828',2)
+  +T(250,138,'旅章',7.5,'#C62828')
+  +box(222,152,20,14,'#E8F5E9','#2E7D32',2)
+  +T(232,162,'地域',7.5,'#2E7D32')
+  +box(258,152,20,14,'#E8F5E9','#2E7D32',2)
+  +T(268,162,'區',7.5,'#2E7D32')
+  +'<path d="M244,174 L256,174" stroke="#2E7D32" stroke-width="1.2" marker-start="url(#ah)" marker-end="url(#ah)"/>'
+  +T(250,184,'兩章相距 1cm（地域前、區後）',8,'#2E7D32')
+  +T(250,200,'由上至下：旅章 → 地域 → 區',8.5,'#8D6E63')
   +T(170,230,'點解要放大：袋蓋上方同袋中央係兩個唔同高度，差 3cm 就好易擺錯。',9,'#455A64')
   +T(170,246,'帽章／領巾／頭髮規格見「✅ 自查清單」；實際樣式以總會官網圖為準。',9,'#455A64')
 );
@@ -947,7 +996,7 @@ D.uniform.scarf = svg(340,215,'旅巾綁法與長度規格', MK
   +'<path d="M150,74 L170,74 L188,74 L196,150 L170,132 L144,150 z" fill="#C8E6C9" stroke="#2E7D32" stroke-width="1.6"/>'
   +T(170,163,'巾尖喺背中央',8.5,'#2E7D32')
   +'<path d="M144,96 L196,96" stroke="#1565C0" stroke-width="1.2" marker-start="url(#ah)" marker-end="url(#ah)"/>'
-  +T(170,92,'捲巾直徑約 3.5cm',8.5,'#1565C0')
+  +T(170,92,'捲巾直徑約 3.5cm',8.5,'#1565C0','middle',0,1)
   +'<path d="M206,74 L206,150" stroke="#6A1B9A" stroke-width="1.2" marker-start="url(#ah)" marker-end="url(#ah)"/>'
   +T(212,116,'底至尖 12–15cm',8.5,'#6A1B9A','start')
   +ln(96,178,250,178,2,'#5D4037')
@@ -973,6 +1022,37 @@ D.skillx.faint = svg(340,132,'復原臥式側臥示意', MK
   +T(206,116,'上膝屈前踏地',9,'#8D6E63')
   +T(170,128,'轉身前後都要睇呼吸；唔好墊枕頭、唔好仰臥',8.5,'#A1887F')
 );
+
+/* ══════════ v35：圖解改用 AVIF 圖檔（用戶要求唔再出 SVG） ══════════
+ * 上面所有手繪 SVG 只係「底稿」：喺度一次過換成 img/dia/*.avif（由同一張底稿放大 raster 出嚟，靚好多）。
+ * 換走嘅 SVG 會存落 IMG.svg，只做後備——瀏覽器唔支援 AVIF 或者圖檔 load 唔到時自動換返。
+ */
+(function(){
+  if (typeof IMG === 'undefined' || !IMG.map) return;
+  var groups = [['cer', D.cer], ['uniform', D.uniform], ['game', D.game], ['skillx', D.skillx], ['fire', D.fire]];
+  groups.forEach(function(g){
+    var name = g[0], box = g[1];
+    if (!box) return;
+    Object.keys(box).forEach(function(k){
+      var key = name + '.' + k;
+      if (!IMG.map[key] || typeof box[k] !== 'string') return;
+      if (box[k].indexOf('<svg') !== 0) return;
+      IMG.svg[key] = box[k];
+      box[k] = IMG.html(key, 'dia-img', 'onerror="' + IMG.onerr(key) + '"');
+    });
+  });
+  [['top', D, ['compass', 'pack']], ['track', D.track, null]].forEach(function(g){
+    var prefix = g[0], box = g[1], only = g[2];
+    if (!box) return;
+    (only || Object.keys(box)).forEach(function(k){
+      var key = prefix + '.' + k;
+      if (!IMG.map[key] || typeof box[k] !== 'string') return;
+      if (box[k].indexOf('<svg') !== 0) return;
+      IMG.svg[key] = box[k];
+      box[k] = IMG.html(key, 'dia-img', 'onerror="' + IMG.onerr(key) + '"');
+    });
+  });
+})();
 
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = DIAGRAMS;
