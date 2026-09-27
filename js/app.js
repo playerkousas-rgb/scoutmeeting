@@ -2,12 +2,25 @@
 var App = {};
 
 App.init = function(){
-  App.renderFlow();
+  App.syncBottomBar();
+  window.addEventListener('resize', App.syncBottomBar);
+  if(typeof ResizeObserver !== 'undefined'){
+    App._bottomBarObserver = new ResizeObserver(App.syncBottomBar);
+    App._bottomBarObserver.observe(document.getElementById('tabbar'));
+  }
   window.addEventListener('hashchange', App.route);
   window.addEventListener('online', App.netState);
   window.addEventListener('offline', App.netState);
   App.netState();
   App.route();
+};
+
+/* 量度實際頁底列高度，為頁面內容及浮動按鈕預留空間。 */
+App.syncBottomBar = function(){
+  var bar = document.getElementById('tabbar');
+  if(!bar) return;
+  var height = Math.ceil(bar.getBoundingClientRect().height);
+  if(height > 0) document.documentElement.style.setProperty('--tabbar-height', height + 'px');
 };
 
 App.netState = function(){
@@ -64,12 +77,6 @@ App.projFab = function(){
 };
 
 /* 全站搜尋 */
-
-App.renderFlow = function(){
-  var fb = document.getElementById('flowbar');
-  if(!fb) return;
-  fb.innerHTML = '<small>🧭 選集會 → 印教材 → 執袋 → 設場 → 帶領</small>';
-};
 
 App.h = function(tag, cls, html){
   var el = document.createElement(tag);
@@ -701,7 +708,8 @@ App.renderMeeting = function(tid){
         var k = sec.id || ('sec'+i);
         var a = null;
         anchors.forEach(function(x){ if (x.id === k) a = x; });
-        items.push({ k:k, ic:(a && a.ic) || '📄', n:(a && a.n) || sec.getAttribute('data-title') || ('第 '+(i+1)+' 節') });
+        var label = (a && a.n) || sec.getAttribute('data-title') || ('第 '+(i+1)+' 節');
+        items.push({ k:k, ic:(a && a.ic) || '📄', n:(i+1)+'. '+label });
       });
       secs.forEach(function(sec, i){
         var pane = App.h('div','tabpane'+(i===0?'':' hidden'));
