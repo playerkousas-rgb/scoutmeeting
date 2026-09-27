@@ -30,7 +30,7 @@ small,.mut{color:var(--mute)}
 .topbtns{display:flex;gap:5px}
 @media(max-width:420px){.brand{font-size:.94rem}.iconbtn{width:33px;height:33px;font-size:1.02rem;border-radius:10px}
   #topbar{padding:8px 10px}}
-#view{max-width:860px;margin:0 auto;padding:14px 14px 108px}
+#view{max-width:860px;margin:0 auto;padding:14px 14px 132px}
 /* ---- 上下兩條導航：🅰️ 上方＝事前準備 ／ 🅱️ 下方＝即插即用 ---- */
 .navcap{font-size:.62rem;font-weight:800;letter-spacing:.3px;text-align:center;padding:2px 6px 1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -60,6 +60,8 @@ small,.mut{color:var(--mute)}
 #tabbar a span{font-size:1.4rem;filter:grayscale(.5);transition:.15s}
 #tabbar a.on,#tabbar a.cur{color:var(--grd)}
 #tabbar a.on span,#tabbar a.cur span{filter:none;transform:translateY(-2px)}
+.bottom-credit{margin:0;padding:4px 10px 5px;text-align:center;background:var(--brand-dark,#1B5E20);color:#E8F5E9;line-height:1.35}
+.bottom-credit small{display:block;color:inherit;font-size:clamp(.56rem,2.5vw,.68rem);font-weight:600;letter-spacing:.01em}
 @media(max-width:380px){#topnav .navrow a{font-size:.66rem}#tabbar a{font-size:.68rem}
   #topnav .navrow a span{font-size:1.05rem}#tabbar a span{font-size:1.25rem}}
 @media(max-width:340px){.navcap{font-size:.56rem}#topnav .navrow a,#tabbar a{font-size:.62rem}
@@ -123,7 +125,7 @@ small,.mut{color:var(--mute)}
 .song-act small{display:block;color:var(--mute);font-size:.78rem;margin-top:1px}
 /* ---- 🧭 嚮導條：揀咗集會之後一步步帶到散會（貼喺工具箱上面） ---- */
 #flowbar{position:fixed;left:0;right:0;bottom:0;z-index:51;pointer-events:none}
-#flowbar.on{pointer-events:auto;bottom:calc(64px + env(safe-area-inset-bottom))}
+#flowbar.on{pointer-events:auto;bottom:calc(100px + env(safe-area-inset-bottom))}
 #flowbar.on>*{box-sizing:border-box}
 #flowbar.on>*{max-width:860px;margin:0 auto}
 .fb-top{display:flex;align-items:center;gap:6px;background:linear-gradient(95deg,#2e7d32,#66bb6a);
@@ -2164,11 +2166,9 @@ figure.fig figcaption{font-size:.76rem;color:var(--mute);padding:7px 10px;border
   --bg:#F3F8F4;--card:#ffffff;--line:#FFE0B2;--ink:#3E2723;--mute:#8D6E63;
 }
 #topbar{background:linear-gradient(95deg,var(--ord),var(--or));color:#fff}
-#view{padding:14px 14px 108px;max-width:860px}
+#view{padding:14px 14px 132px;max-width:860px}
 
 /* ==== 舊版 Cub 特有元件保留（制服、敬禮、追蹤、教材台） ==== */
-.site-footer{text-align:center;padding:12px 16px 24px;color:var(--mute);font-size:12px}
-@media print{.site-footer{display:none!important}}
 /* Source-grounded teaching diagrams and independent ceremony cue reader. */
 .uniform-map,.scarf-map{display:block;width:100%;max-width:640px;height:auto;margin:18px auto}
 .uniform-map text,.scarf-map text{font-family:inherit;fill:#30283c}
@@ -2967,7 +2967,7 @@ ul.motto li{ font-size:15px; }
 .proj-fab{position:fixed;right:14px;z-index:45;background:#1565C0;color:#fff;border-radius:99px;
   padding:10px 15px;font-weight:800;font-size:.86rem;box-shadow:0 6px 18px rgba(13,71,161,.35);
   bottom:calc(64px + env(safe-area-inset-bottom))}
-@media(min-width:900px){.proj-fab{bottom:22px}}
+@media(min-width:900px){.proj-fab{bottom:calc(104px + env(safe-area-inset-bottom))}}
 body.proj-on #app,body.proj-on #projfab,body.proj-on #leadroot{display:none!important}
 
 /* ---- 投影畫面 ---- */
@@ -3148,7 +3148,7 @@ textarea{font-family:inherit;border:1.5px solid var(--line);border-radius:12px;p
   .brand{font-size:.9rem;line-height:1.2;min-width:0}
   .branch-tag{display:none}
   .iconbtn{width:44px;height:44px;flex-basis:44px;font-size:1.15rem}
-  #view{padding:12px 12px 112px}
+  #view{padding:12px 12px 136px}
   h1{font-size:1.42rem}
   h2{font-size:1.12rem}
   .lede{font-size:.92rem;padding:10px 12px}
@@ -3163,7 +3163,7 @@ textarea{font-family:inherit;border:1.5px solid var(--line);border-radius:12px;p
   .sec .print-btn,.sec .proj-btn{min-height:44px;padding:7px 9px}
   .card-actions,.aid-ops{display:flex;flex-wrap:wrap;gap:7px}
   .card-actions button,.aid-ops button{margin:0}
-  .proj-fab{bottom:calc(68px + env(safe-area-inset-bottom));right:10px;min-height:44px}
+  .proj-fab{bottom:calc(104px + env(safe-area-inset-bottom));right:10px;min-height:44px}
 
   .role-guide{grid-template-columns:1fr;gap:7px}
   .role-guide>div{padding:10px 12px}
