@@ -3,11 +3,25 @@ var App = {};
 
 App.init = function(){
   App.renderFlow();
+  App.syncBottomBar();
+  window.addEventListener('resize', App.syncBottomBar);
+  if(typeof ResizeObserver !== 'undefined'){
+    App._bottomBarObserver = new ResizeObserver(App.syncBottomBar);
+    App._bottomBarObserver.observe(document.getElementById('tabbar'));
+  }
   window.addEventListener('hashchange', App.route);
   window.addEventListener('online', App.netState);
   window.addEventListener('offline', App.netState);
   App.netState();
   App.route();
+};
+
+/* 量度實際頁底列高度，避免窄螢幕換行時同流程提示重疊。 */
+App.syncBottomBar = function(){
+  var bar = document.getElementById('tabbar');
+  if(!bar) return;
+  var height = Math.ceil(bar.getBoundingClientRect().height);
+  if(height > 0) document.documentElement.style.setProperty('--tabbar-height', height + 'px');
 };
 
 App.netState = function(){

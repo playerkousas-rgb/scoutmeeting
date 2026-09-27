@@ -11,7 +11,7 @@
 - **CSS 清走 SVG selector**：刪 18 條死規則（`craft-* svg`／`vl-card svg`／`venuepic svg`／`ldia svg`／`parachute-visual svg`／`dgm-fallback svg`／`.body-svg-wrap` 等）；`.svg-steps` 只係版面 class 名，唔會產生 SVG。
 - **唯一 SVG 檔**（`img/icon-192.svg`，icon 來源）搬去 `assets_src/icons/`：前端資料夾只剩 AVIF／PNG／JS／CSS。
 - **測試加守則**（`npm test`）：① 37 個前端檔案逐個掃 `<svg>`／`.svg` 檔引用（掃之前剷走註解，唔會誤中解釋性註解）② 驗 `IMG.map` 54 張圖全部經 `DIAGRAMS` 出到 `<img src="img/dia/*.avif">`③ `js/dia.js` 冇 `IMG.svg` ④ 手繪底稿嘅幾何斷言（尺寸線比例、立正 30°、文字唔出框）改為讀 `assets_src/diasvg/*.src.js`——圖同底稿仍然綁埋一齊驗。
-- PWA cache：`scout-v38-c24-20260927`。
+- PWA cache：`scout-v39-c24-20260927`。
 
 ## ✅ v36 進度（制服圖重畫：徽章佩戴位置全部有圖）
 - **制服 9 張圖全部重畫**（用戶：制服內嘅 SVG 好醜、徽章佩戴要有圖）：`chest`（胸袋上下層）／`zoom`（左胸袋＋右袖肩膊放大）／`sleeve`（右袖由上至下 5 個位置）／`body`（全身衫袖肩帶）／`scarf`（旅巾佩戴＋照比例規格＋捲巾四步）／`ties`（領帶 4 色）／`kilwell`（木章皮繩三種制服）／`cap`（軟帽帽章帽邊＋髮式）／`branch`（陸海空顏色配搭對照）。新圖用「乾淨制服實物圖底圖（AI 生成中性衣物，唔畫任何徽章）＋程式（PIL）照 `UNIFORM.placement` 精確疊加位置線／尺寸線／①–⑨ 編號」，所以章位一律由程式決定，冇 AI 亂畫章位嘅問題（守住 v21 禁令嘅原意）。
@@ -155,7 +155,7 @@
 
 ## 技術
 - 純靜態 HTML/CSS/vanilla JS，無 build
-- PWA：Service Worker `scout-v38-c24-20260927`（逐檔 add，缺圖唔會拖冧核心預緩存）
+- PWA：Service Worker `scout-v39-c24-20260927`（逐檔 add，缺圖唔會拖冧核心預緩存）
 - 示意圖片：`img/fig/*.avif`（AVIF，38 張約 1.17MB）；資料喺 `js/figs.js`（遊戲名→`GAME_FIG`、技能→`SKILL_FIG`、急救→`AID_FIG`）。`game-chairs.avif` 係 CC BY-SA 網上相片轉檔，來源見 `img/fig/SOURCES.md`；其他圖片歷史見 `HANDOVER.md`。
 - 圖解（全部 AVIF、**前端零 SVG**）：`img/dia/*.avif`（54 張約 964KB，制服 9 張佔約 516KB）＋ `js/dia.js`（`IMG.map` 對照表＋自動砌 `DIAGRAMS.*`，每個 key 出 `<img>`）；手繪 SVG 底稿只留喺 `assets_src/diasvg/`（build-only，唔會下載），`img/dia/SOURCES.md` 記尺寸、畫法同重製步驟。圖載唔到就出 alt 文字（`IMG.fallback`），唔會退回 SVG。
 - 官方圖：興趣章 `img/badge/*.avif`（33 張，童軍資訊站《童軍訓練綱要》）、制服服式圖 `img/uni/*.avif`（3 張，香港童軍總會官網）；來源同授權見 `img/badge/SOURCES.md`、`img/uni/SOURCES.md`。
