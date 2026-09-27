@@ -2,7 +2,6 @@
 var App = {};
 
 App.init = function(){
-  App.renderFlow();
   App.syncBottomBar();
   window.addEventListener('resize', App.syncBottomBar);
   if(typeof ResizeObserver !== 'undefined'){
@@ -16,7 +15,7 @@ App.init = function(){
   App.route();
 };
 
-/* 量度實際頁底列高度，避免窄螢幕換行時同流程提示重疊。 */
+/* 量度實際頁底列高度，為頁面內容及浮動按鈕預留空間。 */
 App.syncBottomBar = function(){
   var bar = document.getElementById('tabbar');
   if(!bar) return;
@@ -78,12 +77,6 @@ App.projFab = function(){
 };
 
 /* 全站搜尋 */
-
-App.renderFlow = function(){
-  var fb = document.getElementById('flowbar');
-  if(!fb) return;
-  fb.innerHTML = '<small>🧭 選集會 → 印教材 → 執袋 → 設場 → 帶領</small>';
-};
 
 App.h = function(tag, cls, html){
   var el = document.createElement(tag);
@@ -715,7 +708,8 @@ App.renderMeeting = function(tid){
         var k = sec.id || ('sec'+i);
         var a = null;
         anchors.forEach(function(x){ if (x.id === k) a = x; });
-        items.push({ k:k, ic:(a && a.ic) || '📄', n:(a && a.n) || sec.getAttribute('data-title') || ('第 '+(i+1)+' 節') });
+        var label = (a && a.n) || sec.getAttribute('data-title') || ('第 '+(i+1)+' 節');
+        items.push({ k:k, ic:(a && a.ic) || '📄', n:(i+1)+'. '+label });
       });
       secs.forEach(function(sec, i){
         var pane = App.h('div','tabpane'+(i===0?'':' hidden'));
