@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "rm -rf public && mkdir -p public && cp index.html manifest.webmanifest sw.js public/ && cp -R css js img icons public/ && find public -type f \\( -iname '*.md' -o -iname '*.psd' -o -iname '*.ai' -o -iname '*.zip' -o -iname '*.pdf' \\) -delete",
+  "outputDirectory": "public",
+  "git": {
+    "deploymentEnabled": {
+      "*": false,
+      "main": true
+    }
+  }
+}
