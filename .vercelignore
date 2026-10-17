@@ -1,0 +1,26 @@
+# Development sources, automation and documentation (not needed by the static PWA).
+.git/
+.github/
+assets_src/
+image-search/
+tests/
+test/
+scripts/
+tools/
+docs/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+*.md
+*.psd
+*.ai
+*.zip
+*.pdf
+*.log
+.env*
+# No locally hosted PDF downloads currently exist. If one is added, explicitly
+# allow its runtime path here, e.g. !img/downloads/worksheet.pdf
+
+# Always regenerate the deploy output from runtime sources.
+public/

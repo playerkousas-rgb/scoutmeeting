@@ -4,3 +4,6 @@ assets_src/figsrc/
 image-search/
 assets_src/badges_raw/
 assets_src/unicrop/
+
+# Generated static deployment output
+public/

@@ -175,6 +175,15 @@ python3 -m http.server 8080
 npm test   # smoke test（c01–c24 全覆蓋＋全部 tab render＋插畫/投屏/搜尋，163 項全通過）
 ```
 
+## Vercel 部署瘦身與防呆
+
+- `vercel.json` 只允許 `main` 的 Git 自動部署（其他分支關閉）；本分支的設定須合併至 `main` 才會套用正式部署。
+- 本站是無依賴的靜態 PWA，部署時跳過套件安裝。Build 只將 `index.html`、`manifest.webmanifest`、`sw.js`、`css/`、`js/`、`img/`、`icons/` 複製到新建的 `public/`，並移除文件／設計格式。只有 `public/` 會對外發布，Git 整合部署也不會公開測試或設計底稿。
+- `.vercelignore` 另外減少 CLI 上傳內容：排除原始設計、測試、腳本、文件、壓縮檔及 PDF。目前 PDF 都是外站連結，沒有本地下載檔；日後若新增前端下載 PDF，須同時調整 `.vercelignore` 的例外與 `buildCommand` 的 PDF 排除規則。
+- 圖片檢查（2026-10-17）：沒有超過 500 KB 的 PNG；教材插圖已使用 AVIF，保留 PWA 所需 PNG 圖示。日後超過 500 KB 的 PNG 應壓縮或轉 WebP，目標單檔小於 200 KB，並同步更新引用及 Service Worker 快取版本。
+- 目前沒有 `.github/workflows/` 自動爬蟲；日後如加入，純爬蟲自動更新的 commit 訊息應加上 `[skip ci]`，避免觸發不必要的部署。
+- `npm run test:deployment` 會在暫存目錄執行真正的部署 build，檢查部署檔案、HTML／Service Worker 資源、巨型 PNG 和舊輸出清理；亦已納入 `npm test`。
+
 ## 下一步
 - 覆核《儀容與制服手冊》Drive 第 8 個檔案（第 7 個＝第三章制服配件已讀，距離數值已寫入 UNIFORM.placement：旅章肩膊位下方 2cm、地域／區章相距 1cm、香港章 3cm、世界童軍會員章左胸袋中央）
 - 技能圖如需再補：項目已有 12 張，可按領袖實測回饋加
