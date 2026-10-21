@@ -4,6 +4,20 @@
 
 > **定位**：領袖帶隊工具。三步帶法（領袖預備 → 集會流程 → 跟進）＋ 小隊長任務卡為主，成員工作紙為輔。主色森林綠 #2E7D32 + 金色 #F9A825。
 
+## ✅ v42 進度（2026-10-22 對齊：11 回合改善＋意見回報）
+
+- **集會目錄**：新增「未做／已完成／本月」進度篩選＋「繼續上次」卡（記住上次帶到第 N 版，只存本機）；每行可標記「✓ 用過」，即時顯示「已完成 X / 24」。
+- **大量卡片分批**：興趣章 33 張改首批 12＋「睇多啲」；素材庫工作紙 24 張改首批 12＋「睇多啲」，首次 render 字數同掣數大跌。
+- **預快取瘦身**：`sw.js` 的 `ASSETS` 由 167 檔 3.61MB 改為 **40 檔 1.32MB**（程式／文字／icon）；128 張圖 2.31MB 改由 `CACHE_EXTRA` 喺頁面閒置時背景補（`App.warmCache`，一次 4 張）。離線第一次未補到的圖會出 alt／後備，唔會回 index.html 扮圖。
+- **無障礙**：81 條路由全部 1 個 `h1`、0 標題跳級、0 重複 id；上下導覽及分頁加 `aria-current="page"`（外連唔加）；所有內頁加「← 返回集會目錄」。
+- **意見回報**：`index.html` 加 Scout Admin 統一回報 widget（`data-app="童軍集會"`）；手冊「參考資料」加 📮 意見回報卡，離線可複製文字＋開網頁版表單。詳見 `docs/feedback-system.md`。
+- **綱要直連**：`DATA.source.url` 改為官方全文 PDF（`scoutsinfohub.org.hk/ScoutTrainingScheme/FullVersion-zh.pdf`）；集會目錄、手冊、制服頁主入口一撳即開，網上版只作後備。
+- **時間對齊**：24 場 `Σ程序 + buffer = duration` 全部相等（c02/c07/c09 各減 5 分鐘；c08 10、c10 40、c12/c13/c14/c15/c20 各 5、c16 360 分鐘列作預留）；`node tools/meeting-audit.mjs --strict` 可驗。
+- **架構**：新增 `App.wrapOn()` 模組擴充登記處（本 APP 目前 0 條覆寫鏈）＋棘輪測試，禁止非 `app.js` 私自 `App.xxx =`。
+- PWA cache：`scout-v42-c24-20261022`。
+- 文件：`docs/dialogue-align-20261022.md`（11 回合＋四類對齊清單）、`docs/feedback-system.md`、`docs/app-scorecard-20261022.md`、`docs/meeting-upgrade-guide-20261022.md`；工具：`node tools/meeting-audit.mjs --strict`。
+- 核實修正：2026 綱要封面為**第四版（2026 年 2 月）**；舊 `prog.scouting.org.hk/...FullVersion-zh.pdf` 已死鏈，改指童軍資訊站全本 PDF。制服示意圖全部收入 `<details>` 並標「非官方」。
+
 ## ✅ v37 進度（前端零 SVG：制服圖同所有圖解一律 AVIF）
 
 - **前端 bundle 一個 `<svg>` 都唔會有**（用戶：其他地方都盡量唔要 SVG，用 AVIF）：`js/diagrams.js`＋`js/svg-kit.js`（合共 76KB 手繪 SVG 字串）搬離前端，只留做 build-only 底稿 `assets_src/diasvg/*.src.js`；前端由 `js/dia.js` 嘅 `IMG.map` 自動砌返 `DIAGRAMS.*`（`'uniform.chest'`→`DIAGRAMS.uniform.chest`、`'top.compass'`→`DIAGRAMS.compass`），每個 key 一定出 `<img src="img/dia/*.avif">`。`index.html`／`sw.js` 唔再下載呢兩個檔（離線 cache 亦細咗），`app.js`／`ceremony.js` 嘅呼叫寫法完全不變。
@@ -41,7 +55,7 @@
 
 ## ✅ v33 進度（制服配件補齊）
 
-- **🧣 制服新增「領巾領帶」分頁**（按《儀容與制服手冊》第三章 3.4–3.6，2026.01.01 修訂）：
+- **🧣 制服新增「領巾領帶」分頁**（按《儀容與制服手冊》第三章 3.4–3.6）：
   - 領巾 4 種（會巾／旅巾／基維爾領巾／特別活動領巾）＋ 四條通則（宣誓後才可戴、會巾色唔可採用等）
   - **巾圈 4 種**：顏色巾圈（小童軍・幼童軍）／童軍巾圈／小隊活動巾圈（11–16 歲前＋完成童軍標準獎章）／基維爾巾圈（木章系統第 4 階段）；另有「其他巾圈」使用限制
   - **捲巾 8 步**：直徑約 3.5cm、底至尖 12–15cm、巾圈套衣領尖、巾尖喺背中央、巾尾唔可超越皮帶扣
@@ -155,7 +169,7 @@
 
 ## 技術
 - 純靜態 HTML/CSS/vanilla JS，無 build
-- PWA：Service Worker `scout-v40-c24-20260927`（逐檔 add，缺圖唔會拖冧核心預緩存）
+- PWA：Service Worker `scout-v42-c24-20261022`（40 個核心檔約 1.32MB；128 張圖背景補，逐檔 add，缺圖唔會拖冧核心預緩存）
 - 示意圖片：`img/fig/*.avif`（AVIF，38 張約 1.17MB）；資料喺 `js/figs.js`（遊戲名→`GAME_FIG`、技能→`SKILL_FIG`、急救→`AID_FIG`）。`game-chairs.avif` 係 CC BY-SA 網上相片轉檔，來源見 `img/fig/SOURCES.md`；其他圖片歷史見 `HANDOVER.md`。
 - 圖解（全部 AVIF、**前端零 SVG**）：`img/dia/*.avif`（54 張約 964KB，制服 9 張佔約 516KB）＋ `js/dia.js`（`IMG.map` 對照表＋自動砌 `DIAGRAMS.*`，每個 key 出 `<img>`）；手繪 SVG 底稿只留喺 `assets_src/diasvg/`（build-only，唔會下載），`img/dia/SOURCES.md` 記尺寸、畫法同重製步驟。圖載唔到就出 alt 文字（`IMG.fallback`），唔會退回 SVG。
 - 官方圖：興趣章 `img/badge/*.avif`（33 張，童軍資訊站《童軍訓練綱要》）、制服服式圖 `img/uni/*.avif`（3 張，香港童軍總會官網）；來源同授權見 `img/badge/SOURCES.md`、`img/uni/SOURCES.md`。

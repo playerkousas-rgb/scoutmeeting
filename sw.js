@@ -1,21 +1,86 @@
-var CACHE = "scout-v40-c24-20260927";
+/* Scout Hub Service Worker — v42（2026-10-22 對齊）
+ * 安裝包只預快取程式／文字（ASSETS）；128 張圖（CACHE_EXTRA）等頁面閒置時背景補。
+ * 改任何 ASSETS／EXTRA 內容或想舊用戶即刻換新：升 CACHE 版號。
+ */
+var CACHE = "scout-v42-c24-20261022";
 var ASSETS = [
-  "./", "./index.html", "./manifest.webmanifest", "./css/app.css",
-  "./js/data.js", "./js/interests.js", "./js/ceremony.js", "./js/uniform.js", "./js/dia.js", "./js/songs.js",
-  "./js/figs.js", "./js/projector.js",
-  "./img/fig/cer-open.avif", "./img/fig/cer-close.avif", "./img/fig/cer-drill.avif",
-  "./img/fig/cer-flag.avif", "./img/fig/cer-oath.avif", "./img/fig/cer-salute.avif",
-  "./img/fig/fire-circle.avif", "./img/fig/fire-song.avif", "./img/fig/game-banner.avif",
-  "./img/fig/game-ball.avif", "./img/fig/game-shape.avif", "./img/fig/game-tarp.avif",
-  "./img/fig/game-pack.avif", "./img/fig/game-relay-cards.avif", "./img/fig/game-tug.avif",
-  "./img/fig/game-aid.avif", "./img/fig/game-orienteer.avif",
-  "./img/fig/game-beachflag.avif", "./img/fig/game-water.avif", "./img/fig/game-chairs.avif",
-  "./img/fig/skill-ropecare.avif", "./img/fig/skill-legend.avif", "./img/fig/skill-tent.avif",
-  "./img/fig/skill-stove.avif", "./img/fig/skill-rice.avif", "./img/fig/skill-lost.avif",
-  "./img/fig/game-lineup.avif",
-  "./img/fig/skill-knife.avif", "./img/fig/skill-sos.avif",
-  "./img/fig/skill-pack.avif", "./img/fig/skill-pioneer.avif", "./img/fig/skill-track.avif", "./img/fig/skill-field.avif", "./img/fig/aid-nosebleed.avif", "./img/fig/aid-cramp.avif", "./img/fig/aid-burn.avif", "./img/fig/aid-cut.avif", "./img/fig/aid-sting.avif",
-  "./js/c01-lesson.js", "./js/c02-lesson.js", "./js/c03-lesson.js", "./js/c04-lesson.js", "./js/c05-lesson.js", "./js/c06-lesson.js", "./js/c07-lesson.js", "./js/c08-lesson.js", "./js/c09-lesson.js", "./js/c10-lesson.js", "./js/c11-lesson.js", "./js/c12-lesson.js", "./js/c13-lesson.js", "./js/c14-lesson.js", "./js/c15-lesson.js", "./js/c16-lesson.js", "./js/c17-lesson.js", "./js/c18-lesson.js", "./js/c19-lesson.js", "./js/c20-lesson.js", "./js/c21-lesson.js", "./js/c22-lesson.js", "./js/c23-lesson.js", "./js/c24-lesson.js", "./js/app.js",
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./css/app.css",
+  "./js/app.js",
+  "./js/c01-lesson.js",
+  "./js/c02-lesson.js",
+  "./js/c03-lesson.js",
+  "./js/c04-lesson.js",
+  "./js/c05-lesson.js",
+  "./js/c06-lesson.js",
+  "./js/c07-lesson.js",
+  "./js/c08-lesson.js",
+  "./js/c09-lesson.js",
+  "./js/c10-lesson.js",
+  "./js/c11-lesson.js",
+  "./js/c12-lesson.js",
+  "./js/c13-lesson.js",
+  "./js/c14-lesson.js",
+  "./js/c15-lesson.js",
+  "./js/c16-lesson.js",
+  "./js/c17-lesson.js",
+  "./js/c18-lesson.js",
+  "./js/c19-lesson.js",
+  "./js/c20-lesson.js",
+  "./js/c21-lesson.js",
+  "./js/c22-lesson.js",
+  "./js/c23-lesson.js",
+  "./js/c24-lesson.js",
+  "./js/ceremony.js",
+  "./js/data.js",
+  "./js/dia.js",
+  "./js/figs.js",
+  "./js/interests.js",
+  "./js/projector.js",
+  "./js/songs.js",
+  "./js/uniform.js",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/icon-maskable-512.png"
+];
+
+/* 背景補齊用：全部圖片（AVIF）。唔會喺 install 時下載。 */
+var CACHE_EXTRA = [
+  "./img/badge/angler.avif",
+  "./img/badge/archery.avif",
+  "./img/badge/artist.avif",
+  "./img/badge/athlete.avif",
+  "./img/badge/birdwatcher.avif",
+  "./img/badge/boulderer.avif",
+  "./img/badge/campcook.avif",
+  "./img/badge/campfirehost.avif",
+  "./img/badge/canoeist.avif",
+  "./img/badge/collector.avif",
+  "./img/badge/computer.avif",
+  "./img/badge/cyclist.avif",
+  "./img/badge/dragonboatman.avif",
+  "./img/badge/footdrill.avif",
+  "./img/badge/geologist.avif",
+  "./img/badge/horseman.avif",
+  "./img/badge/kiteflyer.avif",
+  "./img/badge/librarian.avif",
+  "./img/badge/meteorologist.avif",
+  "./img/badge/modelmaker.avif",
+  "./img/badge/musician.avif",
+  "./img/badge/naturalist.avif",
+  "./img/badge/parkorienteer.avif",
+  "./img/badge/petkeeper.avif",
+  "./img/badge/photographer.avif",
+  "./img/badge/rowingboatman.avif",
+  "./img/badge/sailor.avif",
+  "./img/badge/smallholder.avif",
+  "./img/badge/sup.avif",
+  "./img/badge/suppolo.avif",
+  "./img/badge/swimmer.avif",
+  "./img/badge/tourism.avif",
+  "./img/badge/windsurfer.avif",
   "./img/dia/cer-attn.avif",
   "./img/dia/cer-close.avif",
   "./img/dia/cer-dress.avif",
@@ -70,45 +135,50 @@ var ASSETS = [
   "./img/dia/uniform-sleeve.avif",
   "./img/dia/uniform-ties.avif",
   "./img/dia/uniform-zoom.avif",
-  "./img/badge/angler.avif",
-  "./img/badge/archery.avif",
-  "./img/badge/artist.avif",
-  "./img/badge/athlete.avif",
-  "./img/badge/birdwatcher.avif",
-  "./img/badge/boulderer.avif",
-  "./img/badge/campcook.avif",
-  "./img/badge/campfirehost.avif",
-  "./img/badge/canoeist.avif",
-  "./img/badge/collector.avif",
-  "./img/badge/computer.avif",
-  "./img/badge/cyclist.avif",
-  "./img/badge/dragonboatman.avif",
-  "./img/badge/footdrill.avif",
-  "./img/badge/geologist.avif",
-  "./img/badge/horseman.avif",
-  "./img/badge/kiteflyer.avif",
-  "./img/badge/librarian.avif",
-  "./img/badge/meteorologist.avif",
-  "./img/badge/modelmaker.avif",
-  "./img/badge/musician.avif",
-  "./img/badge/naturalist.avif",
-  "./img/badge/parkorienteer.avif",
-  "./img/badge/petkeeper.avif",
-  "./img/badge/photographer.avif",
-  "./img/badge/rowingboatman.avif",
-  "./img/badge/sailor.avif",
-  "./img/badge/smallholder.avif",
-  "./img/badge/sup.avif",
-  "./img/badge/suppolo.avif",
-  "./img/badge/swimmer.avif",
-  "./img/badge/tourism.avif",
-  "./img/badge/windsurfer.avif",
+  "./img/fig/aid-burn.avif",
+  "./img/fig/aid-cramp.avif",
+  "./img/fig/aid-cut.avif",
+  "./img/fig/aid-nosebleed.avif",
+  "./img/fig/aid-sting.avif",
+  "./img/fig/cer-close.avif",
+  "./img/fig/cer-drill.avif",
+  "./img/fig/cer-flag.avif",
+  "./img/fig/cer-oath.avif",
+  "./img/fig/cer-open.avif",
+  "./img/fig/cer-salute.avif",
+  "./img/fig/fire-circle.avif",
+  "./img/fig/fire-song.avif",
+  "./img/fig/game-aid.avif",
+  "./img/fig/game-ball.avif",
+  "./img/fig/game-banner.avif",
+  "./img/fig/game-beachflag.avif",
+  "./img/fig/game-chairs.avif",
+  "./img/fig/game-lineup.avif",
+  "./img/fig/game-orienteer.avif",
+  "./img/fig/game-pack.avif",
+  "./img/fig/game-relay-cards.avif",
+  "./img/fig/game-shape.avif",
+  "./img/fig/game-tarp.avif",
+  "./img/fig/game-tug.avif",
+  "./img/fig/game-water.avif",
+  "./img/fig/skill-field.avif",
+  "./img/fig/skill-knife.avif",
+  "./img/fig/skill-legend.avif",
+  "./img/fig/skill-lost.avif",
+  "./img/fig/skill-pack.avif",
+  "./img/fig/skill-pioneer.avif",
+  "./img/fig/skill-rice.avif",
+  "./img/fig/skill-ropecare.avif",
+  "./img/fig/skill-sos.avif",
+  "./img/fig/skill-stove.avif",
+  "./img/fig/skill-tent.avif",
+  "./img/fig/skill-track.avif",
   "./img/uni/air.avif",
   "./img/uni/land.avif",
-  "./img/uni/sea.avif",
-  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"
+  "./img/uni/sea.avif"
 ];
 var EXTERNAL_PREFIX = "https://";
+var warming = false;
 
 self.addEventListener("install", function (e) {
   e.waitUntil(
@@ -129,6 +199,31 @@ self.addEventListener("activate", function (e) {
   );
 });
 
+/* 頁面閒置時由 app.js 發 {type:'CACHE_EXTRA'}；一次補 4 張，唔搶頻寬。 */
+function warmExtra() {
+  if (warming) return;
+  warming = true;
+  caches.open(CACHE).then(function (c) {
+    var i = 0;
+    function next() {
+      if (i >= CACHE_EXTRA.length) {
+        warming = false;
+        if (self.clients && self.clients.matchAll) {
+          self.clients.matchAll().then(function (cs) { cs.forEach(function (cl) { cl.postMessage({ type:'CACHE_READY' }); }); });
+        }
+        return;
+      }
+      var batch = CACHE_EXTRA.slice(i, i + 4);
+      i += 4;
+      Promise.all(batch.map(function (a) { return c.add(a).catch(function(){ return Promise.resolve(); }); })).then(next);
+    }
+    next();
+  }).catch(function(){ warming = false; });
+}
+self.addEventListener("message", function (e) {
+  if (e && e.data && e.data.type === "CACHE_EXTRA") warmExtra();
+});
+
 self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
@@ -137,10 +232,17 @@ self.addEventListener("fetch", function (e) {
   e.respondWith(
     caches.match(req).then(function (cached) {
       var net = fetch(req).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE).then(function (c) { try { c.put(req, copy); } catch (_) {} });
+        /* 只 cache 成功回應；403／404 唔好污染 cache */
+        if (res && res.ok) {
+          var copy = res.clone();
+          caches.open(CACHE).then(function (c) { try { c.put(req, copy); } catch (_) {} });
+        }
         return res;
-      }).catch(function(){ return cached || caches.match("./index.html"); });
+      }).catch(function(){
+        if (req.mode === "navigate") return caches.match("./index.html");
+        /* 圖片／其他檔案：老實回 404，令 <img onerror> 出後備，唔好回 index.html 扮圖片 */
+        return new Response("", { status: 404, statusText: "Not Found" });
+      });
       return cached || net;
     })
   );
