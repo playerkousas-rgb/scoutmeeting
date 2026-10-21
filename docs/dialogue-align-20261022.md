@@ -158,7 +158,7 @@
 - `npm test`（smoke／runtime／deployment／v42 守門）
 - `node tools/meeting-audit.mjs --strict`
 - jsdom 掃 81 條路由 0 flag
-⬜ 合併方式：PR → squash／merge 到 `main`；合併後保留 `main` 一條長線，舊 arena 分支刪走。PR 編號見 GitHub（本文件隨 PR 更新）。
+⬜ 今次：**PR #12**（`arena/4d332b71-scoutmeeting` → `main`）已開，合併前測試全綠；未合併，等 review。合併方式：squash／merge 到 `main`；合併後保留 `main` 一條長線，舊 arena 分支刪走。
 ⚠️ 一條分支一件事；合併前測試要全綠；合併後刪分支，唔好留一堆同名舊分支。
 
 ---
