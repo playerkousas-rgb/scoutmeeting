@@ -1,6 +1,72 @@
 /* app.js — Scout Hub 核心：路由（支援分頁 sub）、tab 渲染、指邊印邊列印（v19） */
 var App = {};
 
+/* ── 本機儲存（只記「邊場用過」同「上次帶到邊版」，唔收任何個人資料）── */
+App.store = {
+  get: function(k, fb){
+    try{
+      if(typeof localStorage === 'undefined') return fb;
+      var raw = localStorage.getItem('scout.'+k);
+      return raw == null ? fb : JSON.parse(raw);
+    }catch(e){ return fb; }
+  },
+  set: function(k, v){
+    try{
+      if(typeof localStorage === 'undefined') return false;
+      localStorage.setItem('scout.'+k, JSON.stringify(v));
+      return true;
+    }catch(e){ return false; }
+  }
+};
+
+/* ── 模組擴充登記處（唔准再私自 App.vXxx = …）──
+   用法：App.wrapOn('sec', 'my-layer', function(prev, args){ … return prev.apply(this,args); });
+   每條疊加鏈都會記入 App._wrapChain，測試會鎖死非 app.js 檔案的私自覆寫。 */
+App._wrapChain = {};
+App._wrapSeq = 0;
+App.wrap = function(name, layerId, fn){
+  if(typeof App[name] !== 'function') throw new Error('App.wrap：App.'+name+' 未存在');
+  if(typeof fn !== 'function') throw new Error('App.wrap：層 '+name+' 必須係 function');
+  layerId = layerId || ('layer'+(++App._wrapSeq));
+  var prev = App[name];
+  (App._wrapChain[name] = App._wrapChain[name] || []).push({ id:layerId, fn:fn });
+  var wrapped = function(){ return fn.call(this, prev, Array.prototype.slice.call(arguments)); };
+  wrapped.__wrapLayer = layerId;
+  App[name] = wrapped;
+  return wrapped;
+};
+App.wrapOn = App.wrap;
+
+/* ── 輕量 modal / toast（原本 index 有 #modal/#toast，但冇 JS 實作）── */
+App.modal = function(html, label){
+  var m = document.getElementById('modal');
+  if(!m) return false;
+  m.innerHTML = '<div class="mbox" role="dialog" aria-modal="true" aria-label="'+(label||'對話框')+'">'
+    + '<button class="mx" type="button" aria-label="關閉對話框">✕</button>'
+    + '<div class="modal-content">'+html+'</div></div>';
+  if(m.classList) m.classList.add('on');
+  if(document.body && document.body.classList) document.body.classList.add('modal-open');
+  var x = m.querySelector ? m.querySelector('.mx') : null;
+  if(x){ x.onclick = App.closeModal; if(x.focus) x.focus(); }
+  m.onclick = function(e){ if(e && e.target === m) App.closeModal(); };
+  return true;
+};
+App.closeModal = function(){
+  var m = document.getElementById('modal');
+  if(!m) return;
+  if(m.classList) m.classList.remove('on');
+  m.innerHTML = '';
+  if(document.body && document.body.classList) document.body.classList.remove('modal-open');
+};
+App.toast = function(msg){
+  var t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  if(t.classList) t.classList.add('show');
+  clearTimeout(App._toastTimer);
+  App._toastTimer = setTimeout(function(){ if(t.classList) t.classList.remove('show'); }, 2400);
+};
+
 App.init = function(){
   App.syncBottomBar();
   window.addEventListener('resize', App.syncBottomBar);
@@ -11,8 +77,37 @@ App.init = function(){
   window.addEventListener('hashchange', App.route);
   window.addEventListener('online', App.netState);
   window.addEventListener('offline', App.netState);
+  if(!App._keyBound && document.addEventListener){
+    document.addEventListener('keydown', function(e){ if(e && (e.key === 'Escape' || e.keyCode === 27)) App.closeModal(); });
+    App._keyBound = true;
+  }
+  if(!App._printBound && window.addEventListener){
+    /* 列印前自動打開所有 details，印完還原（官方原文一句都唔會漏印） */
+    window.addEventListener('beforeprint', function(){ App.openAllDetails(); });
+    window.addEventListener('afterprint', function(){
+      (App._openedDetails || []).forEach(function(d){ d.open = false; });
+      App._openedDetails = [];
+    });
+    App._printBound = true;
+  }
   App.netState();
   App.route();
+  App.warmCache();
+};
+
+/* 安裝包只預快取文字／程式；131 張圖（約 2.5MB）等頁面閒置時背景補。 */
+App.warmCache = function(){
+  if(typeof navigator === 'undefined' || !navigator.serviceWorker) return;
+  var go = function(){
+    try{
+      navigator.serviceWorker.ready.then(function(reg){
+        var sw = reg.active || (navigator.serviceWorker.controller);
+        if(sw && sw.postMessage) sw.postMessage({ type:'CACHE_EXTRA' });
+      }).catch(function(){});
+    }catch(e){}
+  };
+  if(typeof requestIdleCallback === 'function') requestIdleCallback(go, { timeout:6000 });
+  else setTimeout(go, 4500);
 };
 
 /* 量度實際頁底列高度，為頁面內容及浮動按鈕預留空間。 */
@@ -47,7 +142,12 @@ App.route = function(){
   var allowed = ['plan','ceremony','uniform','official','book','print','play','skills','badges','songs','search'];
   if(allowed.indexOf(tab)<0){ tab = 'plan'; sub=null; }
   document.querySelectorAll('#topnav a, #tabbar a').forEach(function(a){
-    a.classList.toggle('active', a.getAttribute('data-tab')===tab);
+    /* 外連（官方套包）唔算「目前頁」，唔加 aria-current */
+    var isExternal = (a.classList && a.classList.contains('external-link')) || a.getAttribute('target')==='_blank';
+    var on = (a.getAttribute('data-tab')===tab) && !isExternal;
+    a.classList.toggle('active', on);
+    if(on) a.setAttribute('aria-current','page');
+    else a.removeAttribute('aria-current');
   });
   if(tab==='official'){ location.href = EXTERNAL.officialPack; return; }
   var view = document.getElementById('view');
@@ -55,6 +155,7 @@ App.route = function(){
   var el;
   if(tab==='plan' && sub){
     el = App.renderMeeting(sub);
+    if(el) App.noteLast(sub, el);
   } else if(tab==='search'){
     el = App.pages.search(sub);
   } else {
@@ -62,6 +163,14 @@ App.route = function(){
     el = fn(sub);
   }
   if(el) view.appendChild(el);
+  /* 除目錄頁外，一律有「返回集會目錄」，唔會入咗去唔識出返嚟 */
+  if(tab!=='plan' && el && !(view.querySelector && view.querySelector('.back-link'))){
+    var back = document.createElement('a');
+    back.className = 'back-link';
+    back.href = '#plan';
+    back.textContent = '← 返回集會目錄';
+    if(view.insertBefore) view.insertBefore(back, view.firstChild); else view.appendChild(back);
+  }
   if(tab==='search'){ try{ App.searchGo(); }catch(e){} }
   App.projFab();
   window.scrollTo(0,0);
@@ -117,6 +226,7 @@ App.subnav = function(tab, items, cur){
     var on = (it.k || '') === cur;
     var a = App.h('a','subtab'+(on?' on':''),'<i>'+(it.ic||'📄')+'</i><b>'+it.n+'</b>');
     a.href = it.k ? '#'+tab+'/'+it.k : '#'+tab;
+    if(on) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
     row.appendChild(a);
   });
   nav.appendChild(row);
@@ -172,12 +282,42 @@ App.filterbar = function(items, cur, pick, root){
 /* 一頁幾版：撳掣換內容（唔係跳位） */
 App.showPane = function(root, key){
   if (!root || !root.querySelectorAll) return;
-  Array.prototype.forEach.call(root.querySelectorAll('.tabpane'), function(p){
+  var panes = root.querySelectorAll('.tabpane');
+  var idx = -1, label = '';
+  Array.prototype.forEach.call(panes, function(p, i){
     var on = p.getAttribute('data-pane') === key;
+    if(on){ idx = i; var h = p.querySelector && p.querySelector('.sec-head h2'); label = h ? h.textContent.replace(/^[^ ]+ /,'').trim() : ''; }
     p.setAttribute('role','tabpanel');
     p.setAttribute('aria-hidden', on?'false':'true');
     if (p.classList) p.classList.toggle('hidden', !on); else p.style.display = on ? '' : 'none';
   });
+  /* 分頁掣嘅 active / aria-selected / aria-current 同步 */
+  Array.prototype.forEach.call(root.querySelectorAll('.fbar .filter-btn'), function(b){
+    var on = b.getAttribute('data-k') === key;
+    if(b.classList) b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on?'true':'false');
+    if(on) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  });
+  var tid = root.getAttribute ? root.getAttribute('data-tid') : null;
+  if(tid && idx >= 0){
+    App.store.set('last', { tid:tid, pane:key, index:idx+1, total:panes.length, label:label, ts:Date.now() });
+  }
+};
+
+/* 第一次開某一場：記住第 1 版；之後撳分頁由 showPane 更新。 */
+App.noteLast = function(tid, el){
+  var last = App.store.get('last', null);
+  if(last && last.tid === tid) return;
+  var total = (el && el.getAttribute && Number(el.getAttribute('data-total'))) || 9;
+  var first = (el && el.getAttribute && el.getAttribute('data-first-pane')) || '';
+  App.store.set('last', { tid:tid, pane:first, index:1, total:total, label:'', ts:Date.now() });
+};
+App.continueLast = function(){
+  var last = App.store.get('last', null);
+  if(!last || !last.tid) return;
+  App._pendingPane = last.pane || null;
+  if(location.hash === '#plan/'+last.tid) App.route();
+  else location.hash = '#plan/'+last.tid;
 };
 /* 版面分頁條：items＝[{k,ic,n}]；panes 容器內每個 .tabpane[data-pane=k] */
 App.tabs = function(items, cur, root){
@@ -260,6 +400,13 @@ App.block = function(title, innerHTML, opts){
 
 /* ── 🖨️ 指邊印邊：只複製目標區塊去列印區 ── */
 /* 🖼️ 示意圖（v20）：優先 AVIF 插畫；無圖就退回平面圖解；圖 load 唔到（舊瀏覽器／缺檔）自動-show 平面圖解 */
+
+/* 制服示意圖：一律收入 <details>，並標明「非官方・只作對位」（用戶 2026-10-22 指示） */
+App.figFold = function(cap, inner, extra){
+  return '<details class="fig-fold"><summary>📐 '+(cap||'示意圖')+'（示意圖・非官方）</summary>'
+    + inner
+    + '<p class="mut fig-note">'+(extra||'示意圖只幫你對位，唔係官方制服圖；式樣、章形、尺寸一律以《儀容與制服手冊》及總會官方圖為準。')+'</p></details>';
+};
 App.ph = function(key, cap, svgHtml){
   var f = (typeof FIGS !== 'undefined' && FIGS) ? FIGS[key] : null;
   var svgAltHtml = svgHtml || '';
@@ -300,6 +447,7 @@ App.cerDgm = function(k, cap){
 
 App.printSec = function(el){
   if(!el || typeof document==='undefined' || !document.body) return;
+  App.openAllDetails();
   var doc = document;
   var box = doc.getElementById('printzone');
   if(!box){ box = doc.createElement('div'); box.id='printzone'; doc.body.appendChild(box); }
@@ -330,7 +478,14 @@ App.printSec = function(el){
   setTimeout(done, 20000);
   window.print();
 };
-App.printPage = function(){ window.print(); };
+/* 列印前把所有 details 打開（唔會漏印官方原文）；瀏覽器冇 beforeprint 都照做 */
+App.openAllDetails = function(){
+  App._openedDetails = [];
+  Array.prototype.forEach.call(document.querySelectorAll('details'), function(d){
+    if(!d.open){ d.open = true; App._openedDetails.push(d); }
+  });
+};
+App.printPage = function(){ App.openAllDetails(); try{ window.print(); }catch(e){} };
 
 /* ══════════ 搜尋 ══════════ */
 App.searchIndex = null;
@@ -415,6 +570,7 @@ App.renderMeeting = function(tid){
   var m = DATA.meetings.find(function(x){return x.tid===tid;});
   if(!m) return App.pages.plan();
   var wrap = App.h('div','page meeting-page');
+  wrap.setAttribute('data-tid', m.tid);
   var secList = [];                 /* 每節 section 嘅次序（分頁用） */
   var _add = wrap.appendChild;
   wrap.appendChild = function(node){
@@ -429,6 +585,7 @@ App.renderMeeting = function(tid){
   meta.innerHTML = '<span class="tag ok">'+m.month+'</span>'+
     '<span class="tag cat">'+m.form+'</span>'+
     '<span class="tag">'+(m.duration||90)+'分鐘</span>'+
+    (m.buffer?'<span class="tag">＋'+m.buffer+' 分鐘預留</span>':'')+
     '<span class="tag">'+m.badge+'</span>'+
     '<button class="print-all-btn" onclick="App.printPage()">🖨️ 整場教案全部列印</button>'+
     (m.full ? '<span class="tag ok">✓ 完整教案</span>' : '<span class="tag wip">內容陸續補上</span>');
@@ -549,6 +706,11 @@ App.renderMeeting = function(tid){
     tbl.innerHTML += '</tbody>';
     var sProg = App.sec('📋 '+(m.duration||90)+' 分鐘 9 段程序表',{id:tid+'-program'});
     sProg.add(tbl);
+    var progSum = d.program.reduce(function(a,p){ return a + (Number(typeof p.n === 'string' ? p.t : p.min) || 0); }, 0);
+    var progNote = '程序表 ' + progSum + ' 分鐘';
+    if(m.buffer) progNote += '＋預留 ' + m.buffer + ' 分鐘（交通／緩衝／事後跟進）';
+    progNote += '＝全場 ' + (m.duration||90) + ' 分鐘。';
+    sProg.add(App.h('p','mut prog-sum', progNote));
     wrap.appendChild(sProg);
 
     // 物資清單（領袖執袋）
@@ -719,6 +881,14 @@ App.renderMeeting = function(tid){
         wrap.appendChild(pane);
       });
       tabHost.appendChild(App.filterbar(items, items[0].k, function(){}, wrap));
+      wrap.setAttribute('data-first-pane', items[0].k);
+      wrap.setAttribute('data-total', items.length);
+      if(App._pendingPane){
+        var pk = App._pendingPane;
+        App._pendingPane = null;
+        var exists = items.some(function(x){ return x.k === pk; });
+        if(exists) App.showPane(wrap, pk);
+      }
     })();
 
     return wrap;
@@ -747,6 +917,57 @@ App.worksheetHtml = function(w){
   return html;
 };
 
+/* ══════════ 📮 意見回報（Scout Admin 統一回報 v1）══════════
+   有網：index.html 的官方 widget 提供浮動掣；離線／腳本被封：手冊卡片 + 可複製文字 + 網頁版表單。
+   私隱：只收問題本身；唔好填小朋友姓名、班別、地址或相片。 */
+App.FEEDBACK = {
+  app: '童軍集會',
+  source: 'https://scout-admin-blue.vercel.app/widget.js',
+  page: 'https://scout-admin-blue.vercel.app/report.html?app=' + encodeURIComponent('童軍集會')
+};
+App.feedbackTemplate = function(){
+  return '【' + App.FEEDBACK.app + '｜問題／意見】\n'
+    + '類別：（問題回報／意見回饋）\n'
+    + '邊一頁：（例：#plan／#plan/c04／#uniform/badge／#book/refs）\n'
+    + '發生咩事：（一句講清楚，例如「撳列印冇反應」）\n'
+    + '裝置同瀏覽器：（例：iPad Safari）\n'
+    + '（可留聯絡方法；唔好填小朋友姓名、班別、地址或相片）';
+};
+App.feedback = function(){
+  var fab = document.getElementById('scoutw-fab');
+  if(fab && typeof fab.click === 'function'){ fab.click(); return true; }
+  App.modal('<h2>📮 意見回報</h2>'
+    + '<p class="mut">回報表單未載入（多數係離線，或者網絡擋住外部腳本）。可以先抄低文字，貼去 WhatsApp／電郵畀管理員。</p>'
+    + '<textarea id="fb-ta" class="fb-copy" rows="7" readonly onclick="this.select()">' + App.feedbackTemplate() + '</textarea>'
+    + '<div class="quick"><button class="btn gr" onclick="App.copyFeedback()">📋 複製回報文字</button>'
+    + '<a class="btn ghost" href="' + App.FEEDBACK.page + '" target="_blank" rel="noopener">🌐 網頁版表單</a></div>'
+    + '<p class="mut">恢復上網之後，右下角會再有「🐛💬 回報 · 意見」掣，用法一樣。</p>'
+    + '<p class="safe">私隱：唔好填小朋友姓名、班別、地址或相片；講問題本身就得。</p>', '意見回報');
+  return false;
+};
+App.copyFeedback = function(){
+  var ta = document.getElementById('fb-ta');
+  var text = ta ? ta.value : App.feedbackTemplate();
+  function done(){ App.toast('已複製回報文字'); }
+  function fallback(){
+    if(!ta) return;
+    try{ ta.focus(); ta.select(); document.execCommand('copy'); done(); }catch(e){}
+  }
+  if(typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, fallback);
+  } else fallback();
+  return true;
+};
+App.feedbackCard = function(){
+  return '<section class="card feedback-card"><h2>📮 意見回報</h2>'
+    + '<p class="mut">見到錯處、想加內容、帶會時卡住，直接講；可以匿名，唔使帳戶。</p>'
+    + '<div class="quick"><button class="btn gr" onclick="App.feedback()">💬 開回報表單</button>'
+    + '<a class="btn ghost" href="' + App.FEEDBACK.page + '" target="_blank" rel="noopener">🌐 網頁版表單</a></div>'
+    + '<p class="mut">離線都用得：撳「開回報表單」會出好文字，複製之後貼去 WhatsApp／電郵。</p>'
+    + '<p class="safe">私隱：唔好填小朋友姓名、班別、地址或相片；只講遇到咩問題。</p>'
+    + '<p class="mut">回報會送去 Scout Admin 的統一看板（來源：' + App.FEEDBACK.app + '），同其他童軍系統同一格式。</p></section>';
+};
+
 /* ══════════ 各分頁 render ══════════ */
 App.pages = {};
 
@@ -763,7 +984,59 @@ App.pages.search = function(sub){
   return wrap;
 };
 
-/* 📅 集會目錄（整行可撳） */
+/* 📅 集會目錄（整行可撳；進度／階段篩選＋繼續上次） */
+App.planProg = 'all';
+App.planStage = 'all';
+App.monthNums = function(str){
+  var out = [], re = /(\d{1,2})(?:\s*[-–至]\s*(\d{1,2}))?\s*月/g, m;
+  while((m = re.exec(str || ''))){
+    var a = +m[1], b = m[2] ? +m[2] : a;
+    if(b < a) b += 12;
+    for(var i=a;i<=b;i++){ var v = i > 12 ? i-12 : i; if(out.indexOf(v) < 0) out.push(v); }
+  }
+  return out;
+};
+App.doneMap = function(){
+  var v = App.store.get('done', {});
+  return (v && typeof v === 'object') ? v : {};
+};
+App.applyPlanFilter = function(){
+  var table = document.querySelector && document.querySelector('#view .plan-table');
+  if(!table || !table.querySelectorAll) return;
+  var done = App.doneMap(), now = new Date().getMonth() + 1, shown = 0, doneCount = 0;
+  Array.prototype.forEach.call(table.querySelectorAll('tr.meet-row'), function(tr){
+    var tid = tr.getAttribute('data-tid');
+    var isDone = !!done[tid];
+    var stage = tr.getAttribute('data-stage') || '';
+    var special = tr.getAttribute('data-special') === '1';
+    var months = (tr.getAttribute('data-months') || '').split(',').filter(Boolean).map(Number);
+    if(isDone) doneCount++;
+    var okProg = App.planProg === 'all'
+      || (App.planProg === 'done' && isDone)
+      || (App.planProg === 'todo' && !isDone)
+      || (App.planProg === 'month' && months.indexOf(now) >= 0);
+    var okStage = App.planStage === 'all'
+      || (App.planStage === 'special' ? special : stage === App.planStage);
+    var on = okProg && okStage;
+    if(tr.classList) tr.classList.toggle('hidden', !on);
+    if(on) shown++;
+  });
+  var res = document.getElementById('plan-result');
+  if(res) res.textContent = '顯示 ' + shown + ' 場 · 已完成 ' + doneCount + ' / ' + DATA.meetings.length;
+};
+App.toggleDone = function(tid, btn, ev){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  var d = App.doneMap(), on = !d[tid];
+  if(on) d[tid] = Date.now(); else delete d[tid];
+  App.store.set('done', d);
+  if(btn){
+    if(btn.classList) btn.classList.toggle('done', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.textContent = on ? '✓ 用過' : '○ 標記用過';
+  }
+  App.applyPlanFilter();
+  App.toast(on ? ('✓ ' + tid + ' 已記低用過') : ('已取消 ' + tid + ' 嘅完成標記'));
+};
 App.pages.plan = function(){
   var wrap = App.h('div','page plan-page');
   wrap.appendChild(App.h('h1',null,'📅 集會目錄'));
@@ -771,53 +1044,100 @@ App.pages.plan = function(){
   guide.innerHTML = '<div><span class="role-ic">🧭</span><p><b>第一次帶集會</b><br>先揀一場，再由「領袖預備」逐頁做到「安全注意」。</p></div>'+
     '<div><span class="role-ic">⚡</span><p><b>熟手即場搵料</b><br>用畫面下方「素材庫／活動／技能／興趣章／營火會」。</p></div>';
   wrap.appendChild(guide);
+
+  /* 繼續上次：只存本機，唔會上傳 */
+  var last = App.store.get('last', null);
+  var lm = last && DATA.meetings.filter(function(x){ return x.tid === last.tid; })[0];
+  if(lm){
+    var cont = App.h('div','card continue-card');
+    cont.innerHTML = '<div class="continue-copy"><b>⏯️ 繼續上次</b>'
+      + '<p>' + lm.tid + ' ' + lm.n + '</p>'
+      + '<small class="mut">上次去到第 ' + (last.index || 1) + ' / ' + (last.total || 9) + ' 版'
+      + (last.label ? '：' + last.label : '') + '（只記喺呢部機）</small></div>'
+      + '<button class="btn gr" onclick="App.continueLast()">繼續帶</button>';
+    wrap.appendChild(cont);
+  }
+
   wrap.appendChild(App.h('p','lede','24 場完整集會：會員章 6 場、探索 12 場、標準／總結 6 場。撳任何一張就開教案。'));
+  var off = App.h('p','plan-official');
+  off.innerHTML = '<a class="pill" href="'+DATA.source.url+'" target="_blank" rel="noopener">📖 訓練綱要 2026 全文 PDF</a> '
+    + '<a class="pill" href="'+EXTERNAL.officialPack+'" target="_blank" rel="noopener">📦 官方集會套包 PDF</a>';
+  wrap.appendChild(off);
+  /* 新舊制過渡（P022/26）：收埋，唔阻目錄；但一定要搵得到 */
+  var tr = App.h('details','plan-transition');
+  tr.innerHTML = '<summary>📅 2026 新舊制過渡（2026-08-15 起）</summary>'
+    + '<p>2026-08-15 或之後宣誓：<b>必須</b>用新修訂綱要。之前宣誓：可選新制，或沿用舊制並於 <b>2028-08-14</b> 前完成；未完成部分須轉新制。資料來源：P022/26。</p>';
+  wrap.appendChild(tr);
 
-  var filterItems = [
-    {k:'all',n:'全部 24 場'}, {k:'member',n:'會員章 c01–06'},
-    {k:'explore',n:'探索 c07–18'}, {k:'standard',n:'標準／總結 c19–24'},
-    {k:'special',n:'特別集會'}
-  ];
-  var filter = App.h('div','plan-filter filters');
-  filter.setAttribute('aria-label','篩選集會');
-  var result = App.h('p','plan-result','顯示 24 場');
+  /* 初始結果句要同現有篩選一致（唔好永遠寫「24 場」） */
+  var _done0 = App.doneMap(), _now0 = new Date().getMonth() + 1;
+  var _shown0 = DATA.meetings.filter(function(m, idx){
+    var isDone = !!_done0[m.tid];
+    var stage = idx < 6 ? 'member' : (idx < 18 ? 'explore' : 'standard');
+    var months = App.monthNums(m.month);
+    var okP = App.planProg === 'all'
+      || (App.planProg === 'done' && isDone)
+      || (App.planProg === 'todo' && !isDone)
+      || (App.planProg === 'month' && months.indexOf(_now0) >= 0);
+    var okS = App.planStage === 'all'
+      || (App.planStage === 'special' ? !!m.special : stage === App.planStage);
+    return okP && okS;
+  }).length;
+  var _doneN = DATA.meetings.filter(function(m){ return !!_done0[m.tid]; }).length;
+  var result = App.h('p','plan-result','顯示 ' + _shown0 + ' 場 ▪ 已完成 ' + _doneN + ' / ' + DATA.meetings.length);
+  result.id = 'plan-result';
 
+  function chipRow(label, items, prop){
+    var row = App.h('div','plan-filter filters');
+    row.setAttribute('aria-label', label);
+    items.forEach(function(it){
+      var btn = App.h('button','filter-btn'+(App[prop]===it.k?' active':''), it.n);
+      btn.setAttribute('aria-pressed', App[prop]===it.k ? 'true' : 'false');
+      btn.onclick = function(){
+        App[prop] = it.k;
+        Array.prototype.forEach.call(row.querySelectorAll('.filter-btn'), function(x){
+          var on = x === btn;
+          if(x.classList) x.classList.toggle('active', on);
+          x.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        App.applyPlanFilter();
+      };
+      row.appendChild(btn);
+    });
+    return row;
+  }
+  wrap.appendChild(chipRow('集會進度篩選', [
+    {k:'all',n:'全部'}, {k:'todo',n:'未做'}, {k:'done',n:'已完成'}, {k:'month',n:'本月'}
+  ], 'planProg'));
+  wrap.appendChild(chipRow('集會階段篩選', [
+    {k:'all',n:'全部階段'}, {k:'member',n:'會員章 c01–06'}, {k:'explore',n:'探索 c07–18'},
+    {k:'standard',n:'標準／總結 c19–24'}, {k:'special',n:'特別集會'}
+  ], 'planStage'));
+  wrap.appendChild(result);
+
+  var done = App.doneMap();
   var table = App.h('table','meeting-table plan-table');
   table.innerHTML = '<thead><tr><th>場次／月份</th><th>主題／對應獎章</th><th>形式</th><th>狀態</th><th><span class="sr-only">開啟</span></th></tr></thead><tbody>' +
     DATA.meetings.map(function(m,idx){
       var tag = m.placeholder ? '<span class="tag wip">🚧 規劃中</span>' : (m.full ? '<span class="tag ok">✓ 完整</span>' : '<span class="tag wip">🚧</span>');
       var spec = m.special ? '<span class="tag sp">特別</span>' : '';
       var stage = idx<6 ? 'member' : (idx<18 ? 'explore' : 'standard');
-      var groups = stage+(m.special?' special':'');
-      return '<tr class="meet-row" data-groups="'+groups+'" data-href="#plan/'+m.tid+'" tabindex="0" role="link" aria-label="開啟 '+m.tid+' '+m.n+'">'+
+      var months = App.monthNums(m.month).join(',');
+      var isDone = !!done[m.tid];
+      return '<tr class="meet-row'+(isDone?' is-done':'')+'" data-tid="'+m.tid+'" data-stage="'+stage+'" data-special="'+(m.special?'1':'0')+'" data-months="'+months+'" data-href="#plan/'+m.tid+'">'+
         '<td class="plan-id"><b>'+m.tid+'</b><small>'+m.month+'</small></td>'+
-        '<td class="plan-topic"><b>'+m.n+'</b><small>🎖️ '+m.badge+'</small></td>'+
-        '<td class="plan-form">'+m.form+spec+'</td><td class="plan-status">'+tag+'</td><td class="row-go" aria-hidden="true">▶</td></tr>';
+        '<td class="plan-topic"><a class="plan-link" href="#plan/'+m.tid+'"><b>'+m.n+'</b></a><small>🎖️ '+m.badge+'</small></td>'+
+        '<td class="plan-form">'+m.form+spec+'</td>'+
+        '<td class="plan-status">'+tag+'<br><button class="done-btn'+(isDone?' done':'')+'" type="button" aria-pressed="'+(isDone?'true':'false')+'" onclick="App.toggleDone(\''+m.tid+'\',this,event)">'+(isDone?'✓ 用過':'○ 標記用過')+'</button></td>'+
+        '<td class="row-go" aria-hidden="true">▶</td></tr>';
     }).join('') + '</tbody>';
 
-  filterItems.forEach(function(it,i){
-    var btn = App.h('button','filter-btn'+(i===0?' active':''),it.n);
-    btn.setAttribute('aria-pressed',i===0?'true':'false');
-    btn.onclick = function(){
-      Array.prototype.forEach.call(filter.querySelectorAll('.filter-btn'),function(x){
-        x.classList.remove('active'); x.setAttribute('aria-pressed','false');
-      });
-      btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
-      var shown = 0;
-      Array.prototype.forEach.call(table.querySelectorAll('tr.meet-row'),function(tr){
-        var on = it.k==='all' || (' '+tr.getAttribute('data-groups')+' ').indexOf(' '+it.k+' ')>=0;
-        tr.classList.toggle('hidden',!on); if(on) shown++;
-      });
-      result.textContent = '顯示 '+shown+' 場';
-    };
-    filter.appendChild(btn);
-  });
-  wrap.appendChild(filter);
-  wrap.appendChild(result);
   if(table.querySelectorAll){
     Array.prototype.forEach.call(table.querySelectorAll('tr.meet-row'), function(tr){
-      tr.onclick = function(){ location.hash = tr.getAttribute('data-href'); };
-      tr.onkeydown = function(e){ if(e && (e.key==='Enter'||e.key===' ')){ if(e.preventDefault)e.preventDefault(); location.hash = tr.getAttribute('data-href'); } };
+      tr.onclick = function(e){
+        if(e && e.target && e.target.closest && e.target.closest('button')) return;
+        location.hash = tr.getAttribute('data-href');
+      };
     });
   }
   wrap.appendChild(table);
@@ -830,6 +1150,9 @@ App.pages.plan = function(){
     return '<li><b>'+e.n+'</b>（'+e.month+'）— '+e.note+'</li>';
   }).join('');
   wrap.appendChild(ul);
+  /* 初次 render 之後計一次「已完成」，唔會靠 DOM 篩選 */
+  var initDone = Object.keys(done).filter(function(k){ return DATA.meetings.some(function(x){ return x.tid === k; }); }).length;
+  result.textContent = '顯示 24 場 ▪ 已完成 ' + initDone + ' / ' + DATA.meetings.length;
   return wrap;
 };
 
@@ -885,9 +1208,17 @@ App.ceremonySec = function(c, full){
   } else if(!full){
     body += pendingNote;
   }
-  if(c.steps) body += '<ol class="steps">'+c.steps.map(function(st){return '<li><b>'+st.h+'</b>：'+st.d+(st.dgm?App.cerDgm(st.dgm, st.dgmc||st.h):'')+'</li>';}).join('')+'</ol>';
-  if(c.types) body += '<ul class="bullet">'+c.types.map(function(t){return '<li><b>'+t.t+'：</b>'+t.d+(t.dgm?App.cerDgm(t.dgm, t.dgmc||t.t):'')+'</li>';}).join('')+'</ul>';
-  if(c.when_to_salute) body += '<p><b>使用場合：</b></p><ul class="bullet">'+c.when_to_salute.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';
+  var detail = '';
+  if(c.steps) detail += '<ol class="steps">'+c.steps.map(function(st){return '<li><b>'+st.h+'</b>：'+st.d+(st.dgm?App.cerDgm(st.dgm, st.dgmc||st.h):'')+'</li>';}).join('')+'</ol>';
+  if(c.types) detail += '<ul class="bullet">'+c.types.map(function(t){return '<li><b>'+t.t+'：</b>'+t.d+(t.dgm?App.cerDgm(t.dgm, t.dgmc||t.t):'')+'</li>';}).join('')+'</ul>';
+  if(c.when_to_salute) detail += '<p><b>使用場合：</b></p><ul class="bullet">'+c.when_to_salute.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';
+  if(!full && detail){
+    /* 總覽：程序收埋；單卡頁（full）照樣全開，列印前亦會自動開 */
+    var nStep = (c.steps ? c.steps.length : 0) + (c.types ? c.types.length : 0) + (c.when_to_salute ? c.when_to_salute.length : 0);
+    body += '<details class="cer-fold"><summary>📖 完整程序（'+nStep+' 點・撳開睇）</summary>' + detail + '</details>';
+  } else {
+    body += detail;
+  }
   if(c.safety) body += '<p class="safety"><b>⚠️ 注意：</b>'+c.safety+'</p>';
   if(c.note) body += '<div class="callout warn">'+c.note+'</div>';
   var link = full ? '' : '<p class="cer-open"><a href="#ceremony/'+c.k+'">睇完整程序＋圖解 →</a></p>';
@@ -905,6 +1236,13 @@ App.pages.uniform = function(sub){
   subs.forEach(function(x){ if(x.k===sub) cur = sub; });
   wrap.appendChild(App.subnav('uniform',subs,cur));
   wrap.appendChild(App.h('p','lede','童軍支部（陸）、海童軍、空童軍男／女團員制服標準。服式圖：<b>香港童軍總會</b>官方圖（本地存檔，離線都睇得到），可以另開官網原圖對最新式樣；內容以《儀容與制服手冊》為準。'));
+  var ver = App.h('div','callout ver-callout');
+  ver.innerHTML = '📌 <b>版本：</b>2026 年 2 月<b>第四版</b>《童軍訓練綱要》（2026-08-15 生效，P022/26）＋《儀容與制服手冊》（制服帽佩戴 2026-01-01 更新）。'
+    + '本 APP <b>冇收錄 2025 舊制服圖</b>，唔會把舊圖當新制；未核實嘅章形／車縫尺寸一律寫「待實物核對」，唔自繪、唔 AI 生成制服圖。'
+    + '<br><a href="'+DATA.source.url+'" target="_blank" rel="noopener">📖 訓練綱要 2026 全文 PDF</a>｜'
+    + '<a href="'+DATA.source.circular+'" target="_blank" rel="noopener">📄 P022/26 新修訂通告</a>｜'
+    + '<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">👕 儀容與制服手冊</a>';
+  wrap.appendChild(ver);
 
   var byKey = {};
   UNIFORM.types.forEach(function(t){ byKey[t.k]=t; });
@@ -921,9 +1259,10 @@ App.pages.uniform = function(sub){
         + '<figcaption>'+t.name+'官方服式圖（'+uni.branch+'男／女團員）｜實物以<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">童軍物品供應社</a>及《儀容與制服手冊》為準</figcaption></figure>';
     }
     var bu = (typeof DIAGRAMS!=='undefined' && DIAGRAMS.uniform) ? DIAGRAMS.uniform : {};
-    var bfig = bu.branch ? '<div class="svg-steps"><figure>'+bu.branch+
-      '<figcaption>顏色配搭對照圖（離線都睇得到）：陸／海／空三種制服嘅帽、恤衫、短褲／裙褲同長襪顏色，逐項並排比較（'+t.name+'睇自己一支）</figcaption></figure></div>' : '';
-    return '<div class="card uniform-card"><h3>'+t.name+'</h3>'+figHtml+bfig+
+    var bfig = bu.branch ? App.figFold('顏色配搭對照圖',
+      '<div class="svg-steps"><figure>'+bu.branch+
+      '<figcaption>陸／海／空三種制服嘅帽、恤衫、短褲／裙褲同長襪顏色，逐項並排比較（'+t.name+'睇自己一支）</figcaption></figure></div>') : '';
+    return '<div class="card uniform-card"><h2 class="uniform-name">'+t.name+'</h2>'+figHtml+bfig+
       '<div class="uniform-split">'+
         '<div class="uniform-visual no-print"><a href="'+t.img+'" target="_blank" rel="noopener">🖼️ 開總會官網原圖（對最新式樣）</a>'+
         '<small class="mut">本地圖係總會官網同一張，離線都睇得到。</small></div>'+
@@ -943,21 +1282,21 @@ App.pages.uniform = function(sub){
         }).join('')+'</tbody></table>';
     }
     wrap.appendChild(App.block('🎖️ 胸袋上下層點排（圖上 ①–⑥）',
-      '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.chest+
-      '<figcaption>恤衫正面：袋蓋上方 3cm＝上層、袋蓋上方＝下層、袋中央＝進度性獎章（圖只示位置，唔畫徽章樣式）</figcaption></figure></div>'
+      App.figFold('胸袋上下層位置', '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.chest+
+      '<figcaption>恤衫正面：袋蓋上方 3cm＝上層、袋蓋上方＝下層、袋中央＝進度性獎章（圖只示位置，唔畫徽章樣式）</figcaption></figure></div>')
       + pTable(P.chest), {id:'uni-chest'}));
     wrap.appendChild(App.block('🔍 局部放大：最易擺錯嘅兩處（左胸袋・右袖肩膊）',
-      '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.zoom+
-      '<figcaption>左：左胸袋——袋蓋上方 3cm 同袋中央係兩個唔同高度；右：右袖——旅章喺肩膊位下方 2cm，地域章（前）→ 區章（後）相距 1cm</figcaption></figure></div>'
+      App.figFold('局部放大對位', '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.zoom+
+      '<figcaption>左：左胸袋——袋蓋上方 3cm 同袋中央係兩個唔同高度；右：右袖——旅章喺肩膊位下方 2cm，地域章（前）→ 區章（後）相距 1cm</figcaption></figure></div>')
       +'<div class="callout">📖 對唔到就照《儀容與制服手冊》本身嘅放大插圖：'
       +'<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">第三章「制服配件」</a>、'
       +'<a href="'+UNIFORM.source.badgeGuide+'" target="_blank" rel="noopener">支部成員徽章佩戴指引 PDF</a>（官方圖最準）。</div>', {id:'uni-zoom'}));
 
     wrap.appendChild(App.block('🎖️ 全身位置：衫袖・肩帶（圖上 ⑦–⑨）',
-      '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.body+
-      '<figcaption>正面位置：右袖由上至下（小隊章 3cm 起）・左袖（AYP／拯溺）・專章帶由左肩斜落右腰；旅巾着喺肩帶外面</figcaption></figure></div>'
-      +'<div class="svg-steps"><figure>'+DIAGRAMS.uniform.sleeve+
-      '<figcaption>右袖放大（圖上 ①–⑤）：① 旅章／香港肩章＝肩膊位下方 2cm；② 總部／地域／區章＝再落 2cm，地域前區後相距 1cm；③ 環境／社區參與／維護自然世界章；④ 優異旅團章（佩戴一年）；⑤ 童軍小隊章＝袖口縫線上方 3cm。左袖鏡像相同（AYP 上、拯溺下）</figcaption></figure></div>'
+      App.figFold('全身位置', '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.body+
+      '<figcaption>正面位置：右袖由上至下（小隊章 3cm 起）・左袖（AYP／拯溺）・專章帶由左肩斜落右腰；旅巾着喺肩帶外面</figcaption></figure></div>')
+      + App.figFold('右袖放大', '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.sleeve+
+      '<figcaption>右袖放大（圖上 ①–⑤）：① 旅章／香港肩章＝肩膊位下方 2cm；② 總部／地域／區章＝再落 2cm，地域前區後相距 1cm；③ 環境／社區參與／維護自然世界章；④ 優異旅團章（佩戴一年）；⑤ 童軍小隊章＝袖口縫線上方 3cm。左袖鏡像相同（AYP 上、拯溺下）</figcaption></figure></div>')
       + pTable(P.body), {id:'uni-body'}));
     wrap.appendChild(App.h('div','callout','📚 出處：'+P.source+'。本 app 服務童軍支部（11–15 歲）：深資／樂行先有嘅章（急救章、深資／樂行肩章、ATAS 標誌）只作對照，未夠資格唔使理。<br>原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>｜<a href="'+UNIFORM.source.badgeGuide+'" target="_blank" rel="noopener">支部成員徽章佩戴指引（2023 年第 13 號通告）PDF</a>'));
     wrap.appendChild(App.h('p','tip','💡 集會前逐個章對位檢查。'));
@@ -975,30 +1314,31 @@ App.pages.uniform = function(sub){
       '<div class="card"><ul class="bullet">'+NW.rings.map(function(x){return '<li><b>'+x.n+'</b>：'+x.who+'</li>';}).join('')+'</ul>'
       +'<p class="mut">'+NW.ringsOther+'</p></div>'));
     wrap.appendChild(App.block('🧣 領巾點戴（捲巾 8 步＋規格）',
-      '<div class="svg-steps"><figure>'+(bd.scarf||'')+
-      '<figcaption>捲巾直徑約 3.5cm、底至尖 12–15cm；巾圈套喺衣領尖，巾尾唔可超越皮帶扣</figcaption></figure></div>'
+      App.figFold('領巾戴法', '<div class="svg-steps"><figure>'+(bd.scarf||'')+
+      '<figcaption>捲巾直徑約 3.5cm、底至尖 12–15cm；巾圈套喺衣領尖，巾尾唔可超越皮帶扣</figcaption></figure></div>')
       +'<div class="card"><ol class="steps">'+NW.wear.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ol></div>'));
     wrap.appendChild(App.block('👔 領帶 4 色＋佩戴',
-      '<div class="svg-steps"><figure>'+(bd.ties||'')+
-      '<figcaption>棗紅（深資）・深綠（樂行＋成年）・黑（海童軍）・深藍（空童軍）</figcaption></figure></div>'
+      App.figFold('領帶 4 色', '<div class="svg-steps"><figure>'+(bd.ties||'')+
+      '<figcaption>棗紅（深資）・深綠（樂行＋成年）・黑（海童軍）・深藍（空童軍）</figcaption></figure></div>')
       +'<div class="card"><ul class="bullet">'+NW.ties.map(function(x){return '<li><b>'+x.n+'</b>：'+x.who+'</li>';}).join('')+'</ul>'
       +'<ol class="steps">'+NW.tieWear.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ol></div>'));
     wrap.appendChild(App.block('🪵 基維爾巾圈・基維爾領巾・木章（成年成員對照）',
-      '<div class="svg-steps"><figure>'+(bd.kilwell||'')+
-      '<figcaption>木章皮繩位置：領巾／領帶制服掛喺前面，禮服藏翻領內只露木珠</figcaption></figure></div>'
+      App.figFold('木章皮繩位置', '<div class="svg-steps"><figure>'+(bd.kilwell||'')+
+      '<figcaption>木章皮繩位置：領巾／領帶制服掛喺前面，禮服藏翻領內只露木珠</figcaption></figure></div>')
+      +'<details class="uniform-more"><summary>📖 展開成年成員對照（童軍支部未用得到）</summary>'
       +'<div class="card"><ul class="bullet">'+KW.points.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'
       +'<p class="mut">'+KW.note+'</p>'
-      +'<ul class="bullet">'+KW.wear.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
+      +'<ul class="bullet">'+KW.wear.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ul></div></details>'));
     wrap.appendChild(App.block('👖 皮帶・皮鞋・襪',
       '<div class="card"><ul class="bullet">'+BS.items.map(function(x){return '<li><b>'+x.n+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
     var CP = UNIFORM.cap;
     wrap.appendChild(App.block('🧢 制服帽佩戴（帽章・帽邊・髮式）',
-      '<div class="svg-steps"><figure>'+(bd.cap||'')+
-      '<figcaption>帽章＝軟帽左眼處上方 2cm；帽邊＝眼眉上方約 2cm（約一隻手指闊）；帽帶尾套入帽後端黑色膠邊內</figcaption></figure></div>'
+      App.figFold('制服帽佩戴', '<div class="svg-steps"><figure>'+(bd.cap||'')+
+      '<figcaption>帽章＝軟帽左眼處上方 2cm；帽邊＝眼眉上方約 2cm（約一隻手指闊）；帽帶尾套入帽後端黑色膠邊內</figcaption></figure></div>')
       +'<div class="card"><ul class="bullet">'+CP.points.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'
       +'<p class="mut">'+CP.hard+'</p>'
       +'<p class="mut">'+CP.sea+'</p></div>'
-      +'<div class="card"><h4>髮式（戴帽期間）</h4><ul class="bullet">'
+      +'<div class="card"><h3>髮式（戴帽期間）</h3><ul class="bullet">'
       +CP.hair.map(function(x){return '<li><b>'+x.t+'</b>：'+x.d+'</li>';}).join('')+'</ul></div>'));
     wrap.appendChild(App.h('div','callout','🛒 <b>'+UNIFORM.shop.name+'</b>：'+UNIFORM.shop.addr+'｜電話 '+UNIFORM.shop.tel+'｜<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">hkscoutshop.org.hk</a><br>'+UNIFORM.shop.rule+'<br>'+UNIFORM.shop.rest));
     wrap.appendChild(App.h('div','callout','📚 出處：'+NW.source+'；'+BS.source+'；'+UNIFORM.cap.source+'。原文（連官方插圖）：<a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">《儀容與制服手冊》</a>'));
@@ -1011,8 +1351,8 @@ App.pages.uniform = function(sub){
       '<div class="callout">📚 <a href="'+UNIFORM.source.url+'" target="_blank" rel="noopener">儀容與制服手冊（官方網站）</a>｜🛒 <a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">'+UNIFORM.shop.name+'</a>（'+UNIFORM.shop.tel+'）</div>'+
       '<p class="mut">'+UNIFORM.shop.rest+'</p>';
     wrap.appendChild(App.block('🧣 旅巾點綁（巾圈・巾尾長度）',
-      '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.scarf+
-      '<figcaption>捲巾直徑約 3.5cm、底至尖 12–15cm；巾圈收喺衣領尖，巾尾喺肚臍附近、唔可以超越皮帶扣</figcaption></figure></div>'));
+      App.figFold('旅巾長度對位', '<div class="svg-steps"><figure>'+DIAGRAMS.uniform.scarf+
+      '<figcaption>捲巾直徑約 3.5cm、底至尖 12–15cm；巾圈收喺衣領尖，巾尾喺肚臍附近、唔可以超越皮帶扣</figcaption></figure></div>')));
     wrap.appendChild(App.block('✅ 制服自查清單（每次集會前）', cl));
     return wrap;
   }
@@ -1102,17 +1442,21 @@ App.pages.book = function(sub){
   }
 
   var ul3 = App.h('ul','bullet');
-  ul3.innerHTML = '<li><a href="'+DATA.source.url+'" target="_blank" rel="noopener">《童軍訓練綱要》網上版（童軍支部）</a></li>'+
+  ul3.innerHTML = '<li><b>📖 <a href="'+DATA.source.url+'" target="_blank" rel="noopener">《童軍訓練綱要》2026 全文 PDF</a></b>（主入口：一撳即開官方文件）</li>'+
+    '<li><a href="'+DATA.source.webUrl+'" target="_blank" rel="noopener">網上版（分章，後備）</a>｜<a href="'+DATA.source.circular+'" target="_blank" rel="noopener">P022/26 新修訂通告</a></li>'+
     '<li><a href="'+EXTERNAL.officialPack+'" target="_blank" rel="noopener">官方集會套包 2026-09-01 版 PDF</a></li>'+
-    '<li><a href="'+EXTERNAL.badge+'" target="_blank" rel="noopener">童軍進度追蹤（外部 APP）</a></li>'+
-    '<li><a href="'+EXTERNAL.circulars+'" target="_blank" rel="noopener">通告圖書館</a></li>'+
+    '<li><a href="'+EXTERNAL.badge+'" target="_blank" rel="noopener">童軍進度追蹤（外部 APP）</a>｜<a href="'+EXTERNAL.circulars+'" target="_blank" rel="noopener">通告圖書館</a></li>'+
     '<li><a href="'+EXTERNAL.district+'" target="_blank" rel="noopener">區總部報章系統（只係部分專科徽章報名用；興趣組由團長團內考核，唔使入）</a></li>';
   wrap.appendChild(App.sec('🔗 參考資料').add(ul3));
+  var fb = App.h('div','');
+  fb.innerHTML = App.feedbackCard();
+  wrap.appendChild(fb);
   return wrap;
 };
 
 /* ✂️ 素材庫：即搵即印／即投屏 */
 App.printCat = '';
+App.wsBatch = 12;               /* 工作紙首批 12 張，撳「睇多啲」再 render */
 App.printCats = [
   {k:'ws',   ic:'📝', n:'工作紙（24 場）'},
   {k:'aid',  ic:'🩹', n:'急救卡（8 張）'},
@@ -1145,23 +1489,32 @@ App.pages.print = function(){
 App.printPanel = function(cat){
   var box = App.h('div','');
   if (cat === 'ws') {
-    var wsHtml = '<p class="mut">同集會目錄每場教案用嘅係同一份工作紙。</p>';
+    var allWs = DATA.meetings.filter(function(m){return m.full&&m.data&&m.data.worksheet;});
+    var limit = Math.max(12, App.wsBatch || 12);
+    var shown = 0;
+    var wsHtml = '<p class="mut">同集會目錄每場教案用嘅係同一份工作紙。首批 ' + Math.min(limit, allWs.length) + ' / ' + allWs.length + ' 張，撳「睇多啲」再開。</p>';
     [{k:'會員章 c01–c06', from:0, to:6},{k:'探索 c07–c12', from:6, to:12},
      {k:'探索 c13–c18', from:12, to:18},{k:'標準／總結 c19–c24', from:18, to:24}].forEach(function(g){
       var list = DATA.meetings.slice(g.from,g.to).filter(function(m){return m.full&&m.data&&m.data.worksheet;});
       if (!list.length) return;
       wsHtml += '<h3 class="ws-group">'+g.k+'</h3>';
       list.forEach(function(m){
+        if (shown >= limit) return;
+        shown++;
         var aud = m.data.worksheet.audience==='leader' ? '（領袖用）' : '（成員用 A4）';
         wsHtml += '<div class="ws-item" data-title="'+m.tid+' 工作紙">'
           + '<div class="ws-head"><b>'+m.tid+aud+'</b><span class="mut"> '+m.n+'</span> '
           + '<a class="mut ws-goto" href="#plan/'+m.tid+'">睇完整教案 ↗</a>'
           + '<button class="print-btn" onclick="App.printSec(this.closest(\'div.ws-item\'))">🖨️ 只印呢張</button>'
           + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.ws-item\'))">🖥️ 投呢張</button></div>'
+          + '<details class="ws-fold"><summary>📄 展開工作紙內容（列印時自動全開）</summary>'
           + App.worksheetHtml(m.data.worksheet)
-          + '</div>';
+          + '</details></div>';
       });
     });
+    if (shown < allWs.length) {
+      wsHtml += '<p class="ws-more"><button class="btn ghost" onclick="App.wsBatch+='+Math.min(12, allWs.length-shown)+';App.route()">睇多啲（餘下 ' + (allWs.length - shown) + ' 張）</button></p>';
+    }
     box.appendChild(App.block('📝 工作紙（逐張印／逐張投）', wsHtml, {print:false,proj:false}));
     return box;
   }
@@ -1267,6 +1620,7 @@ App.pages.play = function(){
     filt.appendChild(btn);
   });
   wrap.appendChild(filt);
+  wrap.appendChild(App.h('h2',null,'🎲 遊戲卡（12 個）'));
   DATA.games.forEach(function(g){
     var card = App.h('div','card game-card');
     card.setAttribute('data-cat',g.cat);
@@ -1277,8 +1631,9 @@ App.pages.play = function(){
     card.innerHTML = '<h3>'+g.n+' <span class="tag">'+g.cat+'</span> <span class="tag">'+g.minutes+'分鐘</span></h3>'+
       '<p><b>人數：</b>'+g.people+' &nbsp; <b>物資：</b>'+g.mats+'</p>'+
       '<p>'+g.desc+'</p>'+fig+
-      '<p><b>玩法：</b></p><ol class="steps">'+g.steps.map(function(st){return '<li>'+st+'</li>';}).join('')+'</ol>'+
-      '<p class="tip">💡 '+g.tips+'</p>'+
+      '<details class="game-more"><summary>📖 玩法＋領袖提示（列印時自動全開）</summary>'+
+      '<ol class="steps">'+g.steps.map(function(st){return '<li>'+st+'</li>';}).join('')+'</ol>'+
+      '<p class="tip">💡 '+g.tips+'</p></details>'+
       '<p class="safety"><b>⚠️ 安全：</b>'+g.safety+'</p>'+
       '<p class="card-actions"><button class="print-btn" onclick="App.printSec(this.closest(\'div.game-card\'))">🖨️ 印遊戲</button> '
       + '<button class="proj-btn" onclick="App.projSec(this.closest(\'div.game-card\'))">🖥️ 投講解</button></p>';
@@ -1385,48 +1740,83 @@ App.badgeFig = function(k){
     + '<figcaption>'+b.cap+'</figcaption></figure>';
 };
 
-/* 🎖️ 興趣章（唔放區總部報章系統入口——興趣組由團考核） */
+/* 🎖️ 興趣章（唔放區總部報章系統入口——興趣組由團考核）
+   33 張卡一次過 render 會 12k 字／41 個掣；改為首批 12＋「睇多啲」。 */
+App.badgeCat = 'all';
+App.badgeBatch = 12;
+App.badgeCardHtml = function(b, catName){
+  var tags = '';
+  if(b.new2026) tags += '<span class="tag new">🆕 2026新增</span>';
+  if(b.rev2026) tags += '<span class="tag rev">✏️ 2026修訂</span>';
+  var reqList = (b.req || []).map(function(r){ return '<li>'+r+'</li>'; }).join('');
+  var sugList = (b.suggest || []).map(function(s){ return '<li>'+s+'</li>'; }).join('');
+  return '<div class="badge-card" data-cat="'+b.cat+'">'
+    + '<div class="badge-head">' + App.badgeFig(b.k)
+    + '<h3>'+b.zh+' <small>('+b.en+')</small></h3>'
+    + '<div class="badge-tags">'+tags+'<span class="tag cat">'+catName+'</span></div></div>'
+    + '<details><summary>📋 官方考核要求</summary><ol class="req-list">'+reqList+'</ol></details>'
+    + '<details><summary>💡 建議考核方式（僅供參考）</summary><ul class="sug-list">'+sugList+'</ul></details>'
+    + '<p class="no-print"><button class="proj-btn" onclick="App.projSec(this.closest(\'div.badge-card\'))">🖥️ 投屏（同成員講要求）</button></p></div>';
+};
+App.badgeMore = function(){
+  App.badgeBatch += 12;
+  if(App._badgeDraw) App._badgeDraw();
+};
 App.pages.badges = function(){
   var wrap = App.h('div','page');
   wrap.appendChild(App.h('h1',null,'🎖️ 興趣章（興趣組專科徽章）'));
   wrap.appendChild(App.h('p','lede','專科徽章分 4 組：興趣組（綠底，11–13 歲入門）、技能組（藍底，13–15 歲）、服務組（紅底）、教導組（金邊）。呢度只列<b>興趣組</b>——多數由團長喺團內安排考驗。想查其他組別：<a href="'+EXTERNAL.badge+'" target="_blank" rel="noopener">🏅 童軍進度追蹤</a>。'));
+  if(!INTERESTS.badges.some(function(b){ return b.cat === App.badgeCat; })) App.badgeCat = 'all';
+  if(App.badgeBatch < 12) App.badgeBatch = 12;
+
   var filt = App.h('div','filters');
-  var btns = [{k:'all',n:'全部'}].concat(INTERESTS.categories.map(function(c){return {k:c.k,n:c.ic+' '+c.n};}));
-  btns.forEach(function(b,i){
-    var btn = App.h('button','filter-btn'+(i===0?' active':''),b.n);
-    btn.setAttribute('data-cat',b.k);
+  filt.setAttribute('aria-label','興趣章分類');
+  var btns = [{k:'all',n:'全部'}].concat(INTERESTS.categories.map(function(c){ return {k:c.k,n:c.ic+' '+c.n}; }));
+  btns.forEach(function(b){
+    var btn = App.h('button','filter-btn'+(App.badgeCat===b.k?' active':''), b.n);
+    btn.setAttribute('data-cat', b.k);
+    btn.setAttribute('aria-pressed', App.badgeCat===b.k?'true':'false');
     btn.onclick = function(){
-      document.querySelectorAll('.filters .filter-btn').forEach(function(x){x.classList.remove('active');});
-      btn.classList.add('active');
-      var cat = b.k;
-      document.querySelectorAll('.badge-card').forEach(function(card){
-        card.style.display = (cat==='all' || card.getAttribute('data-cat')===cat) ? '' : 'none';
+      App.badgeCat = b.k;
+      App.badgeBatch = 12;
+      Array.prototype.forEach.call(filt.querySelectorAll('.filter-btn'), function(x){
+        var on = x === btn;
+        if(x.classList) x.classList.toggle('active', on);
+        x.setAttribute('aria-pressed', on?'true':'false');
       });
+      draw();
     };
     filt.appendChild(btn);
   });
   wrap.appendChild(filt);
-  wrap.appendChild(App.h('p','source-note','📚 來源：'+INTERESTS.source.title+'（'+INTERESTS.source.version+'）｜<a href="#book/apply">興趣組點考（團內考核 7 步）</a>｜💡 興趣組由團考核，唔使自己入區總部報章系統<br>🎖️ 章樣：<a href="https://scoutsinfohub.org.hk/scout-training-scheme" target="_blank" rel="noopener">童軍資訊站《童軍訓練綱要》</a>官方專科徽章圖（本地存檔，離線都睇得到）；實物以<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">童軍物品供應社</a>發售嘅布章為準。'));
+  wrap.appendChild(App.h('p','source-note','📚 來源：'+INTERESTS.source.title+'（'+INTERESTS.source.version+'）｜<a href="#book/apply">興趣組點考（團內考核 7 步）</a>｜💡 興趣組由團考核，唔使自己入區總部報章系統<br>🎖️ 章樣：<a href="'+DATA.source.webUrl+'" target="_blank" rel="noopener">童軍資訊站《童軍訓練綱要》</a>官方專科徽章圖（本地存檔，離線都睇得到）；實物以<a href="'+UNIFORM.shop.url+'" target="_blank" rel="noopener">童軍物品供應社</a>發售嘅布章為準。'));
+  wrap.appendChild(App.h('h2',null,'🏅 興趣組徽章'));
+  var count = App.h('p','mut badge-count','');
+  count.id = 'badge-count';
+  wrap.appendChild(count);
   var grid = App.h('div','badge-grid');
-  INTERESTS.badges.forEach(function(b){
-    var catName = (INTERESTS.categories.find(function(c){return c.k===b.cat;})||{n:''}).n;
-    var tags = '';
-    if(b.new2026) tags += '<span class="tag new">🆕 2026新增</span>';
-    if(b.rev2026) tags += '<span class="tag rev">✏️ 2026修訂</span>';
-    var reqList = b.req.map(function(r){return '<li>'+r+'</li>';}).join('');
-    var sugList = b.suggest.map(function(s){return '<li>'+s+'</li>';}).join('');
-    var card = App.h('div','badge-card');
-    card.setAttribute('data-cat',b.cat);
-    card.innerHTML =
-      '<div class="badge-head">'+App.badgeFig(b.k)+
-      '<h3>'+b.zh+' <small>('+b.en+')</small></h3>'+
-      '<div class="badge-tags">'+tags+'<span class="tag cat">'+catName+'</span></div></div>'+
-      '<details><summary>📋 官方考核要求</summary><ol class="req-list">'+reqList+'</ol></details>'+
-      '<details><summary>💡 建議考核方式（僅供參考）</summary><ul class="sug-list">'+sugList+'</ul></details>'
-      + '<p class="no-print"><button class="proj-btn" onclick="App.projSec(this.closest(\'div.badge-card\'))">🖥️ 投屏（同成員講要求）</button></p>';
-    grid.appendChild(card);
-  });
+  grid.id = 'badge-grid';
   wrap.appendChild(grid);
+  var more = App.h('p','badge-more');
+  more.id = 'badge-more';
+  wrap.appendChild(more);
+
+  function draw(){
+    var list = INTERESTS.badges.filter(function(b){ return App.badgeCat === 'all' || b.cat === App.badgeCat; });
+    var shown = list.slice(0, App.badgeBatch);
+    grid.innerHTML = shown.map(function(b){
+      var catName = (INTERESTS.categories.filter(function(c){ return c.k === b.cat; })[0] || {n:''}).n;
+      return App.badgeCardHtml(b, catName);
+    }).join('');
+    count.textContent = '顯示 ' + shown.length + ' / ' + list.length + ' 個'
+      + (App.badgeCat === 'all' ? '（共 ' + INTERESTS.badges.length + ' 個興趣組章）' : '');
+    more.innerHTML = (shown.length < list.length)
+      ? '<button class="btn ghost" onclick="App.badgeMore()">睇多啲（餘下 ' + (list.length - shown.length) + ' 個）</button>'
+      : '';
+  }
+  App._badgeDraw = draw;
+  draw();
+
   var cancel = App.h('div','callout warn');
   cancel.innerHTML = '⚠️ <b>已取消徽章（2026-08-15生效）</b>：愛護動物章（興趣組）已取消，由新設「動物飼養章（興趣組）」及「愛護動物章（服務組）」取代；持有舊章者仍可佩戴至童軍身分完結。';
   wrap.appendChild(cancel);
@@ -1468,7 +1858,7 @@ App.pages.songs = function(sub){
   if(cur==='flow'){
     wrap.appendChild(App.h('p','lede','第一次帶就照住呢個 90 分鐘次序：準備 → 熱身 → 高潮 → 歌唱 → 寧靜結尾 → 完全熄火。其他資料已拆到上面五個分頁。'));
     var hero = App.h('div','card song-hero camp-hero');
-    hero.innerHTML = '<h3>🔥 營火會點樣帶</h3><div class="svg-steps"><figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.flow:'')+'<figcaption>三段氣氛：熱身 → 高潮 → 寧靜結尾</figcaption></figure></div>';
+    hero.innerHTML = '<h2>🔥 營火會點樣帶</h2><div class="svg-steps"><figure>'+(DIAGRAMS.fire?DIAGRAMS.fire.flow:'')+'<figcaption>三段氣氛：熱身 → 高潮 → 寧靜結尾</figcaption></figure></div>';
     wrap.appendChild(hero);
     wrap.appendChild(App.block('🗓️ 一般營火會時間表（約 90 分鐘）',
       '<div class="card"><ol class="steps camp-timeline">'+SONGS.programme.map(function(x){return '<li><b>'+x.t+'</b><br>'+x.d+'</li>';}).join('')+'</ol>'+
@@ -1530,6 +1920,7 @@ App.pages.songs = function(sub){
 
   if(cur==='library'){
     wrap.appendChild(App.h('p','lede','14 首香港旅團唱開嘅歌。每張只顯示歌名、場合同第一句；撳入去先睇完整歌詞、玩法、領唱提示。'));
+    wrap.appendChild(App.h('h2',null,'🎵 14 首歌單'));
     var grid = App.h('div','song-grid');
     sheets.forEach(function(sg){
       var card = App.h('a','card song-card');

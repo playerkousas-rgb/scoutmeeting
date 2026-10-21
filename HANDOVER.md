@@ -1,7 +1,15 @@
 # Scout Hub — Handover Notes（交下一個 Agent 用）
 
-> 最後更新：2026-09-16
-> 目前 branch：`arena/01a0a963-scoutmeeting`（v37：**前端零 SVG** — 制服 9 張位置圖＋全部圖解一律 AVIF）
+> 最後更新：2026-10-22
+> 目前 branch：`arena/4d332b71-scoutmeeting`（v42：**11 回合對齊** — 進度篩選／續帶、分批、預快取拆分、無障礙、意見回報、官方綱要直連）
+>
+> **v42 快照（2026-10-22）**
+> - 文件：`docs/dialogue-align-20261022.md`（11 回合）、`docs/feedback-system.md`、`docs/app-scorecard-20261022.md`、`docs/meeting-upgrade-guide-20261022.md`。
+> - 工具：`tools/meeting-audit.mjs`（24 場 `Σ分鐘 + buffer = duration`；`npm run test:meetings`）。
+> - 預快取：核心 40 檔 1.32 MB；128 張圖 2.31 MB 由 `CACHE_EXTRA` 背景補；`CACHE = scout-v42-c24-20261022`。
+> - 意見回報：`data-app="童軍集會"`（**唔准用「童軍」**，會被歸入專章系統）；離線有 `App.feedback()` 後備。
+> - 核實修正：2026 綱要封面係**第四版（2026 年 2 月）**；舊 `prog.scouting.org.hk/...FullVersion-zh.pdf` 係死鏈，已改指童軍資訊站全本 PDF。
+> - 測試：`npm test` = smoke＋runtime＋v42＋deployment；jsdom 掃 81 條路由 0 flag。
 >
 > **v36／v37 快照（睇呢段就夠，下面 v19 前後嘅記錄當歷史）**
 > - **制服 9 張位置圖**（`img/dia/uniform-{chest,zoom,sleeve,body,scarf,ties,kilwell,cap,branch}.avif`）＝乾淨制服底圖（AI 生成中性衣物、零徽章）＋**程式照《儀容與制服手冊》疊位置線／尺寸線／①–⑨ 編號**；章位一律由條文決定，AI 只出底圖（守住 v21 禁令）。前端經 `IMG.html('uniform.<key>')` 出圖。

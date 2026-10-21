@@ -2458,7 +2458,10 @@ body.offline .extcard{opacity:.55}
 @media print {
   /* beforeprint 沿目前教材向上隔離，連不在 modal-content 的額外掣也不出紙。 */
   [data-print-exclude] { display: none !important; }
-  details:not([open]), .skill-instructions, .skill-reader > details { display: none !important; }
+  /* v42：列印一律全開 details（官方原文唔可以漏印）；摘要行唔出紙 */
+  details, details > summary { display: block !important; }
+  details > summary { display: none !important; }
+  .skill-instructions, .skill-reader > details { display: none !important; }
   /* 螢幕的 100dvh 加紙邊／首段 margin 會推出額外空白頁。 */
   html, body { min-height: 0 !important; height: auto !important; background: #fff !important; }
   #modal, #modal .mbox, #modal .modal-content, #printarea {
@@ -3232,3 +3235,62 @@ textarea{font-family:inherit;border:1.5px solid var(--line);border-radius:12px;p
 .uniform-fig figcaption{font-size:.78rem;color:var(--mute);margin-top:6px;line-height:1.5}
 .uniform-fig.imgfail{display:none}
 .uniform-visual.no-print{display:flex;flex-direction:column;gap:6px;font-size:.8rem}
+
+/* ══════════ v42（2026-10-22 對齊）：進度／分批／意見回報／無障礙 ══════════ */
+.uniform-card h2.uniform-name{font-size:1.05rem;color:var(--ord);margin:0 0 .4em}
+.ver-callout{font-size:.86rem;line-height:1.6}
+.plan-official{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.plan-link{color:inherit;text-decoration:none}
+.continue-card{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0;
+  background:linear-gradient(135deg,#E8F5E9,#fff 70%);border:1.5px solid #C8E6C9}
+.continue-copy{min-width:0}
+.continue-copy p{margin:2px 0 0;font-weight:800;line-height:1.35}
+.done-btn{display:inline-flex;align-items:center;justify-content:center;min-height:32px;margin-top:5px;
+  padding:3px 10px;border:1.5px solid var(--line);border-radius:999px;background:#fff;
+  color:var(--mute);font-size:.74rem;font-weight:800}
+.done-btn.done{background:#E8F5E9;border-color:#A5D6A7;color:var(--grd)}
+.plan-table tr.is-done .plan-id b{color:var(--mute)}
+.badge-count{margin:2px 0 8px;font-size:.8rem;font-weight:700}
+.badge-more,.ws-more{text-align:center;margin:10px 0}
+/* Scout Admin widget：升到底部導覽之上，避開「🖥️ 投整頁」掣 */
+#scoutw-fab{
+  right:12px !important;
+  bottom:calc(var(--tabbar-height) + 62px) !important;
+  min-height:44px !important;
+  padding:10px 14px !important;
+  font-size:13px !important;
+  line-height:1.1 !important;
+  max-width:calc(100vw - 24px);
+}
+@media(min-width:900px){#scoutw-fab{bottom:calc(var(--tabbar-height) + 62px) !important}}
+@media print{#scoutw-root{display:none !important}}
+.feedback-card{background:linear-gradient(135deg,#FFF8E1,#fff)}
+.feedback-card h2{color:var(--ord)}
+.fb-copy{width:100%;box-sizing:border-box;font:inherit;font-size:.86rem;line-height:1.5;
+  border:1.5px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;background:#fff;
+  color:var(--ink);resize:vertical}
+.fb-copy:focus{outline:3px solid #FFB74D;outline-offset:1px}
+#modal .mbox .quick .btn{min-height:44px}
+@media(max-width:599px){.continue-card{align-items:flex-start;flex-direction:column}.continue-card .btn{width:100%}}
+@media print{
+  .continue-card,.plan-official,.done-btn,.badge-more,.ws-more,.feedback-card{display:none!important}
+}
+.ws-fold{margin-top:4px}
+.ws-fold>summary{cursor:pointer;color:var(--grd);font-size:.8rem;font-weight:800;padding:4px 0}
+.ws-fold[open]>summary{margin-bottom:4px}
+.game-more>summary{cursor:pointer;color:var(--ord);font-weight:800;font-size:.86rem;padding:4px 0}
+.game-more[open]>summary{margin-bottom:4px}
+.uniform-more>summary{cursor:pointer;color:var(--grd);font-weight:800;font-size:.86rem;padding:4px 0}
+/* v42：示意圖摺疊（非官方圖一律收埋，唔會扮官方） */
+.fig-fold{margin:8px 0;border:1px dashed var(--line);border-radius:12px;padding:6px 10px;background:#fbfdf9}
+.fig-fold>summary{cursor:pointer;color:var(--grd);font-weight:800;font-size:.84rem;min-height:44px;display:flex;align-items:center}
+.fig-fold .fig-note{font-size:.74rem;margin:6px 0 2px}
+.fig-fold .svg-steps figure{margin:4px 0}
+/* v42：主要導覽每格最少 44×44（手指撳得中） */
+#topnav .navrow a,#tabbar a{min-height:44px;min-width:44px;justify-content:center}
+.cer-fold{margin:6px 0}
+.cer-fold>summary{cursor:pointer;color:var(--ord);font-weight:800;font-size:.84rem;min-height:44px;display:flex;align-items:center}
+.cer-fold[open]>summary{margin-bottom:4px}
+.plan-transition{margin:0 0 10px}
+.plan-transition>summary{cursor:pointer;font-weight:800;font-size:.84rem;color:var(--grd);min-height:44px;display:flex;align-items:center}
+.plan-transition p{margin:0 0 6px;font-size:.84rem;line-height:1.6}
